@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || inputs.tier == 'display'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.3.11"
@@ -107,7 +107,7 @@ jobs:
     # hand when it's worth a dedicated pass.
     if: github.event_name == 'workflow_dispatch' && inputs.tier == 'lightbox'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.3.11"
