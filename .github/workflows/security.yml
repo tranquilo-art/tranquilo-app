@@ -1,0 +1,90 @@
+name: Security
+
+# Runs the official gitleaks Docker image directly rather than a
+# third-party GitHub Action, to avoid depending on that action's own
+# licensing terms. --no-git scans the checked-out tree as-is (what this
+# push/PR actually contains), not the full commit history -- a
+# history-wide scan is a separate, one-time audit, not something every
+# push should re-pay the cost of or get blocked by pre-existing history
+# it can't retroactively fix. .gitleaks.toml (repo root) extends the
+# default ruleset with an allowlist for known non-secret identifiers
+# (e.g. the Cloudflare beacon token, which is public by design).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly rather than per-push, same reasoning as the --no-git split
+    # below: a history scan is a separate audit, not something every push
+    # should re-pay the cost of. Monday 06:00 UTC -- arbitrary, just off
+    # the top of the hour.
+    - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+
+jobs:
+  secret-scan:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Run gitleaks
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/repo" \
+            zricethezav/gitleaks:latest \
+            detect --source /repo --no-git --config /repo/.gitleaks.toml --redact -v
+
+  # Full commit-history scan, including commit messages -- gitleaks' git
+  # mode parses `git log -p`, which covers the message along with the diff,
+  # so no separate flag is needed to catch a secret pasted into a commit
+  # message rather than a file. Scoped to this branch's own ancestry (the
+  # default `actions/checkout@v5` behaviour with fetch-depth: 0 -- it does
+  # NOT fetch other branches), which matters here: this repo's separate
+  # db-backups branch holds nightly database dumps whose base64 image
+  # blobs trip gitleaks' aws-access-token heuristic in the hundreds --
+  # confirmed locally, not guessed -- and scanning that branch's history
+  # under this same job would drown any real finding in noise. That branch
+  # needs its own scan with its own allowlist tuning if it's ever wanted,
+  # not this one widened to `--all`.
+  #
+  # Local sanity check before adding this (gitleaks 8.16.0, apt, no Docker
+  # available here) found only known false positives confined to
+  # tests/fixtures/*.json's own base64 image bytes on this branch's
+  # history -- consistent with the fact that the existing tree-only job
+  # above, using the same file content via the real `zricethezav/
+  # gitleaks:latest` image this job also uses, already passes clean. Still
+  # worth watching the first scheduled run rather than assuming that holds.
+  secret-scan-history:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Run gitleaks (full history)
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/repo" \
+            zricethezav/gitleaks:latest \
+            detect --source /repo --config /repo/.gitleaks.toml --redact -v
+
+  # Dependency-advisory scan. `bun audit` needs no new tool -- it's
+  # built into the Bun we already run everything else with. Gated at
+  # `critical` only, not `high`: several transitive deps (prisma's own
+  # mysql2/deepmerge-ts, @vercel/node's ajv/path-to-regexp/undici) currently
+  # carry high-severity advisories with no available fix yet, so gating on
+  # `high` today would block every PR on pre-existing, unfixable findings
+  # rather than catch a newly introduced one. Revisit the threshold once
+  # those are cleared.
+  dependency-audit:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.11"
+      - run: bun install --frozen-lockfile
+      - run: bun audit --audit-level=critical

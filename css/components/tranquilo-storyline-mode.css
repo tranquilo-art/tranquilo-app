@@ -1,0 +1,283 @@
+/* Storyline overlay -- intro/trailer page, chapters, nav, timeline.
+   Rules shared with other components stay in css/style.css. */
+
+/* ---------- Storyline mode ---------- */
+/* Full-screen overlay, same z-index tier as the lightbox/detail modal.
+   Vertical scroll stays the main feed's axis; horizontal swipe *inside*
+   here moves chapter to chapter -- the concrete implementation of the
+   horizontal-swipe gesture the product already reserves for "related
+   works." Closing this never touches #feed's scroll position, so
+   exiting always lands back exactly where the user left. */
+.storyline-mode{
+  position:fixed; inset:0;
+  z-index:250;
+  background:var(--ink);
+  display:flex;
+  flex-direction:column;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.25s ease;
+}
+.storyline-mode.open{ opacity:1; pointer-events:auto; }
+
+.storyline-header{
+  position:relative;
+  z-index:5;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:18px 20px;
+  background:linear-gradient(to bottom, rgba(11,11,18,0.9), rgba(11,11,18,0));
+}
+.storyline-header-title{
+  font-family:var(--serif);
+  font-style:italic;
+  font-weight:500;
+  font-size:1.05rem;
+  color:var(--text);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.storyline-close{
+  flex:none;
+}
+
+/* Nested horizontal scroll-snap container -- deliberately separate from
+   #feed's vertical one, so the two gesture axes never fight each other. */
+.storyline-track{
+  flex:1;
+  min-height:0;
+  display:flex;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  scroll-behavior:smooth;
+  -webkit-overflow-scrolling:touch;
+}
+.storyline-track::-webkit-scrollbar{ display:none; }
+
+/* Shown while a storyline's full content is being fetched lazily --
+   reuses style.css's shimmer keyframe, same visual language as .art-skeleton. */
+.storyline-loading{
+  flex:none;
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(100deg, #1a1a18 30%, #232220 50%, #1a1a18 70%);
+  background-size:200% 100%;
+  animation:shimmer 1.6s ease-in-out infinite;
+}
+
+/* Prev/next for pointing devices. Revealed only under (pointer: fine) --
+   a touch reader swipes and doesn't need buttons over the artwork.
+   Disabled rather than removed at the ends, so the target stays stable. */
+.storyline-nav{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:3;
+  width:44px;
+  height:44px;
+  border:none;
+  border-radius:50%;
+  background:rgba(0,0,0,0.55);
+  color:#fff;
+  font-size:26px;
+  line-height:1;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:opacity 0.2s ease, background-color 0.2s ease;
+}
+.storyline-nav[hidden]{ display:none; }
+.storyline-nav:hover:not(:disabled){ background:rgba(0,0,0,0.75); }
+.storyline-nav:disabled{ opacity:0.25; cursor:default; }
+.storyline-nav-prev{ left:16px; }
+.storyline-nav-next{ right:16px; }
+
+.storyline-page{
+  flex:none;
+  width:100%;
+  height:100%;
+  scroll-snap-align:start;
+  scroll-snap-stop:always;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  padding:0 28px;
+  text-align:center;
+  /* An expanded disclosure can make the intro page taller than the
+     viewport; the track itself scrolls horizontally, so this is its own
+     axis and doesn't fight the snap. */
+  overflow-y:auto;
+}
+
+/* The "trailer" -- always position 0, opened directly from the chip
+   regardless of which chapter's chip was tapped. */
+.storyline-intro-eyebrow{
+  font-family:var(--sans);
+  font-size:0.72rem;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:var(--gold-soft);
+  margin-bottom:16px;
+}
+.storyline-intro-title{
+  font-family:var(--serif);
+  font-weight:500;
+  font-style:italic;
+  font-size:1.9rem;
+  line-height:1.2;
+  color:var(--text);
+  margin:0 0 18px;
+  max-width:520px;
+}
+.storyline-intro-caption{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.96rem;
+  line-height:1.65;
+  color:var(--ink-soft);
+  max-width:440px;
+  margin:0 0 26px;
+}
+/* position:relative is load-bearing: on a pointer device .ai-badge-note
+   becomes position:absolute and needs an anchor of its own here (no
+   .fact-label wrapper exists on this page). text-align:left since the
+   page is centred, which suits a one-line caption but not a paragraph. */
+.storyline-intro-caption{ position:relative; }
+.storyline-intro-caption .ai-badge-note{ text-align:left; }
+
+/* Sharing the storyline itself, from the page that introduces it.
+   .caption-actions already carries the shared flex row/button sizing;
+   this just places it in the intro page's centred column. */
+.storyline-intro-actions{
+  margin-top:0;
+  margin-bottom:22px;
+}
+.storyline-intro-hint{
+  font-family:var(--sans);
+  font-size:0.72rem;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+}
+.storyline-intro-stack{
+  position:relative;
+  width:140px; height:180px;
+  margin-bottom:24px;
+  flex:none;
+}
+.storyline-intro-stack img{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover;
+  border-radius:4px;
+  box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);
+  z-index:1;
+}
+.storyline-intro-stack .stack-ghost{
+  position:absolute; inset:0;
+  border-radius:4px;
+  background:var(--surface);
+  box-shadow:0 14px 34px -18px rgba(0,0,0,0.5);
+}
+.storyline-intro-stack .stack-ghost.layer-1{ transform:translateY(6px) rotate(-3deg); opacity:0.55; }
+.storyline-intro-stack .stack-ghost.layer-2{ transform:translateY(12px) rotate(3.5deg); opacity:0.35; }
+
+.storyline-chapter-frame{
+  flex:1;
+  width:100%;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px 8px 0;
+}
+.storyline-chapter-frame img{
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+  box-shadow:0 30px 70px -20px rgba(0,0,0,0.6);
+}
+.storyline-chapter-meta{
+  font-family:var(--sans);
+  font-size:0.72rem;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--gold-soft);
+  margin:18px 0 8px;
+}
+/* The way out to the detail panel. Inherits from .storyline-chapter-meta
+   so the row reads as one line of text, not a bolted-on control -- the
+   underline is the whole affordance. */
+.storyline-chapter-title{
+  font:inherit;
+  letter-spacing:inherit;
+  text-transform:inherit;
+  color:inherit;
+  background:none;
+  border:none;
+  padding:0;
+  cursor:pointer;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  text-decoration-thickness:1px;
+  transition:opacity 0.15s ease;
+}
+.storyline-chapter-title:hover{ opacity:0.75; }
+/* The artwork itself is the other route out (to the lightbox). No underline
+   here -- a large image reading as tappable is the convention the feed already
+   set, and the cursor carries it. */
+.storyline-chapter-frame img{ cursor:zoom-in; }
+/* Gated artwork must not be zoomable before it is revealed: the click handler
+   bails, and this stops the cursor promising otherwise. */
+.storyline-chapter-frame.nudity-gated img{ cursor:default; }
+.storyline-chapter-caption{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.9rem;
+  line-height:1.6;
+  color:var(--text);
+  max-width:520px;
+  padding:0 8px 12px;
+}
+
+.storyline-timeline{
+  flex:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  padding:10px 20px calc(18px + env(safe-area-inset-bottom));
+}
+.storyline-dot{
+  width:22px; height:22px;
+  flex:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:none;
+  border:none;
+  padding:0;
+  cursor:pointer;
+}
+.storyline-dot::before{
+  content:"";
+  width:6px; height:6px;
+  border-radius:50%;
+  background:rgba(242,239,230,0.3);
+  transition:background 0.15s ease, box-shadow 0.15s ease;
+}
+.storyline-dot.visited::before{ background:var(--gold); }
+.storyline-dot.current::before{
+  background:var(--gold);
+  box-shadow:0 0 0 4px rgba(139,92,246,0.25);
+}

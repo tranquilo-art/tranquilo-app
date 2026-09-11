@@ -1,0 +1,239 @@
+/* Discover/Shelves overlay -- shell, shelf rows/items, header dressing, section headings.
+   Rules shared with other components stay in css/style.css. */
+
+/* ---------- Discover (mood shelves) ---------- */
+/* Same full-screen-overlay pattern as .storyline-mode -- a separate
+   destination reachable from the topbar, not inline in the main
+   vertical feed, so its horizontally-scrolling shelf rows never
+   compete with the feed's own vertical scroll-snap gesture. */
+.shelves-mode{
+  position:fixed; inset:0;
+  z-index:240;
+  background:var(--ink);
+  display:flex;
+  flex-direction:column;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.25s ease;
+}
+.shelves-mode.open{ opacity:1; pointer-events:auto; }
+
+.shelves-header{
+  position:relative;
+  z-index:5;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:18px 20px;
+  background:linear-gradient(to bottom, rgba(11,11,18,0.9), rgba(11,11,18,0));
+}
+.shelves-header-title{
+  font-family:var(--serif);
+  font-style:italic;
+  font-weight:500;
+  font-size:1.05rem;
+  color:var(--text);
+}
+.shelves-close{
+  flex:none;
+}
+
+.shelves-body{
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  padding:0 0 40px;
+}
+
+.shelf{
+  margin:22px 0;
+}
+/* Sans, not italic serif -- italic serif at small sizes on a dark
+   background is the least legible option, and these are scanned, not read. */
+.shelf-title{
+  font-family:var(--sans);
+  font-weight:500;
+  font-size:0.92rem;
+  letter-spacing:0.01em;
+  color:var(--text);
+  margin:0 20px 10px;
+}
+.shelf-row{
+  display:flex;
+  gap:12px;
+  overflow-x:auto;
+  padding:0 20px 4px;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+  -webkit-overflow-scrolling:touch;
+}
+.shelf-row::-webkit-scrollbar{ display:none; }
+/* Gives the rail back to mouse users: hiding the scrollbar is right on
+   touch (you swipe), but a pointing device has no gesture for a horizontal
+   rail -- a vertical wheel doesn't scroll it, so it dead-ends. Keyed on
+   `pointer: fine`, not a width breakpoint, since that's the actual
+   question (a touchscreen laptop reports fine for its trackpad).
+   Both scrollbar-width and ::-webkit-scrollbar are needed -- Chrome/Safari
+   ignore the former, and the latter renders zero-tall without an explicit
+   height. */
+@media (pointer: fine){
+  .shelf-row{
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,255,255,0.28) transparent;
+    padding-bottom:10px;
+  }
+  .shelf-row::-webkit-scrollbar{ display:block; height:8px; }
+  .shelf-row::-webkit-scrollbar-track{ background:transparent; }
+  .shelf-row::-webkit-scrollbar-thumb{
+    background:rgba(255,255,255,0.28);
+    border-radius:4px;
+  }
+  .shelf-row:hover::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.45); }
+}
+.shelf-item{
+  flex:none;
+  width:130px;
+  cursor:pointer;
+  background:none;
+  border:none;
+  padding:0;
+  text-align:left;
+  color:inherit;
+  font:inherit;
+}
+.shelf-item img{
+  width:130px;
+  height:130px;
+  object-fit:cover;
+  border-radius:6px;
+  display:block;
+  box-shadow:0 10px 24px -14px rgba(0,0,0,0.6);
+}
+.shelf-item-title{
+  margin-top:6px;
+  font-family:var(--sans);
+  font-size:0.74rem;
+  color:var(--ink-soft);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* Same "there's more here" visual language as .art-stack-layer (feed) and
+   .storyline-intro-stack (Storyline mode's intro page), resized for this
+   shelf's fixed 130x130 thumbnail footprint. A third, separately-scoped
+   instance rather than a shared class -- each context's sizing/offsets
+   differ enough that a shared class would need per-context overrides
+   anyway. */
+.shelf-item-stack{
+  position:relative;
+  width:130px;
+  height:130px;
+}
+.shelf-item-stack img{
+  position:relative;
+  z-index:1;
+  width:100%;
+  height:100%;
+}
+.shelf-item-stack-ghost{
+  position:absolute;
+  inset:0;
+  border-radius:6px;
+  background:var(--surface);
+  box-shadow:0 8px 20px -12px rgba(0,0,0,0.5);
+}
+.shelf-item-stack-ghost.layer-1{ transform:translateY(5px) rotate(-3deg); opacity:0.55; }
+.shelf-item-stack-ghost.layer-2{ transform:translateY(10px) rotate(3deg); opacity:0.35; z-index:-1; }
+.shelf-item-subtitle{
+  font-family:var(--sans);
+  font-size:0.68rem;
+  color:var(--ink-soft);
+  opacity:0.75;
+}
+
+/* ---------- Discover header dressing ---------- */
+/* Everything below is borrowed from surfaces that already exist rather than
+   invented -- the eyebrow from the marketing pages, the serif heading from
+   storyline mode, the lead paragraph from the About page, the tulip from
+   the top bar. */
+.shelves-header{
+  align-items:center;
+  padding:20px 20px 0;
+}
+.shelves-header-brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+.shelves-mark{
+  height:30px;
+  width:auto;
+  flex:none;
+  filter:drop-shadow(0 0 1px rgba(0,0,0,0.9));
+}
+/* `display:flex` so the anchor wraps the image tightly -- an inline anchor
+   adds a descender's worth of dead space below the glyph, which pushed the
+   tulip out of line with the heading beside it. No colour or underline
+   treatment: the link's content is an image, and the global `a` rules add
+   an underline that renders as a stray line under the flower. */
+.shelves-mark-link{
+  display:flex;
+  align-items:center;
+  flex:none;
+  text-decoration:none;
+  border-radius:4px;
+}
+.shelves-mark-link:focus-visible{
+  outline:2px solid var(--accent, #a78bfa);
+  outline-offset:3px;
+}
+/* Sans, not italic serif -- this is a wayfinding label at the top of an
+   overlay, read at a glance, and italic serif on dark was the hardest
+   thing on the page to read. */
+.shelves-header-title{
+  font-family:var(--sans);
+  /* Explicit: an earlier .shelves-header-title rule sets font-style:italic --
+     changing only font-family left Work Sans rendering as a synthesised
+     oblique, worse than the serif it replaced. */
+  font-style:normal;
+  font-weight:600;
+  font-size:1.3rem;
+  letter-spacing:-0.01em;
+  line-height:1.2;
+  color:var(--text);
+  margin:0;
+  align-self:center;
+}
+@media (max-width: 420px){
+  .shelves-header-title{ font-size:1.15rem; }
+}
+
+.shelf-section{
+  margin:30px 20px 14px;
+}
+.shelf-section:first-child{ margin-top:8px; }
+.shelf-section-title{
+  font-family:var(--sans);
+  font-weight:600;
+  font-size:1.35rem;
+  letter-spacing:-0.01em;
+  line-height:1.2;
+  color:var(--text);
+  margin:0 0 4px;
+  text-wrap:balance;
+}
+.shelf-section-sub{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.85rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  margin:0;
+}
+@media (max-width: 420px){
+  .shelf-section-title{ font-size:1.18rem; }
+  .shelf-section-sub{ font-size:0.8rem; }
+}

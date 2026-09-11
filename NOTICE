@@ -1,0 +1,32 @@
+Tranquilo — Third-Party Data Notices
+====================================
+
+Tranquilo's own source code is licensed under the GNU Affero General Public
+License v3.0 (or later) — see LICENSE.
+
+This project also uses reference data from third parties under separate
+terms. The one requiring attribution:
+
+Getty Union List of Artist Names (ULAN)
+----------------------------------------
+
+Used to reconcile artist name variants across the catalogue (e.g.
+recognizing "Rembrandt van Rijn" and "Rijn, Rembrandt van" as the same
+person) — see data/reference/README.md for how, and
+scripts/extract_ulan_artists.mjs for the extraction process. The raw ULAN
+dump itself is not committed to this repository (see
+data/reference/raw/.gitignore); only the derived artist-name mapping is.
+
+    Getty Vocabulary data is made available by the J. Paul Getty Trust
+    under the Open Data Commons Attribution License (ODC-By) 1.0.
+
+License: Open Data Commons Attribution License (ODC-By) 1.0
+<https://www.getty.edu/research/tools/vocabularies/lod/index.html>
+
+Other third-party data used by this project (Wikidata, via
+data/reference/README.md) is CC0-licensed and does not require attribution.
+
+Ingested artwork records themselves (the `items` table / catalogue content)
+come from several public-domain and open-access sources, each verified
+per-item against that source's own licensing terms at ingestion time — see
+the "Licensing" section of README.md for the full list.

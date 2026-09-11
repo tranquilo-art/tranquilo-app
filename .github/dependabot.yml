@@ -1,0 +1,15 @@
+version: 2
+updates:
+  # TypeScript/JS side -- package.json + bun.lock at repo root.
+  - package-ecosystem: "bun"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # The GitHub Actions themselves (actions/checkout, astral-sh/setup-uv,
+  # oven-sh/setup-bun, etc.) -- pinned versions in .github/workflows/*.yml
+  # are dependencies too, just not ones either ecosystem above tracks.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

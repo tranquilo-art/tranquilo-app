@@ -1,0 +1,231 @@
+// Prisma is used here ONLY for migrations.
+//
+// A few real Postgres features those files use have no
+// clean equivalent in Prisma's schema language and are called out below,
+// with the actual DDL living in prisma/migrations/ instead of here:
+//   - every WHERE-clause partial index (Prisma 7 CAN express one, via
+//     `where: raw(...)` on @@index -- but only behind
+//     `previewFeatures = ["partialIndexes"]`, which needs the generator
+//     block this file deliberately has none of, so they stay undeclared)
+//   - the immutable_unaccent() SQL function itself (no Prisma DSL represents
+//     a custom SQL function, in any version)
+//   - the unaccent/pg_trgm CREATE EXTENSION statements (also expressible,
+//     via `previewFeatures = ["postgresqlExtensions"]` -- same generator-block
+//     tradeoff as partial indexes, so also left to the migration SQL)
+//   - the items_review_status_check CHECK constraint (no Prisma DSL
+//     represents CHECK constraints, in any version)
+//
+// No `generator` block on purpose: nothing here ever runs `prisma generate`
+// (every script below passes --skip-generate), so there is nothing to
+// generate a client into.
+
+datasource db {
+  provider = "postgresql"
+}
+
+model items {
+  id        String @id
+  source    String
+  native_id String
+
+  title  String?
+  artist String?
+  bio    String?
+  date   String?
+  medium String?
+  credit String?
+  tags   String?
+
+  title_in_original_language String?
+
+  img      String?
+  full_img String?
+  url      String?
+
+  license String?
+
+  category       String?
+  region_primary String?
+  timeframe      String?
+  media_type     String?
+  palette        String?
+  subject_type   String?
+
+  accent_color     String?
+  blur_placeholder String?
+
+  contains_nudity Boolean?
+
+  caption_tea        String?
+  caption_basic      String?
+  tea_voice_status   String?
+  tea_voice_eligible Boolean?
+  tea_voice_claims   Json?
+
+  human_reviewed_at DateTime? @db.Timestamptz
+
+  cast         Json?
+  cast_context Json?
+  cast_tier    String?
+
+  storyline_ids String[]
+
+  // Single-membership, unlike storyline_ids -- see sql/033_set_of_works.sql
+  // for why this is a separate concept from the `series` column below.
+  set_of_work_id String?
+
+  twist_category   String?
+  twist_hook       String?
+  twist_story      String?
+  twist_confidence String?
+  twist_source_url String?
+
+  music_mood String?
+
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  review_status String    @default("ok")
+  review_flags  Json?
+  rules_version Int?
+  harmonized_at DateTime? @db.Timestamptz
+  source_type   String?
+
+  attribution_type   String?
+  artist_nationality String?
+  artist_lifespan    String?
+  culture            String?
+  culture_period     String?
+
+  century     Int?
+  search_text Unsupported("text GENERATED ALWAYS AS (immutable_unaccent(lower(coalesce(title, '') || ' ' || coalesce(artist, '') || ' ' || coalesce(category, '') || ' ' || coalesce(medium, '') || ' ' || coalesce(tags, '') || ' ' || coalesce(region_primary, '') || ' ' || coalesce(timeframe, '') || ' ' || coalesce(media_type, '') || ' ' || coalesce(palette, '') || ' ' || coalesce(date, '') || ' ' || coalesce(bio, '')))) STORED")?
+
+  region_alt String[]
+
+  series String?
+
+  place_of_origin String?
+
+  department String?
+
+  contributor_nationality String?
+
+  shuffle_key Float @default(0)
+
+  @@index([search_text(ops: raw("gin_trgm_ops"))], type: Gin, map: "items_search_text_trgm_idx")
+  @@unique([source, native_id], map: "items_source_native_id_idx")
+}
+
+model analytics_events {
+  id         BigInt   @id @default(autoincrement())
+  event_name String
+  props      Json?
+  created_at DateTime @default(now()) @db.Timestamptz
+}
+
+model blob_usage_tracker {
+  id          Int    @id @default(1)
+  total_bytes BigInt @default(0)
+}
+
+model source_fetch_state {
+  source               String    @id
+  tokens               Float     @default(0) @db.Real
+  capacity             Float     @default(30) @db.Real
+  refill_per_sec       Float     @default(0.5) @db.Real
+  last_refill          DateTime  @default(now()) @db.Timestamptz
+  blocked_until        DateTime? @db.Timestamptz
+  hold_reason          String?
+  consecutive_failures Int       @default(0)
+  last_status          Int?
+  last_ok_at           DateTime? @db.Timestamptz
+  updated_at           DateTime  @default(now()) @db.Timestamptz
+}
+
+model img_fetch_claims {
+  cache_key  String   @id
+  claimed_at DateTime @default(now()) @db.Timestamptz
+  expires_at DateTime @db.Timestamptz
+
+  @@index([expires_at], map: "img_fetch_claims_expiry_idx")
+}
+
+model img_cache_stats {
+  day          DateTime @db.Date
+  source       String
+  tier         String
+  hits         BigInt   @default(0)
+  misses       BigInt   @default(0)
+  origin_ok    BigInt   @default(0)
+  origin_429   BigInt   @default(0)
+  origin_error BigInt   @default(0)
+  shed         BigInt   @default(0)
+
+  @@id([day, source, tier])
+}
+
+model img_cache_entries {
+  cache_key   String    @id
+  source      String
+  tier        String
+  requests    BigInt    @default(1)
+  bytes       BigInt?
+  admitted_at DateTime? @db.Timestamptz
+  first_seen  DateTime  @default(now()) @db.Timestamptz
+  last_seen   DateTime  @default(now()) @db.Timestamptz
+
+  // Real index is partial (WHERE bytes IS NOT NULL) -- see file header note.
+}
+
+model host_fetch_state {
+  host                 String    @id
+  source               String?
+  tokens               Float     @default(6) @db.Real
+  capacity             Float     @default(6) @db.Real
+  refill_per_sec       Float     @default(0.2) @db.Real
+  last_refill          DateTime  @default(now()) @db.Timestamptz
+  blocked_until        DateTime? @db.Timestamptz
+  consecutive_failures Int       @default(0)
+  last_status          Int?
+  last_ok_at           DateTime? @db.Timestamptz
+  first_seen           DateTime  @default(now()) @db.Timestamptz
+  updated_at           DateTime  @default(now()) @db.Timestamptz
+
+  @@index([source], map: "host_fetch_state_source_idx")
+}
+
+model img_shed_stats {
+  day    DateTime @default(now()) @db.Date
+  source String
+  tier   String
+  reason String
+  n      BigInt   @default(0)
+
+  @@id([day, source, tier, reason])
+}
+
+model blob_ops_stats {
+  day DateTime @default(now()) @db.Date
+  op  String
+  n   BigInt   @default(0)
+
+  @@id([day, op])
+}
+
+model items_vocab {
+  key          String   @id
+  value        String
+  type         String
+  rank         Int      @db.SmallInt
+  item_count   Int
+  refreshed_at DateTime @default(now()) @db.Timestamptz
+
+  @@index([key(ops: raw("gin_trgm_ops"))], type: Gin, map: "items_vocab_key_trgm_idx")
+  @@index([rank, item_count], map: "items_vocab_rank_idx")
+}
+
+model items_vocab_words {
+  word         String   @id
+  refreshed_at DateTime @default(now()) @db.Timestamptz
+
+  @@index([word(ops: raw("gin_trgm_ops"))], type: Gin, map: "items_vocab_words_trgm_idx")
+}

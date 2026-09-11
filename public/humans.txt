@@ -1,0 +1,22 @@
+/* TEAM */
+
+    Development: Loveycakes
+    Contact: anjuna.skye@proton.me
+    From: 2026-08-19
+
+/* THANKS */
+
+    The Metropolitan Museum of Art, Smithsonian Open Access, Cleveland
+    Museum of Art, Wikimedia Commons and Europeana -- for making their
+    collections available under open licenses in the first place.
+
+/* SITE */
+
+    Last update: 2026-09-04
+    Language: English
+    Standards: HTML5, CSS3
+    Components: TypeScript, Vite, Prisma (migrations only), Neon Postgres
+    Software: bun, Biome, Vitest, Playwright, Vercel
+
+/* This file is generated -- edit scripts/generate-humans-txt.mts, not
+   this file directly. Regenerate with `bun run humans`. */

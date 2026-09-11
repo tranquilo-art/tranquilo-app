@@ -1,0 +1,40 @@
+name: CodeQL
+
+# Static analysis for vulnerable code patterns (SQL injection, XSS, unsafe
+# deserialization, ...) -- gitleaks (security.yml) covers secrets only, not
+# this. Free on GitHub for public repos; on a private repo this needs GitHub
+# Advanced Security enabled first or the job is skipped/billed depending on
+# plan -- check before relying on this running silently.
+#
+# javascript-typescript covers both api/lib/src (TS); the gitignored js/
+# build output isn't scanned (it doesn't exist in the checked-out tree).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly, not on every push -- CodeQL's own analysis is slower than the
+    # rest of CI and a stale finding is still useful next week, unlike a
+    # broken build or a leaked secret.
+    - cron: "0 6 * * 1"
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["javascript-typescript"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"

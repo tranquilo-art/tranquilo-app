@@ -1,0 +1,28 @@
+<extends src="_base.html">
+<block name="head" type="append">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Support us — Tranquilo</title>
+<meta name="description" content="Tranquilo is ad-free by choice. Your support covers hosting and the quiet cost of keeping it running.">
+</block>
+
+<block name="main">
+  <main class="mkt-main narrow">
+
+    <section class="mkt-section">
+      <div class="mkt-eyebrow">Support us</div>
+      <h1 class="mkt-h1">What keeps this running</h1>
+
+      <p class="mkt-lead">Tranquilo is ad-free by choice &mdash; we don't sell your
+        attention, so we ask for support instead. Your contribution covers hosting
+        and the quiet cost of keeping this running.</p>
+    </section>
+
+    <section class="mkt-section">
+      <tranquilo-support-strip data-support-strip-line="off"></tranquilo-support-strip>
+    </section>
+
+  </main>
+</block>
+
+<block name="script"><script type="module" src="../src/pages/support.ts"></script></block>
+</extends>

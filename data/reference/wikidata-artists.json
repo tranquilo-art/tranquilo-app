@@ -1,0 +1,2225 @@
+{
+  "Albrecht Dürer": {
+    "name": "Albrecht Dürer",
+    "wikidata": "http://www.wikidata.org/entity/Q5580",
+    "description": "German painter, printmaker, mathematician, and theorist (1471-1528)",
+    "birth": "1471",
+    "death": "1528",
+    "nationality": [
+      "Duchy of Bavaria"
+    ],
+    "movement": [
+      "German Renaissance"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Albrecht_D%C3%BCrer",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:14.628Z"
+  },
+  "Paul Gauguin": {
+    "name": "Paul Gauguin",
+    "wikidata": "http://www.wikidata.org/entity/Q37693",
+    "description": "French painter and printmaker (1848–1903)",
+    "birth": "1848",
+    "death": "1903",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "cloisonnism",
+      "primitivism",
+      "synthetism",
+      "Pont-Aven School",
+      "Post-impressionism",
+      "Symbolism",
+      "Impressionism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Paul_Gauguin",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:14.629Z"
+  },
+  "Auguste Rodin": {
+    "name": "Auguste Rodin",
+    "wikidata": "http://www.wikidata.org/entity/Q30755",
+    "description": "French sculptor (1840–1917)",
+    "birth": "1840",
+    "death": "1917",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "Symbolism",
+      "modern art"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Auguste_Rodin",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:14.629Z"
+  },
+  "Edgar Degas": {
+    "name": "Edgar Degas",
+    "wikidata": "http://www.wikidata.org/entity/Q46373",
+    "description": "French Impressionist artist (1834–1917)",
+    "birth": "1834",
+    "death": "1917",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "Impressionism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Edgar_Degas",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:14.629Z"
+  },
+  "Jacques Callot": {
+    "name": "Jacques Callot",
+    "found": true,
+    "ambiguous": true,
+    "candidates": [
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q60561596",
+        "description": "French sculptor",
+        "birth": "1861",
+        "death": "1929",
+        "article": null
+      },
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q460124",
+        "description": "Flemish-French engraver (c.1592–1635)",
+        "birth": "1592",
+        "death": "1635",
+        "article": "https://en.wikipedia.org/wiki/Jacques_Callot"
+      }
+    ],
+    "fetched_at": "2026-08-24T15:02:14.630Z"
+  },
+  "Giuseppe Castiglione": {
+    "name": "Giuseppe Castiglione",
+    "found": true,
+    "ambiguous": true,
+    "candidates": [
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q98674932",
+        "description": "Italian artist",
+        "birth": null,
+        "death": null,
+        "article": null
+      },
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q458671",
+        "description": "Italian monk, missionary and painter (1688-1766)",
+        "birth": "1688",
+        "death": "1766",
+        "article": "https://en.wikipedia.org/wiki/Giuseppe_Castiglione_(Jesuit_painter)"
+      },
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q5565375",
+        "description": "Italian genre and portrait painter (1829-1908)",
+        "birth": "1829",
+        "death": "1914",
+        "article": "https://en.wikipedia.org/wiki/Giuseppe_Castiglione_(1829%E2%80%931908)"
+      }
+    ],
+    "fetched_at": "2026-08-24T15:02:14.630Z"
+  },
+  "Camille Pissarro": {
+    "name": "Camille Pissarro",
+    "wikidata": "http://www.wikidata.org/entity/Q134741",
+    "description": "Danish-French painter (1830-1903)",
+    "birth": "1830",
+    "death": "1903",
+    "nationality": [
+      "Kingdom of Denmark",
+      "France"
+    ],
+    "movement": [
+      "Neo-impressionism",
+      "Impressionism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Camille_Pissarro",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:14.629Z"
+  },
+  "Odilon Redon": {
+    "name": "Odilon Redon",
+    "wikidata": "http://www.wikidata.org/entity/Q154349",
+    "description": "French painter (1840–1916)",
+    "birth": "1840",
+    "death": "1916",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "Symbolism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Odilon_Redon",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:14.629Z"
+  },
+  "François Boucher": {
+    "name": "François Boucher",
+    "wikidata": "http://www.wikidata.org/entity/Q180932",
+    "description": "French painter (1703–1770)",
+    "birth": "1703",
+    "death": "1770",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "Rococo"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Fran%C3%A7ois_Boucher",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:14.629Z"
+  },
+  "Giovanni Battista Tiepolo": {
+    "name": "Giovanni Battista Tiepolo",
+    "wikidata": "http://www.wikidata.org/entity/Q186202",
+    "description": "Italian painter (1696–1770)",
+    "birth": "1696",
+    "death": "1770",
+    "nationality": [
+      "Republic of Venice"
+    ],
+    "movement": [
+      "Rococo",
+      "Baroque"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Giovanni_Battista_Tiepolo",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:14.629Z"
+  },
+  "Honoré Daumier": {
+    "name": "Honoré Daumier",
+    "wikidata": "http://www.wikidata.org/entity/Q187506",
+    "description": "French artist (1808–1879)",
+    "birth": "1808",
+    "death": "1879",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "realism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Honor%C3%A9_Daumier",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:14.629Z"
+  },
+  "Utagawa Hiroshige": {
+    "name": "Utagawa Hiroshige",
+    "wikidata": "http://www.wikidata.org/entity/Q200798",
+    "description": "Japanese ukiyo-e artist (1797–1858)",
+    "birth": "1797",
+    "death": "1858",
+    "nationality": [
+      "Japan"
+    ],
+    "movement": [
+      "Kasei culture",
+      "Utagawa school"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Hiroshige",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:14.629Z"
+  },
+  "James McNeill Whistler": {
+    "name": "James McNeill Whistler",
+    "wikidata": "http://www.wikidata.org/entity/Q203643",
+    "description": "American painter (1834-1903)",
+    "birth": "1834",
+    "death": "1903",
+    "nationality": [
+      "United States"
+    ],
+    "movement": [
+      "Aestheticism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/James_McNeill_Whistler",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:14.629Z"
+  },
+  "Thomas Rowlandson": {
+    "name": "Thomas Rowlandson",
+    "wikidata": "http://www.wikidata.org/entity/Q318584",
+    "description": "English artist and caricaturist (1757–1827)",
+    "birth": "1757",
+    "death": "1827",
+    "nationality": [
+      "United Kingdom of Great Britain and Ireland",
+      "Kingdom of Great Britain"
+    ],
+    "movement": [
+      "Romanticism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Thomas_Rowlandson",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:14.629Z"
+  },
+  "Winslow Homer": {
+    "name": "Winslow Homer",
+    "wikidata": "http://www.wikidata.org/entity/Q344838",
+    "description": "American landscape painter (1836–1910)",
+    "birth": "1836",
+    "death": "1910",
+    "nationality": [
+      "United States"
+    ],
+    "movement": [
+      "realism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Winslow_Homer",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:14.629Z"
+  },
+  "Giovanni Domenico Tiepolo": {
+    "name": "Giovanni Domenico Tiepolo",
+    "wikidata": "http://www.wikidata.org/entity/Q435316",
+    "description": "Italian painter and engraver (1727–1804)",
+    "birth": "1727",
+    "death": "1804",
+    "nationality": [
+      "Republic of Venice"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Giovanni_Domenico_Tiepolo",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:14.629Z"
+  },
+  "Allen & Ginter": {
+    "name": "Allen & Ginter",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:14.630Z"
+  },
+  "W. Duke, Sons & Co.": {
+    "name": "W. Duke, Sons & Co.",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:14.630Z"
+  },
+  "Rembrandt van Rijn": {
+    "name": "Rembrandt van Rijn",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:14.630Z"
+  },
+  "Joseph Mallord William Turner": {
+    "name": "Joseph Mallord William Turner",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:14.630Z"
+  },
+  "Peter Paul Rubens": {
+    "name": "Peter Paul Rubens",
+    "wikidata": "http://www.wikidata.org/entity/Q5599",
+    "description": "Flemish painter (1577–1640)",
+    "birth": "1577",
+    "death": "1640",
+    "nationality": [
+      "Spanish Netherlands"
+    ],
+    "movement": [
+      "Flemish Baroque painting",
+      "Baroque"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Peter_Paul_Rubens",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:17.311Z"
+  },
+  "Katsushika Hokusai": {
+    "name": "Katsushika Hokusai",
+    "wikidata": "http://www.wikidata.org/entity/Q5586",
+    "description": "Japanese artist (1760-1849)",
+    "birth": "1760",
+    "death": "1849",
+    "nationality": [
+      "Japan"
+    ],
+    "movement": [
+      "Kasei culture",
+      "woodblock printing in Japan",
+      "Japonisme",
+      "ukiyo-e"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Hokusai",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:17.311Z"
+  },
+  "Eugène Delacroix": {
+    "name": "Eugène Delacroix",
+    "wikidata": "http://www.wikidata.org/entity/Q33477",
+    "description": "French painter (1798–1863)",
+    "birth": "1798",
+    "death": "1863",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "Romanticism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Eug%C3%A8ne_Delacroix",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:17.311Z"
+  },
+  "Pierre-Auguste Renoir": {
+    "name": "Pierre-Auguste Renoir",
+    "wikidata": "http://www.wikidata.org/entity/Q39931",
+    "description": "French painter and sculptor (1841–1919)",
+    "birth": "1841",
+    "death": "1919",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "Impressionism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Pierre-Auguste_Renoir",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:17.311Z"
+  },
+  "Alphonse Legros": {
+    "name": "Alphonse Legros",
+    "wikidata": "http://www.wikidata.org/entity/Q957538",
+    "description": "French painter, etcher and sculptor (1837-1911)",
+    "birth": "1837",
+    "death": "1911",
+    "nationality": [
+      "United Kingdom of Great Britain and Ireland",
+      "France"
+    ],
+    "movement": [
+      "French Realism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Alphonse_Legros",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:17.311Z"
+  },
+  "Muirhead Bone": {
+    "name": "Muirhead Bone",
+    "wikidata": "http://www.wikidata.org/entity/Q5581681",
+    "description": "Scottish artist (1876–1953)",
+    "birth": "1876",
+    "death": "1953",
+    "nationality": [
+      "United Kingdom"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Muirhead_Bone",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:17.311Z"
+  },
+  "Giovanni Battista Piranesi": {
+    "name": "Giovanni Battista Piranesi",
+    "wikidata": "http://www.wikidata.org/entity/Q316307",
+    "description": "Italian painter (1720-1778)",
+    "birth": "1720",
+    "death": "1778",
+    "nationality": [
+      "Republic of Venice"
+    ],
+    "movement": [
+      "Neoclassicism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Giovanni_Battista_Piranesi",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:17.311Z"
+  },
+  "Wenceslaus Hollar": {
+    "name": "Wenceslaus Hollar",
+    "wikidata": "http://www.wikidata.org/entity/Q448555",
+    "description": "Czech cartographer, painter of nature, portrait painter and engraver (1607-1677)",
+    "birth": "1607",
+    "death": "1677",
+    "nationality": [
+      "Germany"
+    ],
+    "movement": [
+      "Baroque"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Wenceslaus_Hollar",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:17.312Z"
+  },
+  "Dai Jin": {
+    "name": "Dai Jin",
+    "wikidata": "http://www.wikidata.org/entity/Q741512",
+    "description": "Chinese artist (1388-1462)",
+    "birth": "1388",
+    "death": "1462",
+    "nationality": [
+      "Ming dynasty"
+    ],
+    "movement": [
+      "Zhe school"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Dai_Jin",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:17.312Z"
+  },
+  "Jean-François Millet": {
+    "name": "Jean-François Millet",
+    "wikidata": "http://www.wikidata.org/entity/Q148458",
+    "description": "French painter (1814–1875)",
+    "birth": "1814",
+    "death": "1875",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "French Realism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Jean-Fran%C3%A7ois_Millet",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:17.312Z"
+  },
+  "Martin Schongauer": {
+    "name": "Martin Schongauer",
+    "found": true,
+    "ambiguous": true,
+    "candidates": [
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q155575",
+        "description": "German artist (c. 1450–1491)",
+        "birth": "1440",
+        "death": "1491",
+        "article": "https://en.wikipedia.org/wiki/Martin_Schongauer"
+      },
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q94877159",
+        "description": null,
+        "birth": null,
+        "death": null,
+        "article": null
+      }
+    ],
+    "fetched_at": "2026-08-24T15:02:17.312Z"
+  },
+  "Horace Vernet": {
+    "name": "Horace Vernet",
+    "wikidata": "http://www.wikidata.org/entity/Q161145",
+    "description": "French painter (1789–1863)",
+    "birth": "1789",
+    "death": "1863",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "Romanticism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Horace_Vernet",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:17.312Z"
+  },
+  "George Bellows": {
+    "name": "George Bellows",
+    "wikidata": "http://www.wikidata.org/entity/Q167132",
+    "description": "American painter (1882-1925)",
+    "birth": "1882",
+    "death": "1925",
+    "nationality": [
+      "United States"
+    ],
+    "movement": [
+      "American realism",
+      "Ashcan School"
+    ],
+    "article": "https://en.wikipedia.org/wiki/George_Bellows",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:17.312Z"
+  },
+  "Édouard Vuillard": {
+    "name": "Édouard Vuillard",
+    "wikidata": "http://www.wikidata.org/entity/Q239394",
+    "description": "French painter (1868-1940)",
+    "birth": "1868",
+    "death": "1940",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "Japonisme",
+      "Les Nabis",
+      "Post-impressionism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/%C3%89douard_Vuillard",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:17.312Z"
+  },
+  "Seifū Yohei III": {
+    "name": "Seifū Yohei III",
+    "wikidata": "http://www.wikidata.org/entity/Q22669202",
+    "description": "Japanese potter (1851–1914)",
+    "birth": "1851",
+    "death": "1914",
+    "nationality": [
+      "Japan"
+    ],
+    "movement": [],
+    "article": null,
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:17.312Z"
+  },
+  "Auguste Louis Lepère": {
+    "name": "Auguste Louis Lepère",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:17.312Z"
+  },
+  "Otto H. Bacher": {
+    "name": "Otto H. Bacher",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:17.312Z"
+  },
+  "House of Fabergé": {
+    "name": "House of Fabergé",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:17.312Z"
+  },
+  "Hendrick Goltzius": {
+    "name": "Hendrick Goltzius",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:17.312Z"
+  },
+  "Morton Schamberg": {
+    "name": "Morton Schamberg",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:17.312Z"
+  },
+  "Gustave Courbet": {
+    "name": "Gustave Courbet",
+    "wikidata": "http://www.wikidata.org/entity/Q34618",
+    "description": "French painter (1819–1877)",
+    "birth": "1819",
+    "death": "1877",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "French Realism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Gustave_Courbet",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:20.290Z"
+  },
+  "Hans Holbein the Younger": {
+    "name": "Hans Holbein the Younger",
+    "wikidata": "http://www.wikidata.org/entity/Q48319",
+    "description": "German artist and printmaker (1497–1543)",
+    "birth": "1497",
+    "death": "1543",
+    "nationality": [
+      "Holy Roman Empire",
+      "France",
+      "Switzerland"
+    ],
+    "movement": [
+      "German Renaissance",
+      "Northern Renaissance"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Hans_Holbein_the_Younger",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:20.290Z"
+  },
+  "Jean-Honoré Fragonard": {
+    "name": "Jean-Honoré Fragonard",
+    "wikidata": "http://www.wikidata.org/entity/Q127171",
+    "description": "French painter (1732–1806)",
+    "birth": "1732",
+    "death": "1806",
+    "nationality": [
+      "French constitutional monarchy",
+      "France"
+    ],
+    "movement": [
+      "Rococo"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Jean-Honor%C3%A9_Fragonard",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:20.290Z"
+  },
+  "Henri de Toulouse-Lautrec": {
+    "name": "Henri de Toulouse-Lautrec",
+    "wikidata": "http://www.wikidata.org/entity/Q82445",
+    "description": "French painter and illustrator (1864–1901)",
+    "birth": "1864",
+    "death": "1901",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "Post-impressionism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Henri_de_Toulouse-Lautrec",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:20.290Z"
+  },
+  "Albrecht Altdorfer": {
+    "name": "Albrecht Altdorfer",
+    "wikidata": "http://www.wikidata.org/entity/Q153746",
+    "description": "German painter (1480–1538)",
+    "birth": "1480",
+    "death": "1538",
+    "nationality": [],
+    "movement": [
+      "German Renaissance"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Albrecht_Altdorfer",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:20.290Z"
+  },
+  "Théodore Géricault": {
+    "name": "Théodore Géricault",
+    "wikidata": "http://www.wikidata.org/entity/Q184212",
+    "description": "French painter (1791–1824)",
+    "birth": "1791",
+    "death": "1824",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "Romanticism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Th%C3%A9odore_G%C3%A9ricault",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:20.290Z"
+  },
+  "Kitagawa Utamaro": {
+    "name": "Kitagawa Utamaro",
+    "wikidata": "http://www.wikidata.org/entity/Q272045",
+    "description": "175?-1806 Japanese artist",
+    "birth": "1754",
+    "death": "1806",
+    "nationality": [
+      "Japan"
+    ],
+    "movement": [
+      "ukiyo-e"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Utamaro",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:20.290Z"
+  },
+  "Lucas van Leyden": {
+    "name": "Lucas van Leyden",
+    "wikidata": "http://www.wikidata.org/entity/Q320980",
+    "description": "Dutch artist, painter (1494-1533)",
+    "birth": "1494",
+    "death": "1533",
+    "nationality": [
+      "Northern Low Countries"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Lucas_van_Leyden",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:20.290Z"
+  },
+  "Salvator Rosa": {
+    "name": "Salvator Rosa",
+    "wikidata": "http://www.wikidata.org/entity/Q359421",
+    "description": "Italian painter, poet and printmaker (1615 –1673)",
+    "birth": "1615",
+    "death": "1673",
+    "nationality": [],
+    "movement": [
+      "Baroque"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Salvator_Rosa",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:20.290Z"
+  },
+  "Suzuki Harunobu": {
+    "name": "Suzuki Harunobu",
+    "wikidata": "http://www.wikidata.org/entity/Q360978",
+    "description": "Japanese printmaker",
+    "birth": "1724",
+    "death": "1770",
+    "nationality": [
+      "Japan"
+    ],
+    "movement": [
+      "nishiki-e",
+      "ukiyo-e"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Suzuki_Harunobu",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:20.290Z"
+  },
+  "Antoine-Louis Barye": {
+    "name": "Antoine-Louis Barye",
+    "wikidata": "http://www.wikidata.org/entity/Q451489",
+    "description": "French sculptor (1795–1875)",
+    "birth": "1795",
+    "death": "1875",
+    "nationality": [
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Antoine-Louis_Barye",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:20.290Z"
+  },
+  "Félix Bracquemond": {
+    "name": "Félix Bracquemond",
+    "wikidata": "http://www.wikidata.org/entity/Q633574",
+    "description": "French painter (1833-1914)",
+    "birth": "1833",
+    "death": "1914",
+    "nationality": [
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/F%C3%A9lix_Bracquemond",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:20.290Z"
+  },
+  "Ma Lin": {
+    "name": "Ma Lin",
+    "wikidata": "http://www.wikidata.org/entity/Q637407",
+    "description": "Chinese artist (1180-1256)",
+    "birth": "1180",
+    "death": "1256",
+    "nationality": [
+      "China",
+      "Song dynasty"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Ma_Lin_(painter)",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:20.290Z"
+  },
+  "Paul Gavarni": {
+    "name": "Paul Gavarni",
+    "wikidata": "http://www.wikidata.org/entity/Q1074290",
+    "description": "French caricaturist (1804-1866)",
+    "birth": "1804",
+    "death": "1866",
+    "nationality": [
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Paul_Gavarni",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:20.290Z"
+  },
+  "Jean Baptiste Camille Corot": {
+    "name": "Jean Baptiste Camille Corot",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:20.291Z"
+  },
+  "French Painter": {
+    "name": "French Painter",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:20.291Z"
+  },
+  "Camille Corot": {
+    "name": "Camille Corot",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:20.291Z"
+  },
+  "Brewster & Co.": {
+    "name": "Brewster & Co.",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:20.291Z"
+  },
+  "Allart van Everdingen": {
+    "name": "Allart van Everdingen",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:20.291Z"
+  },
+  "Jean Louis Forain": {
+    "name": "Jean Louis Forain",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:20.291Z"
+  },
+  "Käthe Kollwitz": {
+    "name": "Käthe Kollwitz",
+    "wikidata": "http://www.wikidata.org/entity/Q142472",
+    "description": "German printmaker and sculptor (1867–1945)",
+    "birth": "1867",
+    "death": "1945",
+    "nationality": [
+      "German Empire",
+      "Weimar Republic"
+    ],
+    "movement": [
+      "Expressionism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/K%C3%A4the_Kollwitz",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Jean-Léon Gérôme": {
+    "name": "Jean-Léon Gérôme",
+    "wikidata": "http://www.wikidata.org/entity/Q212499",
+    "description": "French painter and sculptor (1824–1904)",
+    "birth": "1824",
+    "death": "1904",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "neo-Pompeian",
+      "Neo-Grec",
+      "academic art",
+      "Orientalism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Jean-L%C3%A9on_G%C3%A9r%C3%B4me",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Nicolas Poussin": {
+    "name": "Nicolas Poussin",
+    "wikidata": "http://www.wikidata.org/entity/Q41554",
+    "description": "French painter (1594-1665)",
+    "birth": "1594",
+    "death": "1665",
+    "nationality": [
+      "Kingdom of France",
+      "France"
+    ],
+    "movement": [
+      "Classicism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Nicolas_Poussin",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Maurice Denis": {
+    "name": "Maurice Denis",
+    "wikidata": "http://www.wikidata.org/entity/Q440369",
+    "description": "French painter (1870–1943)",
+    "birth": "1870",
+    "death": "1943",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "Les Nabis",
+      "Pont-Aven School",
+      "Symbolism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Maurice_Denis",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Wang Meng": {
+    "name": "Wang Meng",
+    "wikidata": "http://www.wikidata.org/entity/Q700903",
+    "description": "Chinese painter (1308-1385)",
+    "birth": "1308",
+    "death": "1385",
+    "nationality": [
+      "Yuan dynasty"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Wang_Meng_(painter)",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Francis Frith": {
+    "name": "Francis Frith",
+    "wikidata": "http://www.wikidata.org/entity/Q978878",
+    "description": "English photographer (1822–1898)",
+    "birth": "1822",
+    "death": "1898",
+    "nationality": [
+      "United Kingdom of Great Britain and Ireland",
+      "United Kingdom"
+    ],
+    "movement": [
+      "Orientalism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Francis_Frith",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Giovanni Francesco Romanelli": {
+    "name": "Giovanni Francesco Romanelli",
+    "wikidata": "http://www.wikidata.org/entity/Q2983846",
+    "description": "Italian painter (1610-1662)",
+    "birth": "1610",
+    "death": "1662",
+    "nationality": [
+      "Italy"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Giovanni_Francesco_Romanelli",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Maurice Prendergast": {
+    "name": "Maurice Prendergast",
+    "wikidata": "http://www.wikidata.org/entity/Q248707",
+    "description": "American-Canadian artist (1858-1924)",
+    "birth": "1858",
+    "death": "1924",
+    "nationality": [
+      "United States"
+    ],
+    "movement": [
+      "Ashcan School",
+      "Post-impressionism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Maurice_Prendergast",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Henri Fantin-Latour": {
+    "name": "Henri Fantin-Latour",
+    "wikidata": "http://www.wikidata.org/entity/Q310715",
+    "description": "French painter and printmaker (1836-1904)",
+    "birth": "1836",
+    "death": "1904",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "French Realism",
+      "Symbolism",
+      "Impressionism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Henri_Fantin-Latour",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Charles Marville": {
+    "name": "Charles Marville",
+    "wikidata": "http://www.wikidata.org/entity/Q329387",
+    "description": "French photographer (1813-1879)",
+    "birth": "1813",
+    "death": "1879",
+    "nationality": [
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Charles_Marville",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Adolphe Braun": {
+    "name": "Adolphe Braun",
+    "wikidata": "http://www.wikidata.org/entity/Q365683",
+    "description": "French photographer (1812-1877)",
+    "birth": "1812",
+    "death": "1877",
+    "nationality": [
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Adolphe_Braun",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Francisco de Goya": {
+    "name": "Francisco de Goya",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Adriaen van Ostade": {
+    "name": "Adriaen van Ostade",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Charles François Daubigny": {
+    "name": "Charles François Daubigny",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Rembrandt (Rembrandt van Rijn)": {
+    "name": "Rembrandt (Rembrandt van Rijn)",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Tang Yin": {
+    "name": "Tang Yin",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Auguste Renoir": {
+    "name": "Auguste Renoir",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Jacques François Saly": {
+    "name": "Jacques François Saly",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Seifū Yohei IV": {
+    "name": "Seifū Yohei IV",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Eugène Cicéri": {
+    "name": "Eugène Cicéri",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:23.097Z"
+  },
+  "Vincent van Gogh": {
+    "name": "Vincent van Gogh",
+    "wikidata": "http://www.wikidata.org/entity/Q5582",
+    "description": "Dutch painter (1853–1890)",
+    "birth": "1853",
+    "death": "1890",
+    "nationality": [
+      "Kingdom of the Netherlands"
+    ],
+    "movement": [
+      "Post-impressionism",
+      "Expressionism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Vincent_van_Gogh",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:25.992Z"
+  },
+  "Utagawa Kunisada": {
+    "name": "Utagawa Kunisada",
+    "wikidata": "http://www.wikidata.org/entity/Q467427",
+    "description": "ukiyo-e artist (1786–1865)",
+    "birth": "1786",
+    "death": "1865",
+    "nationality": [
+      "Japan"
+    ],
+    "movement": [
+      "Utagawa school"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Kunisada",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:25.992Z"
+  },
+  "Heinrich Aldegrever": {
+    "name": "Heinrich Aldegrever",
+    "wikidata": "http://www.wikidata.org/entity/Q62514",
+    "description": "German painter and engraver",
+    "birth": "1502",
+    "death": "1558",
+    "nationality": [
+      "Germany"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Heinrich_Aldegrever",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:25.992Z"
+  },
+  "Marcantonio Raimondi": {
+    "name": "Marcantonio Raimondi",
+    "wikidata": "http://www.wikidata.org/entity/Q728375",
+    "description": "16th-century Italian engraver and printmaker (1480–1534)",
+    "birth": "1480",
+    "death": "1534",
+    "nationality": [
+      "Italy"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Marcantonio_Raimondi",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:25.992Z"
+  },
+  "Stefano della Bella": {
+    "name": "Stefano della Bella",
+    "wikidata": "http://www.wikidata.org/entity/Q921242",
+    "description": "engraver, printmaker (1610-1664)",
+    "birth": "1610",
+    "death": "1664",
+    "nationality": [
+      "Grand Duchy of Tuscany"
+    ],
+    "movement": [
+      "Baroque"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Stefano_della_Bella",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:25.992Z"
+  },
+  "Jean Duvet": {
+    "name": "Jean Duvet",
+    "wikidata": "http://www.wikidata.org/entity/Q1685499",
+    "description": "French artist (1485–1561)",
+    "birth": "1485",
+    "death": "1561",
+    "nationality": [
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Jean_Duvet",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:25.992Z"
+  },
+  "Pierre-Louis Pierson": {
+    "name": "Pierre-Louis Pierson",
+    "wikidata": "http://www.wikidata.org/entity/Q3383295",
+    "description": "French photographer (1822–1913)",
+    "birth": "1822",
+    "death": "1913",
+    "nationality": [
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Pierre-Louis_Pierson",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:25.992Z"
+  },
+  "Lievin Cruyl": {
+    "name": "Lievin Cruyl",
+    "wikidata": "http://www.wikidata.org/entity/Q6544486",
+    "description": "designer, engraver (1634-1709)",
+    "birth": "1634",
+    "death": "1720",
+    "nationality": [
+      "Southern Netherlands"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Lievin_Cruyl",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:25.992Z"
+  },
+  "Hans Burgkmair": {
+    "name": "Hans Burgkmair",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:25.993Z"
+  },
+  "Charles-Émile Jacque": {
+    "name": "Charles-Émile Jacque",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:25.993Z"
+  },
+  "Lü Ji": {
+    "name": "Lü Ji",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:25.993Z"
+  },
+  "John Singer Sargent": {
+    "name": "John Singer Sargent",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:25.993Z"
+  },
+  "Anthonie Waterloo": {
+    "name": "Anthonie Waterloo",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:25.993Z"
+  },
+  "Saint Cloud Porcelain Factory": {
+    "name": "Saint Cloud Porcelain Factory",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:25.993Z"
+  },
+  "Lucas Cranach": {
+    "name": "Lucas Cranach",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:25.993Z"
+  },
+  "Sèvres Porcelain Factory": {
+    "name": "Sèvres Porcelain Factory",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:25.993Z"
+  },
+  "Goryeo-Dynasty artist": {
+    "name": "Goryeo-Dynasty artist",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:25.993Z"
+  },
+  "Edouard Manet": {
+    "name": "Edouard Manet",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:25.993Z"
+  },
+  "Raja Deen Dayal": {
+    "name": "Raja Deen Dayal",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:25.993Z"
+  },
+  "Utagawa Kuniyoshi": {
+    "name": "Utagawa Kuniyoshi",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:25.993Z"
+  },
+  "Édouard Manet": {
+    "name": "Édouard Manet",
+    "wikidata": "http://www.wikidata.org/entity/Q40599",
+    "description": "French painter (1832–1883)",
+    "birth": "1832",
+    "death": "1883",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "Impressionism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/%C3%89douard_Manet",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:28.693Z"
+  },
+  "Anthony van Dyck": {
+    "name": "Anthony van Dyck",
+    "wikidata": "http://www.wikidata.org/entity/Q150679",
+    "description": "Flemish Baroque artist (1599–1641)",
+    "birth": "1599",
+    "death": "1641",
+    "nationality": [
+      "Spanish Netherlands"
+    ],
+    "movement": [
+      "Baroque painting"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Anthony_van_Dyck",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:28.693Z"
+  },
+  "William Henry Fox Talbot": {
+    "name": "William Henry Fox Talbot",
+    "wikidata": "http://www.wikidata.org/entity/Q299565",
+    "description": "British inventor and photographer (1800–1877)",
+    "birth": "1800",
+    "death": "1877",
+    "nationality": [
+      "United Kingdom of Great Britain and Ireland",
+      "Kingdom of Great Britain"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Henry_Fox_Talbot",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:28.693Z"
+  },
+  "John Singleton Copley": {
+    "name": "John Singleton Copley",
+    "wikidata": "http://www.wikidata.org/entity/Q316016",
+    "description": "American painter (1738-1815)",
+    "birth": "1738",
+    "death": "1815",
+    "nationality": [
+      "British Empire"
+    ],
+    "movement": [
+      "realism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/John_Singleton_Copley",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:28.693Z"
+  },
+  "Antonio Tempesta": {
+    "name": "Antonio Tempesta",
+    "wikidata": "http://www.wikidata.org/entity/Q605447",
+    "description": "painter from Florence (1555-1630)",
+    "birth": "1555",
+    "death": "1630",
+    "nationality": [],
+    "movement": [
+      "Renaissance"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Antonio_Tempesta",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:28.693Z"
+  },
+  "Grinling Gibbons": {
+    "name": "Grinling Gibbons",
+    "wikidata": "http://www.wikidata.org/entity/Q610462",
+    "description": "Anglo-Dutch sculptor and wood carver (1648-1721)",
+    "birth": "1648",
+    "death": "1721",
+    "nationality": [
+      "Dutch Republic"
+    ],
+    "movement": [
+      "Baroque"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Grinling_Gibbons",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:28.693Z"
+  },
+  "Jakob Alt": {
+    "name": "Jakob Alt",
+    "wikidata": "http://www.wikidata.org/entity/Q685495",
+    "description": "German painter (1789-1872)",
+    "birth": "1789",
+    "death": "1872",
+    "nationality": [
+      "Austrian Empire"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Jakob_Alt",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:28.693Z"
+  },
+  "Jan Saenredam": {
+    "name": "Jan Saenredam",
+    "wikidata": "http://www.wikidata.org/entity/Q711775",
+    "description": "Dutch painter, engraver and cartographer (1565–1607)",
+    "birth": "1565",
+    "death": "1607",
+    "nationality": [
+      "Dutch Republic"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Jan_Saenredam",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:28.693Z"
+  },
+  "Joseph Pennell": {
+    "name": "Joseph Pennell",
+    "wikidata": "http://www.wikidata.org/entity/Q1389068",
+    "description": "American artist and author (1857-1926)",
+    "birth": "1857",
+    "death": "1926",
+    "nationality": [
+      "United States"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Joseph_Pennell",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:28.693Z"
+  },
+  "Louis Haghe": {
+    "name": "Louis Haghe",
+    "wikidata": "http://www.wikidata.org/entity/Q1656919",
+    "description": "Belgian lithographer and watercolour artist (1806-1885)",
+    "birth": "1806",
+    "death": "1885",
+    "nationality": [
+      "Belgium"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Louis_Haghe",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:28.693Z"
+  },
+  "John Burke": {
+    "name": "John Burke",
+    "found": true,
+    "ambiguous": true,
+    "candidates": [
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q6223924",
+        "description": "Irish sculptor, born 1946",
+        "birth": "1946",
+        "death": "2006",
+        "article": "https://en.wikipedia.org/wiki/John_Burke_(artist)"
+      },
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q20810566",
+        "description": "British photographer, active late 19th century in India and Afghanistan (1843–1900)",
+        "birth": "1843",
+        "death": "1900",
+        "article": "https://en.wikipedia.org/wiki/John_Burke_(photographer)"
+      }
+    ],
+    "fetched_at": "2026-08-24T15:02:28.693Z"
+  },
+  "Charles Meryon": {
+    "name": "Charles Meryon",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:28.694Z"
+  },
+  "Meissen Manufactory": {
+    "name": "Meissen Manufactory",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:28.694Z"
+  },
+  "Carleton E. Watkins": {
+    "name": "Carleton E. Watkins",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:28.694Z"
+  },
+  "Master of the E-Series Tarocchi": {
+    "name": "Master of the E-Series Tarocchi",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:28.694Z"
+  },
+  "Jan van de Velde II": {
+    "name": "Jan van de Velde II",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:28.694Z"
+  },
+  "Goya (Francisco de Goya y Lucientes)": {
+    "name": "Goya (Francisco de Goya y Lucientes)",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:28.694Z"
+  },
+  "Meissen Porcelain Factory": {
+    "name": "Meissen Porcelain Factory",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:28.694Z"
+  },
+  "Rijn, Rembrandt van": {
+    "name": "Rijn, Rembrandt van",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:28.694Z"
+  },
+  "Henri Joseph Redouté": {
+    "name": "Henri Joseph Redouté",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:28.694Z"
+  },
+  "William Blake": {
+    "name": "William Blake",
+    "found": true,
+    "ambiguous": true,
+    "candidates": [
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q41513",
+        "description": "English poet and artist (1757–1827)",
+        "birth": "1757",
+        "death": "1827",
+        "article": "https://en.wikipedia.org/wiki/William_Blake"
+      },
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q123158248",
+        "description": "English photographer (1874-1957)",
+        "birth": "1874",
+        "death": "1957",
+        "article": null
+      }
+    ],
+    "fetched_at": "2026-08-24T15:02:31.503Z"
+  },
+  "Paul Cézanne": {
+    "name": "Paul Cézanne",
+    "found": true,
+    "ambiguous": true,
+    "candidates": [
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q35548",
+        "description": "French painter (1839–1906)",
+        "birth": "1839",
+        "death": "1906",
+        "article": "https://en.wikipedia.org/wiki/Paul_C%C3%A9zanne"
+      },
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q17277915",
+        "description": "painter (1872-1947), son of Paul Cézanne",
+        "birth": "1872",
+        "death": "1947",
+        "article": null
+      }
+    ],
+    "fetched_at": "2026-08-24T15:02:31.503Z"
+  },
+  "Kamisaka Sekka": {
+    "name": "Kamisaka Sekka",
+    "wikidata": "http://www.wikidata.org/entity/Q6358490",
+    "description": "Japanese artist (1866-1942)",
+    "birth": "1866",
+    "death": "1942",
+    "nationality": [
+      "Japan"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Kamisaka_Sekka",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:31.503Z"
+  },
+  "Israhel van Meckenem": {
+    "name": "Israhel van Meckenem",
+    "wikidata": "http://www.wikidata.org/entity/Q77554",
+    "description": "Germany Printmaker and goldsmith (c.1445-1503)",
+    "birth": "1440",
+    "death": "1503",
+    "nationality": [
+      "Germany"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Israhel_van_Meckenem",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:31.503Z"
+  },
+  "Anders Zorn": {
+    "name": "Anders Zorn",
+    "wikidata": "http://www.wikidata.org/entity/Q206820",
+    "description": "Swedish painter and engraver (1860-1920)",
+    "birth": "1860",
+    "death": "1920",
+    "nationality": [
+      "Sweden"
+    ],
+    "movement": [
+      "Impressionism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Anders_Zorn",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:31.503Z"
+  },
+  "Francesco Guardi": {
+    "name": "Francesco Guardi",
+    "wikidata": "http://www.wikidata.org/entity/Q318769",
+    "description": "Italian painter (1712-1793)",
+    "birth": "1712",
+    "death": "1793",
+    "nationality": [
+      "Republic of Venice"
+    ],
+    "movement": [
+      "Rococo"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Francesco_Guardi",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:31.503Z"
+  },
+  "William Sidney Mount": {
+    "name": "William Sidney Mount",
+    "wikidata": "http://www.wikidata.org/entity/Q45431",
+    "description": "American painter (1807-1868)",
+    "birth": "1807",
+    "death": "1868",
+    "nationality": [
+      "United States"
+    ],
+    "movement": [
+      "Hudson River school"
+    ],
+    "article": "https://en.wikipedia.org/wiki/William_Sidney_Mount",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:31.503Z"
+  },
+  "Samuel Bourne": {
+    "name": "Samuel Bourne",
+    "wikidata": "http://www.wikidata.org/entity/Q337475",
+    "description": "British photographer (1834-1912)",
+    "birth": "1834",
+    "death": "1912",
+    "nationality": [
+      "United Kingdom of Great Britain and Ireland",
+      "United Kingdom"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Samuel_Bourne",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:31.503Z"
+  },
+  "Ma Yuan": {
+    "name": "Ma Yuan",
+    "wikidata": "http://www.wikidata.org/entity/Q433603",
+    "description": "Chinese painter from Song Dynasty (1160-1225)",
+    "birth": "1160",
+    "death": "1225",
+    "nationality": [
+      "Song dynasty"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Ma_Yuan_(painter)",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:31.503Z"
+  },
+  "Hans Sebald Beham": {
+    "name": "Hans Sebald Beham",
+    "wikidata": "http://www.wikidata.org/entity/Q507825",
+    "description": "German artist (1500-1550)",
+    "birth": "1500",
+    "death": "1550",
+    "nationality": [
+      "Free Imperial City of Nuremberg",
+      "Germany"
+    ],
+    "movement": [
+      "German Renaissance"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Sebald_Beham",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:31.503Z"
+  },
+  "Daniel Hopfer": {
+    "name": "Daniel Hopfer",
+    "wikidata": "http://www.wikidata.org/entity/Q548407",
+    "description": "Engraver from Germany (1470-1536)",
+    "birth": "1470",
+    "death": "1536",
+    "nationality": [
+      "Germany"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Daniel_Hopfer",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:31.503Z"
+  },
+  "Utagawa Toyokuni": {
+    "name": "Utagawa Toyokuni",
+    "wikidata": "http://www.wikidata.org/entity/Q17194158",
+    "description": "Japanese painter (1903–2000)",
+    "birth": "1903",
+    "death": "2000",
+    "nationality": [
+      "Empire of Japan",
+      "Japan"
+    ],
+    "movement": [],
+    "article": null,
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:31.503Z"
+  },
+  "Félix Hilaire Buhot": {
+    "name": "Félix Hilaire Buhot",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:31.504Z"
+  },
+  "Mary Altha Nims": {
+    "name": "Mary Altha Nims",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:31.504Z"
+  },
+  "Stefano Della Bella": {
+    "name": "Stefano Della Bella",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:31.504Z"
+  },
+  "Antonio Canaletto": {
+    "name": "Antonio Canaletto",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:31.504Z"
+  },
+  "Louis-Théophile Marie Rousselet": {
+    "name": "Louis-Théophile Marie Rousselet",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:31.504Z"
+  },
+  "Master MZ": {
+    "name": "Master MZ",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:31.504Z"
+  },
+  "Hill and Adamson": {
+    "name": "Hill and Adamson",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:31.504Z"
+  },
+  "Georg Pencz": {
+    "name": "Georg Pencz",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:31.504Z"
+  },
+  "Aristide Maillol": {
+    "name": "Aristide Maillol",
+    "wikidata": "http://www.wikidata.org/entity/Q153920",
+    "description": "sculptor from France (1861–1944)",
+    "birth": "1861",
+    "death": "1944",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "Les Nabis",
+      "Symbolism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Aristide_Maillol",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:34.503Z"
+  },
+  "William Morris": {
+    "name": "William Morris",
+    "found": true,
+    "ambiguous": true,
+    "candidates": [
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q182589",
+        "description": "British textile artist, author, and socialist (1834-1896)",
+        "birth": "1834",
+        "death": "1896",
+        "article": "https://en.wikipedia.org/wiki/William_Morris"
+      },
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q8015832",
+        "description": "American artist (born 1957)",
+        "birth": "1957",
+        "death": null,
+        "article": "https://en.wikipedia.org/wiki/William_Morris_(glass_artist)"
+      },
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q43134431",
+        "description": "American artist",
+        "birth": "1957",
+        "death": null,
+        "article": null
+      }
+    ],
+    "fetched_at": "2026-08-24T15:02:34.503Z"
+  },
+  "Anna Atkins": {
+    "name": "Anna Atkins",
+    "wikidata": "http://www.wikidata.org/entity/Q264269",
+    "description": "English botanist and photographer (1799-1871)",
+    "birth": "1799",
+    "death": "1871",
+    "nationality": [
+      "United Kingdom of Great Britain and Ireland"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Anna_Atkins",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:34.503Z"
+  },
+  "Benjamin West": {
+    "name": "Benjamin West",
+    "wikidata": "http://www.wikidata.org/entity/Q313498",
+    "description": "18th- and 19th-century English painter (1738–1820)",
+    "birth": "1738",
+    "death": "1820",
+    "nationality": [
+      "United States"
+    ],
+    "movement": [
+      "Romanticism",
+      "Neoclassicism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Benjamin_West",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:34.503Z"
+  },
+  "Jan van Goyen": {
+    "name": "Jan van Goyen",
+    "wikidata": "http://www.wikidata.org/entity/Q315996",
+    "description": "Dutch landscape painter (1596-1656)",
+    "birth": "1596",
+    "death": "1656",
+    "nationality": [
+      "Dutch Republic"
+    ],
+    "movement": [
+      "Dutch Golden Age painting"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Jan_van_Goyen",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:34.503Z"
+  },
+  "David Roberts": {
+    "name": "David Roberts",
+    "found": true,
+    "ambiguous": true,
+    "candidates": [
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q369776",
+        "description": "Scottish painter (1796–1864)",
+        "birth": "1796",
+        "death": "1864",
+        "article": "https://en.wikipedia.org/wiki/David_Roberts_(painter)"
+      },
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q5239117",
+        "description": "British children's illustrator, born 1970",
+        "birth": "1970",
+        "death": null,
+        "article": "https://en.wikipedia.org/wiki/David_Roberts_(illustrator)"
+      },
+      {
+        "wikidata": "http://www.wikidata.org/entity/Q124858842",
+        "description": "Scottish architect, artist and art historian",
+        "birth": "1934",
+        "death": "1997",
+        "article": null
+      }
+    ],
+    "fetched_at": "2026-08-24T15:02:34.503Z"
+  },
+  "Jan Lievens": {
+    "name": "Jan Lievens",
+    "wikidata": "http://www.wikidata.org/entity/Q430783",
+    "description": "Dutch painter (1607–1674)",
+    "birth": "1607",
+    "death": "1674",
+    "nationality": [
+      "Dutch Republic"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Jan_Lievens",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:34.503Z"
+  },
+  "Bernard Palissy": {
+    "name": "Bernard Palissy",
+    "wikidata": "http://www.wikidata.org/entity/Q524252",
+    "description": "French potter and engineer",
+    "birth": "1510",
+    "death": "1590",
+    "nationality": [
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Bernard_Palissy",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:34.503Z"
+  },
+  "Li Tang": {
+    "name": "Li Tang",
+    "wikidata": "http://www.wikidata.org/entity/Q716331",
+    "description": "Chinese painter (1050–1130)",
+    "birth": "1050",
+    "death": "1130",
+    "nationality": [
+      "Song dynasty"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Li_Tang_(painter)",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:34.503Z"
+  },
+  "Francis Seymour Haden": {
+    "name": "Francis Seymour Haden",
+    "wikidata": "http://www.wikidata.org/entity/Q946578",
+    "description": "British artist (1818–1910)",
+    "birth": "1818",
+    "death": "1910",
+    "nationality": [
+      "United Kingdom of Great Britain and Ireland"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Francis_Seymour_Haden",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:34.503Z"
+  },
+  "Gabriel Huquier": {
+    "name": "Gabriel Huquier",
+    "wikidata": "http://www.wikidata.org/entity/Q1489306",
+    "description": "French art dealer (1695–1772)",
+    "birth": "1695",
+    "death": "1772",
+    "nationality": [
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Gabriel_Huquier",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:34.503Z"
+  },
+  "Michele Marieschi": {
+    "name": "Michele Marieschi",
+    "wikidata": "http://www.wikidata.org/entity/Q2501578",
+    "description": "Venetian painter of landscapes and vedute",
+    "birth": "1710",
+    "death": "1743",
+    "nationality": [
+      "Republic of Venice"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Michele_Marieschi",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:34.503Z"
+  },
+  "Samuel Prout": {
+    "name": "Samuel Prout",
+    "wikidata": "http://www.wikidata.org/entity/Q2542408",
+    "description": "English painter (1783–1852)",
+    "birth": "1783",
+    "death": "1852",
+    "nationality": [
+      "United Kingdom of Great Britain and Ireland",
+      "Kingdom of Great Britain"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Samuel_Prout",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:34.503Z"
+  },
+  "Hu Zhengyan": {
+    "name": "Hu Zhengyan",
+    "wikidata": "http://www.wikidata.org/entity/Q15430363",
+    "description": "Chinese painter and printer (1584–1674)",
+    "birth": "1584",
+    "death": "1674",
+    "nationality": [
+      "Ming dynasty",
+      "Qing dynasty"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Hu_Zhengyan",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:34.503Z"
+  },
+  "British Painter": {
+    "name": "British Painter",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:34.505Z"
+  },
+  "Seifū Yohei II": {
+    "name": "Seifū Yohei II",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:34.505Z"
+  },
+  "Frank Wilcox": {
+    "name": "Frank Wilcox",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:34.505Z"
+  },
+  "Philippe de Lasalle": {
+    "name": "Philippe de Lasalle",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:34.505Z"
+  },
+  "Seifū Yohei I": {
+    "name": "Seifū Yohei I",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:34.505Z"
+  },
+  "Russell T. Limbach": {
+    "name": "Russell T. Limbach",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:34.505Z"
+  },
+  "Jean-Auguste-Dominique Ingres": {
+    "name": "Jean-Auguste-Dominique Ingres",
+    "wikidata": "http://www.wikidata.org/entity/Q23380",
+    "description": "French painter (1780–1867)",
+    "birth": "1780",
+    "death": "1867",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "Romanticism",
+      "Neoclassicism"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Jean-Auguste-Dominique_Ingres",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:37.400Z"
+  },
+  "Pierre Bonnard": {
+    "name": "Pierre Bonnard",
+    "wikidata": "http://www.wikidata.org/entity/Q26408",
+    "description": "French painter and printmaker (1867-1947)",
+    "birth": "1867",
+    "death": "1947",
+    "nationality": [
+      "France"
+    ],
+    "movement": [
+      "Les Nabis"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Pierre_Bonnard",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:37.400Z"
+  },
+  "Titian": {
+    "name": "Titian",
+    "wikidata": "http://www.wikidata.org/entity/Q47551",
+    "description": "Italian painter (c.1490–1576)",
+    "birth": "1490",
+    "death": "1576",
+    "nationality": [
+      "Republic of Venice"
+    ],
+    "movement": [
+      "High Renaissance",
+      "Venetian school"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Titian",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:37.400Z"
+  },
+  "Édouard Baldus": {
+    "name": "Édouard Baldus",
+    "wikidata": "http://www.wikidata.org/entity/Q71244",
+    "description": "French photographer (1813–1889)",
+    "birth": "1813",
+    "death": "1889",
+    "nationality": [
+      "Duchy of Nassau",
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/%C3%89douard_Baldus",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:37.400Z"
+  },
+  "Frans Hals": {
+    "name": "Frans Hals",
+    "wikidata": "http://www.wikidata.org/entity/Q167654",
+    "description": "Dutch painter (1580–1666)",
+    "birth": "1582",
+    "death": "1666",
+    "nationality": [
+      "Dutch Republic"
+    ],
+    "movement": [
+      "Dutch Golden Age painting",
+      "Baroque"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Frans_Hals",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:37.400Z"
+  },
+  "Wen Zhengming": {
+    "name": "Wen Zhengming",
+    "wikidata": "http://www.wikidata.org/entity/Q306673",
+    "description": "Chinese painter, calligrapher and poet from the Ming dynasty (1470-1559)",
+    "birth": "1470",
+    "death": "1559",
+    "nationality": [
+      "Ming dynasty"
+    ],
+    "movement": [
+      "Wu School"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Wen_Zhengming",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:37.400Z"
+  },
+  "Pierre-Joseph Redouté": {
+    "name": "Pierre-Joseph Redouté",
+    "wikidata": "http://www.wikidata.org/entity/Q551638",
+    "description": "Belgian painter and botanist (1759–1840)",
+    "birth": "1759",
+    "death": "1840",
+    "nationality": [
+      "Southern Netherlands",
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Pierre-Joseph_Redout%C3%A9",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:37.400Z"
+  },
+  "Gustave Le Gray": {
+    "name": "Gustave Le Gray",
+    "wikidata": "http://www.wikidata.org/entity/Q982549",
+    "description": "French photographer (1820–1884)",
+    "birth": "1820",
+    "death": "1884",
+    "nationality": [
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Gustave_Le_Gray",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:37.400Z"
+  },
+  "Robert Nanteuil": {
+    "name": "Robert Nanteuil",
+    "wikidata": "http://www.wikidata.org/entity/Q1356084",
+    "description": "French engraver (1623-1678)",
+    "birth": "1623",
+    "death": "1678",
+    "nationality": [
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Robert_Nanteuil",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:37.400Z"
+  },
+  "Giulio Bonasone": {
+    "name": "Giulio Bonasone",
+    "wikidata": "http://www.wikidata.org/entity/Q1527962",
+    "description": "Italian painter",
+    "birth": "1510",
+    "death": "1576",
+    "nationality": [],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Giulio_Bonasone",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:37.400Z"
+  },
+  "Maxime Lalanne": {
+    "name": "Maxime Lalanne",
+    "wikidata": "http://www.wikidata.org/entity/Q2059329",
+    "description": "French etcher (1827-1886)",
+    "birth": "1827",
+    "death": "1886",
+    "nationality": [
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Maxime_Lalanne",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:37.400Z"
+  },
+  "Félix Bonfils": {
+    "name": "Félix Bonfils",
+    "wikidata": "http://www.wikidata.org/entity/Q2915801",
+    "description": "French commercial photographer active in the Middle East (1831-1885)",
+    "birth": "1831",
+    "death": "1885",
+    "nationality": [
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/F%C3%A9lix_Bonfils",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:37.400Z"
+  },
+  "Battista Franco": {
+    "name": "Battista Franco",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:37.402Z"
+  },
+  "Gobelins Manufactory": {
+    "name": "Gobelins Manufactory",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:37.402Z"
+  },
+  "Sceaux Factory": {
+    "name": "Sceaux Factory",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:37.402Z"
+  },
+  "Chōbunsai Eishi": {
+    "name": "Chōbunsai Eishi",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:37.402Z"
+  },
+  "Jean-Émile Laboureur": {
+    "name": "Jean-Émile Laboureur",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:37.402Z"
+  },
+  "Qāsim al-Ḥusaynī al-`Arīdī al-Qazvīnī": {
+    "name": "Qāsim al-Ḥusaynī al-`Arīdī al-Qazvīnī",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:37.402Z"
+  },
+  "Jean Baptiste Pillement": {
+    "name": "Jean Baptiste Pillement",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:37.402Z"
+  },
+  "Paul Cezanne": {
+    "name": "Paul Cezanne",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:37.402Z"
+  },
+  "Torii Kiyonaga": {
+    "name": "Torii Kiyonaga",
+    "wikidata": "http://www.wikidata.org/entity/Q427642",
+    "description": "Japanese artist (1752–1815)",
+    "birth": "1752",
+    "death": "1815",
+    "nationality": [
+      "Japan"
+    ],
+    "movement": [
+      "Torii school"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Torii_Kiyonaga",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:39.639Z"
+  },
+  "Shen Zhou": {
+    "name": "Shen Zhou",
+    "wikidata": "http://www.wikidata.org/entity/Q558863",
+    "description": "Chinese painter (1427-1509)",
+    "birth": "1427",
+    "death": "1509",
+    "nationality": [
+      "Ming dynasty"
+    ],
+    "movement": [
+      "Wu School"
+    ],
+    "article": "https://en.wikipedia.org/wiki/Shen_Zhou",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:39.639Z"
+  },
+  "Corneille de Lyon": {
+    "name": "Corneille de Lyon",
+    "wikidata": "http://www.wikidata.org/entity/Q720941",
+    "description": "Dutch painter (1500s-1575)",
+    "birth": "1510",
+    "death": "1575",
+    "nationality": [
+      "France"
+    ],
+    "movement": [],
+    "article": "https://en.wikipedia.org/wiki/Corneille_de_Lyon",
+    "found": true,
+    "fetched_at": "2026-08-24T15:02:39.639Z"
+  },
+  "Agostino Veneziano (Agostino dei Musi)": {
+    "name": "Agostino Veneziano (Agostino dei Musi)",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:39.641Z"
+  },
+  "André-Adolphe-Eugène Disdéri": {
+    "name": "André-Adolphe-Eugène Disdéri",
+    "found": false,
+    "fetched_at": "2026-08-24T15:02:39.641Z"
+  }
+}

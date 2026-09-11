@@ -1,0 +1,46 @@
+-- The holding department, kept as its own fact. Run once by hand in Neon's
+-- web SQL editor, same convention as sql/008_items_place_of_origin.sql.
+-- Safe to re-run.
+--
+-- Without it, a Met pull of European Sculpture and Decorative Arts
+-- quarantined 58 of 75 items (77%) on schema.region_unresolved and aborted
+-- the run-level guard: records like met:102519 (title='Apron', artist=
+-- 'Unknown') have no culture, place_of_origin, or bio nationality for
+-- classify_region() to work from. The Met returns `department` on every
+-- object and the Met adapter already read it for the Arms and Armor
+-- category hint, then discarded it -- so whole departments of
+-- unattributed decorative objects were un-ingestible despite the
+-- department name itself asserting a region ("European Sculpture and
+-- Decorative Arts").
+--
+-- Stored rather than kept as a transient `_category_hint` because a
+-- transient signal classifies WORSE on a recheck than on ingestion (the
+-- evidence is gone by the time the rules run again) -- reading as the rules
+-- having gotten stricter rather than as data having been dropped.
+--
+-- classify_region() consults it LAST, only once place_of_origin and the
+-- artist's nationality have both failed, and only for departments whose
+-- name asserts exactly one region (core.MET_DEPARTMENT_REGION_MAP):
+--
+--     European Sculpture and Decorative Arts -> Europe
+--     European Paintings                     -> Europe
+--     American Decorative Arts               -> Americas
+--     Egyptian Art                           -> Africa
+--     Ancient West Asian Art                 -> West Asia & Middle East
+--
+-- Asian Art, Islamic Art, Greek and Roman Art (spans three regions) and
+-- every medium-organised department stay unresolved on purpose -- a wrong
+-- region is a claim we cannot support and is invisible once written. The
+-- derivation trace records how="department" so the UI can label this
+-- distinctly from a region reached via the object's own place.
+--
+-- Existing rows are left NULL: department is only known at fetch time, so
+-- back-populating means re-fetching, and no backfill runs without a
+-- process that avoids rate limiting first.
+
+ALTER TABLE items ADD COLUMN IF NOT EXISTS department TEXT;
+
+-- Verify (optional):
+-- SELECT department, count(*) FILTER (WHERE region_primary IS NOT NULL) AS with_region,
+--        count(*) AS total
+-- FROM items WHERE source = 'met' AND department <> '' GROUP BY 1 ORDER BY 3 DESC;

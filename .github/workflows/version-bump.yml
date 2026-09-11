@@ -1,0 +1,77 @@
+name: Bump version and changelog
+
+# Manually triggered only -- a version bump is a deliberate release step,
+# not something that should fire automatically on every merge: this repo's
+# CI is unreliable by design (see STANDARDS.md's Testing & CI section), and
+# a release process that depends on
+# CI firing on its own is exactly the kind of thing that could silently
+# drift again. This workflow runs the same two scripts documented for local
+# use (scripts/bump-version.mts, scripts/generate-changelog.mts) -- the only
+# difference from running them at a terminal is that a human triggers this
+# from the Actions tab instead, which is useful when local push access to
+# the repo isn't available.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: "Version bump type (auto infers it from [major]/[minor]/[patch]/[hotfix] commit tags since the last release)"
+        type: choice
+        options: [auto, major, minor, patch, hotfix]
+        default: auto
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.11"
+
+      - run: bun install --frozen-lockfile
+
+      - name: Bump version
+        id: bump
+        run: |
+          if [ "${{ inputs.bump_type }}" = "auto" ]; then
+            output=$(bun scripts/bump-version.mts)
+          else
+            output=$(bun scripts/bump-version.mts "${{ inputs.bump_type }}")
+          fi
+          echo "$output"
+          version=$(echo "$output" | grep -oE '\-> [0-9]+\.[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          type=$(echo "$output" | grep -oE '\([a-z]+\)' | tr -d '()')
+          if [ -z "$version" ] || [ -z "$type" ]; then
+            echo "::error::could not parse the version/type bump-version.mts reported"
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "type=${type}" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and tag the version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json api/openapi.yaml
+          git commit -m "[${{ steps.bump.outputs.type }}] Bump version to ${{ steps.bump.outputs.version }}"
+          git tag "v${{ steps.bump.outputs.version }}"
+
+      - name: Generate the changelog entry
+        run: bun scripts/generate-changelog.mts --to "v${{ steps.bump.outputs.version }}"
+
+      - name: Commit the changelog
+        run: |
+          git add CHANGELOG.md
+          git commit -m "[${{ steps.bump.outputs.type }}] Update changelog for v${{ steps.bump.outputs.version }}"
+
+      - name: Push commits and tag
+        run: |
+          git push origin "HEAD:${{ github.ref_name }}"
+          git push origin "v${{ steps.bump.outputs.version }}"

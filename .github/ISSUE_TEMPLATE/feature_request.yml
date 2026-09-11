@@ -1,0 +1,29 @@
+name: Feature request / change proposal
+description: Propose a change before writing code for it
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Per CONTRIBUTING.md's "How to Contribute": for anything beyond a
+        small, obvious fix, opening an issue here first is a much cheaper
+        place to find out "this conflicts with an existing design decision"
+        than after a PR is written.
+  - type: textarea
+    id: what
+    attributes:
+      label: What you want to change
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: The problem this solves, or the case it makes better.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional -- other approaches you thought about and why you didn't pick them.

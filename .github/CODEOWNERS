@@ -1,0 +1,32 @@
+# Code owners for Tranquilo.
+#
+# This file only blocks a merge if branch protection asks it to: GitHub ->
+# Settings -> Branches -> protection rule on `main` -> enable "Require
+# review from Code Owners". Without that setting on, this file documents
+# ownership but doesn't enforce it.
+#
+# Owners below must have write access to this repo. @elaous is Sam's
+# handle -- his call if he'd rather use a different one later.
+#
+# Rules are matched in order, with the LAST matching rule winning -- so
+# the default owner goes first, and every more specific path goes after it.
+
+# Default owner for anything not matched by a rule below.
+* @loveycakes
+
+# ---------------------------------------------------------------------
+# Database schema, migrations, and migration tooling. A bad merge here
+# touches production data directly -- Sam's backend-architecture domain.
+# ---------------------------------------------------------------------
+/sql/              @elaous
+/prisma/           @elaous
+/prisma.config.ts  @elaous
+
+# ---------------------------------------------------------------------
+# CI/CD and deploy configuration -- not in the original ask, but the same
+# class of risk as the above: a workflow change can alter what secrets
+# are exposed or what ships to production. Recommended addition; delete
+# this section if you'd rather leave it under the default owner.
+# ---------------------------------------------------------------------
+/.github/workflows/  @elaous
+/vercel.json         @elaous

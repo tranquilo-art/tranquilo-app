@@ -1,0 +1,42 @@
+-- The nationalities a source records for an object's named contributors,
+-- kept as their own fact. Run once by hand in Neon's web SQL editor, same
+-- convention as sql/008_items_place_of_origin.sql and
+-- sql/014_items_department.sql. Safe to re-run.
+--
+-- The Met's Open Access API withholds this: met:412660, an anonymous 1664
+-- etching, returns 57 keys and no nationality (artistDisplayName is
+-- "Anonymous", artistNationality is "", constituents list names with no
+-- bio), so it quarantined on region_unresolved with nothing to look up --
+-- yet the Met's own page shows three named collaborators (two Italian, one
+-- French), and MetObjects.csv carries them as `Artist Nationality =
+-- "|Italian|Italian|French"`. Measured across the whole CSV: 239,580 of
+-- 248,472 public-domain objects (96.4%) carry at least one region signal.
+--
+-- Not folded into `bio`: the shortcut of filling empty bio from the CSV's
+-- Artist Display Bio writes a falsehood (412660's first non-empty bio
+-- belongs to Giulio Parigi, asserting a lifespan for an anonymous maker
+-- who has none, which the attribution step would then derive
+-- artist_nationality/artist_lifespan from in good faith). Not
+-- `artist_nationality` either -- the attribution step resets that to ""
+-- and re-derives it from `bio` on every normalise pass, wiping anything
+-- an adapter writes there. What the record
+-- actually supports is narrower: the named contributors were Italian and
+-- French, placing the OBJECT in Europe while claiming nothing about the
+-- anonymous artist -- only a separate column can say that.
+--
+-- classify_region() consults it after the artist's own bio and before the
+-- department fallback. Every named contributor must agree on a region:
+-- "Italian|French" resolves to one region, "Italian|Japanese" resolves to
+-- nothing (never just the first). Empty segments are skipped (the leading
+-- "|" is the anonymous primary artist). Stored rather than derived at
+-- classification time for the same reason as department: a transient
+-- signal classifies worse on a later recheck than on the original run.
+
+ALTER TABLE items ADD COLUMN IF NOT EXISTS contributor_nationality TEXT;
+
+-- ---------------------------------------------------------------------------
+-- Verify (optional)
+-- ---------------------------------------------------------------------------
+-- SELECT count(*) FILTER (WHERE coalesce(contributor_nationality,'') <> '') AS with_value,
+--        count(*) AS total
+-- FROM items WHERE source = 'met';

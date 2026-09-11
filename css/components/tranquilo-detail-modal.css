@@ -1,0 +1,430 @@
+/* Full-screen artwork detail panel -- track/page shell, shelf-browse chrome, Meet-the-Cast/Plot-Twist/Tea sections, meta rows, outbound source links.
+   Rules shared with other components stay in css/style.css. */
+
+/* ---------- Detail modal (full-screen takeover) ---------- */
+.detail-modal{
+  position:fixed; inset:0;
+  z-index:200;
+  background:var(--surface);
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(12px);
+  transition:opacity 0.28s ease, transform 0.28s ease, background-color 0.8s ease;
+}
+.detail-modal.open{
+  opacity:1;
+  pointer-events:auto;
+  transform:translateY(0);
+}
+/* Horizontal scroll-snap track, same mechanism as .storyline-track --
+   deliberately a separate gesture axis from the vertical scroll each
+   .detail-modal-page handles on its own (unlike storyline chapters,
+   detail content isn't guaranteed to fit one viewport -- bio/credit/
+   tags/Meet the Cast can genuinely be tall), so the vertical-scroll
+   responsibility that used to live on the outer .detail-modal-scroll
+   now lives per-page instead. With exactly one page (the normal, non-
+   shelf case) this is visually and behaviorally identical to before. */
+.detail-modal-track{
+  height:100%;
+  display:flex;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+}
+.detail-modal-track::-webkit-scrollbar{ display:none; }
+.detail-modal-page{
+  flex:none;
+  width:100%;
+  height:100%;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  scroll-snap-align:start;
+  scroll-snap-stop:always;
+}
+
+/* .detail-close's own fixed position -- the visual treatment it shares with
+   .storyline-close/.shelves-close (size, border, background) stays in
+   css/style.css; only this element's own placement moves. */
+.detail-close{
+  position:fixed;
+  top:18px; right:18px;
+  z-index:2;
+}
+
+/* Shelf-browse chrome -- only shown when the detail modal was opened
+   from a shelf with more than one qualifying item (see openDetailModal's
+   shelfContext param). Fixed/viewport-relative, same as .detail-close,
+   so it stays put regardless of which page is currently scrolled to. */
+.detail-shelf-position{
+  position:fixed;
+  top:29px; left:18px;
+  z-index:2;
+  font-family:var(--sans);
+  font-size:0.68rem;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--gold-soft);
+}
+.detail-shelf-nav{
+  position:fixed;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:2;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.18);
+  color:var(--text);
+  width:38px; height:38px;
+  border-radius:50%;
+  font-size:1.1rem;
+  line-height:1;
+  cursor:pointer;
+}
+.detail-shelf-nav:hover{ background:rgba(255,255,255,0.14); }
+.detail-shelf-nav:disabled{ opacity:0.25; cursor:default; pointer-events:none; }
+.detail-shelf-nav.prev{ left:18px; }
+.detail-shelf-nav.next{ right:18px; }
+@media (max-width:719px){
+  /* Mobile already has swipe -- click arrows would sit awkwardly over
+     the artwork image with no room to breathe, and thumb-swipe is the
+     natural gesture there anyway (matching Storyline mode's own mobile
+     treatment, which has no click affordance either). */
+  .detail-shelf-nav{ display:none; }
+}
+
+.detail-modal-inner{
+  max-width:640px;
+  margin:0 auto;
+  padding:88px 28px 80px;
+  color:var(--text);
+}
+.detail-modal-inner .d-frame{
+  position:relative;
+  width:100%;
+  min-height:240px;
+  max-height:46vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:28px;
+}
+/* Overrides the feed-tuned .art-skeleton inset (96px/24px/210px, sized
+   for the full-bleed .art-frame) -- .d-frame is a much smaller, content-
+   sized box, so the skeleton just fills it exactly instead. */
+.detail-modal-inner .d-frame .art-skeleton{ inset:0; }
+.detail-modal-inner .d-frame.loading img, .detail-modal-inner .d-frame.failed img{ opacity:0; }
+.detail-modal-inner .d-frame img{
+  max-width:100%;
+  max-height:46vh;
+  object-fit:contain;
+}
+.detail-modal-inner .cat-label{
+  font-family:var(--sans);
+  font-size:0.68rem;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:10px;
+}
+.detail-modal-inner .art-title{
+  font-family:var(--serif);
+  font-weight:500;
+  font-style:italic;
+  font-size:2rem;
+  line-height:1.2;
+  margin:0 0 10px;
+  color:var(--text);
+}
+.detail-modal-inner .art-meta{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.92rem;
+  color:var(--ink-soft);
+  margin:0 0 22px;
+}
+.detail-modal-inner .art-meta .sep{ margin:0 6px; color:var(--hairline); }
+.detail-modal-inner .artist-link{
+  font-weight:500;
+  color:var(--text);
+  background:none;
+  border:none;
+  padding:0;
+  font-family:inherit;
+  font-size:inherit;
+  cursor:pointer;
+  border-bottom:1px solid var(--gold);
+}
+.detail-modal-inner .artist-link:hover{ color:var(--gold); }
+
+/* Plot Twist detail-panel section -- see buildTwistSectionHtml() in
+   app.js. Same "surface-deep box" visual language as .fact-box (the
+   established info-box pattern in this panel), but with the teaser's
+   own --gold-soft accent instead of --gold, so the card's twist-hook
+   teaser and this section read as one visual thread rather than being
+   mistaken for the general "Did you know?" box. Rendered as the lead
+   item, above .fact-box. */
+.detail-modal-inner .twist-box{
+  background:var(--surface-deep);
+  border-left:3px solid var(--gold-soft);
+  padding:16px 20px;
+  margin:0 0 26px;
+  border-radius:2px;
+}
+.detail-modal-inner .twist-box .twist-label{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-family:var(--sans);
+  font-size:0.68rem;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--gold-soft);
+  margin-bottom:6px;
+  font-weight:500;
+}
+.detail-modal-inner .twist-box p{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:1rem;
+  line-height:1.6;
+  margin:0 0 10px;
+  color:var(--text);
+}
+.detail-modal-inner .twist-box .source-link{
+  margin:0;
+}
+
+.detail-modal-inner .fact-box{
+  background:var(--surface-deep);
+  border-left:3px solid var(--gold);
+  padding:16px 20px;
+  margin:0 0 26px;
+  border-radius:2px;
+}
+.detail-modal-inner .fact-box .fact-label{
+  font-family:var(--sans);
+  font-size:0.68rem;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:6px;
+  font-weight:500;
+}
+/* Grounding sources for a Tea Voice caption: icons, not the labelled
+   ".source-link" treatment used by Cast/Plot Twist -- those are occasional
+   highlights, a Tea caption appears on nearly every item, and a repeated
+   text link there would read as citation-dense. Sits below the caption
+   as an attribution footer, muted until hover. */
+.detail-modal-inner .fact-box .tea-sources{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:12px;
+  padding-top:10px;
+  border-top:1px solid rgba(203,184,136,0.18);
+}
+.detail-modal-inner .fact-box .tea-sources-label{
+  font-family:var(--sans);
+  font-size:0.6rem;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:rgba(203,184,136,0.55);
+}
+.detail-modal-inner .fact-box a.tea-source{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  color:var(--gold-soft);
+  opacity:0.6;
+  border-bottom:none;
+  transition:opacity 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+.detail-modal-inner .fact-box a.tea-source:hover,
+.detail-modal-inner .fact-box a.tea-source:focus-visible{
+  opacity:1;
+  color:#fff;
+  background:rgba(203,184,136,0.14);
+}
+/* Keyboard users get the same affordance -- these are real links and the
+   tooltip is not reachable without a pointer, so the focus ring has to be
+   visible rather than relying on the hover state alone. */
+.detail-modal-inner .fact-box a.tea-source:focus-visible{
+  outline:2px solid var(--gold-soft);
+  outline-offset:2px;
+}
+
+.detail-modal-inner .fact-box p{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:1rem;
+  line-height:1.6;
+  margin:0;
+  color:var(--text);
+}
+
+.cast-section{
+  margin:0 0 26px;
+}
+.cast-toggle{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:var(--surface-deep);
+  border:1px solid var(--hairline);
+  border-radius:2px;
+  padding:14px 18px;
+  cursor:pointer;
+  font-family:var(--sans);
+  font-size:0.82rem;
+  font-weight:500;
+  letter-spacing:0.02em;
+  color:var(--text);
+  transition:border-color 0.2s ease;
+}
+.cast-toggle:hover{ border-color:var(--gold-soft); }
+.cast-chevron{ transition:transform 0.2s ease; flex:none; }
+.cast-toggle[aria-expanded="true"] .cast-chevron{ transform:rotate(180deg); }
+
+.cast-panel{
+  padding:18px 18px 4px;
+  border:1px solid var(--hairline);
+  border-top:none;
+}
+.cast-intro{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.94rem;
+  line-height:1.6;
+  color:var(--text);
+  margin:0 0 16px;
+}
+.cast-intro-hedged{ color:var(--ink-soft); }
+.cast-context-detail{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.82rem;
+  line-height:1.6;
+  color:var(--ink-soft);
+  margin:16px 0 4px;
+  padding-top:14px;
+  border-top:1px solid var(--hairline);
+}
+
+.cast-list{ list-style:none; margin:0; padding:0; }
+.cast-person{ border-bottom:1px solid var(--hairline); }
+.cast-person:last-child{ border-bottom:none; }
+.cast-person-toggle{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  background:none;
+  border:none;
+  cursor:pointer;
+  padding:12px 2px;
+  text-align:left;
+}
+.cast-name{
+  font-family:var(--sans);
+  font-weight:500;
+  font-size:0.86rem;
+  color:var(--text);
+}
+.cast-person-toggle .cast-chevron{ color:var(--ink-soft); }
+.cast-tidbit{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.86rem;
+  line-height:1.6;
+  color:var(--ink-soft);
+  padding:0 2px 16px;
+}
+.cast-tidbit p{ margin:0 0 8px; }
+.cast-tidbit a{ font-size:0.78rem; }
+.cast-no-tidbit{ font-style:italic; }
+
+.detail-modal-inner .rule{
+  width:32px; height:1px;
+  background:var(--hairline);
+  margin:0 0 18px;
+}
+.detail-modal-inner .d-body{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.92rem;
+  line-height:1.65;
+  color:var(--ink-soft);
+}
+.detail-modal-inner .d-body div{ margin-bottom:10px; }
+
+/* .detail-modal-inner a / a:hover -- the plain-link treatment inside the
+   panel. (.meta-label, used here too, is shared with the feed caption's
+   .art-meta and stays in css/style.css.) */
+.detail-modal-inner a{ color:var(--gold); text-decoration:none; border-bottom:1px solid var(--gold-soft); }
+.detail-modal-inner a:hover{ color:var(--text); }
+
+/* Outbound source links -- "View on metmuseum.org" and Meet the Cast's
+   per-person "Source" links -- scoped to .source-link rather than the
+   general .detail-modal-inner a rule above, which still governs any
+   other plain link inside the modal. Underline sits only under the
+   label, not the arrow (underlining an arrow character reads as a
+   stray line, not a deliberate style); the arrow nudges right on
+   hover instead. */
+.detail-modal-inner a.source-link{
+  color:var(--gold-soft);
+  text-decoration:none;
+  border-bottom:none;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  transition:color 0.2s ease;
+}
+.detail-modal-inner a.source-link .link-text{
+  text-decoration:underline;
+  text-underline-offset:3px;
+  text-decoration-color:rgba(203,184,136,0.5);
+}
+.detail-modal-inner a.source-link .link-arrow{
+  display:inline-block;
+  transition:transform 0.15s ease;
+}
+.detail-modal-inner a.source-link:hover{
+  color:#fff;
+}
+.detail-modal-inner a.source-link:hover .link-text{
+  text-decoration-color:rgba(255,255,255,0.6);
+}
+.detail-modal-inner a.source-link:hover .link-arrow{
+  transform:translateX(3px);
+}
+
+/* Scattered elsewhere in the original style.css, moved here: */
+@media (min-width:720px){
+  .detail-modal-inner{ padding-top:110px; }
+}
+
+/* Licence deed link: underlined rather than gold-on-gold, since it's a
+   legal reference someone may need to follow, not decoration. */
+.detail-modal-inner .meta-row .meta-license-link{
+  color:var(--gold-soft);
+  text-decoration:underline;
+  text-underline-offset:2px;
+  text-decoration-color:rgba(203,184,136,0.45);
+  /* Cancels `.detail-modal-inner a`'s own border-bottom underline --
+     without this the link renders two stacked lines. */
+  border-bottom:none;
+}
+.detail-modal-inner .meta-row .meta-license-link:hover{ color:#fff; }
+
+@media (hover: hover) and (pointer: fine){
+  .fact-label{ position:relative; }
+}

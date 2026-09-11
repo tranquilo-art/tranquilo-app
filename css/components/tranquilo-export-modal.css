@@ -1,0 +1,58 @@
+/* Collection-export confirmation modal. Its own .upsell-cta override lives here; the base rule is shared in css/style.css.
+   Rules shared with other components stay in css/style.css. */
+
+/* ---------- Export modal (My Collection) ---------- */
+.export-modal{
+  position:fixed; inset:0;
+  z-index:200;
+  background:rgba(8,7,6,0.85);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.25s ease;
+  padding:24px;
+}
+.export-modal.open{ opacity:1; pointer-events:auto; }
+.export-modal-inner{
+  position:relative;
+  width:min(400px, 100%);
+  background:var(--surface);
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:14px;
+  padding:32px 28px 28px;
+  text-align:center;
+}
+.export-modal-inner h2{
+  font-family:var(--serif);
+  font-weight:500;
+  font-style:italic;
+  font-size:1.4rem;
+  color:var(--text);
+  margin:0 0 14px;
+}
+.export-modal-inner p{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.9rem;
+  line-height:1.6;
+  color:var(--ink-soft);
+  margin:0 0 22px;
+}
+.export-modal-inner .upsell-cta{
+  display:inline-block;
+  text-decoration:none;
+}
+.export-modal-close{
+  position:absolute;
+  top:12px; right:12px;
+  background:none;
+  border:1px solid rgba(255,255,255,0.25);
+  color:var(--text);
+  width:30px; height:30px;
+  border-radius:50%;
+  font-size:1.15rem;
+  line-height:1;
+  cursor:pointer;
+}

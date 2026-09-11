@@ -1,0 +1,71 @@
+<!--
+  Layout for pages/*.html, via posthtml-extend (see vite-plugins/base-template.mts).
+  A page extends this file and overrides only the blocks it needs to --
+  <extends src="_base.html"><block name="main">...</block></extends> -- rather
+  than repeating the whole document and marking the shared bits with a comment
+  (the old approach: vite-plugins/page-chrome-partial.mts's NAV/FOOTER markers).
+
+  Never a build entry itself -- not listed in vite.config.mts's
+  rollupOptions.input, and the leading underscore signals "not a real page"
+  the way _includes does in other static-site tools.
+
+  the head block's type="append" is the one non-default mode: a page's own
+  title element, description meta tag, AND its font stylesheet link (not
+  every page loads the same font families -- terms.html/privacy.html only
+  need Work Sans, the rest also load Cormorant Garamond for display type,
+  so that link is real page content, not shared boilerplate, and belongs in
+  each page's own head block alongside title/description) need to ADD to
+  this file's shared head tags, not replace them, since head-partial.mts
+  derives the OG/twitter tags from title+description and expects both the
+  page's own tags and the shared ones present together. Every other block
+  defaults to "replace if the page supplies one, otherwise leave this
+  file's content untouched" -- exactly posthtml-extend's own default
+  behavior, no type="replace" needed.
+
+  IMPORTANT: never write a literal opening/closing title tag inside a
+  comment in this file (or in any pages/*.html file) -- head-partial.mts
+  extracts the real title via a plain string regex over the whole
+  assembled document, not a real HTML parser, so it can't tell a title tag
+  mentioned in prose from a real one. That regex would greedily match from
+  here to the actual title element far below, swallowing this whole
+  comment as the page's title. Found by tripping over it directly while
+  building this file.
+
+  the nav block has no static default content here on purpose: every
+  page's navigation needs to know which link (if any) is "current," which
+  isn't something a static file can express -- vite-plugins/base-template.mts
+  computes it per page (the same buildNav() page-chrome-partial.mts already
+  had) and injects it as that page's own nav block before the extends step
+  runs, so every page effectively supplies this block, none has to author
+  it by hand.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<block name="head" type="append"></block>
+<!-- HEAD:SHARED -->
+</head>
+<body>
+
+<div class="mkt-page">
+  <block name="nav"></block>
+
+  <block name="main"></block>
+
+  <block name="footer"><footer class="mkt-footer">
+    <div class="mkt-footer-links">
+      <a href="feedback.html">Feedback</a>
+      <a href="terms.html">Terms &amp; Privacy</a>
+      <a href="pro.html">Pro Waitlist</a>
+    </div>
+  </footer></block>
+</div>
+
+<block name="script"></block>
+
+</body>
+</html>

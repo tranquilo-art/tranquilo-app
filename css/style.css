@@ -1,0 +1,2212 @@
+/* Glacial Indifference, the wordmark's typeface. Self-hosted (one 21KB
+   file) rather than a CDN, so it never silently falls back to Work Sans.
+   SIL Open Font License 1.1 -- licence travels with the font at
+   assets/fonts/OFL.txt. Reserved Font Name: do not ship a modified copy
+   under this name. */
+@font-face{
+  font-family:'Glacial Indifference';
+  src:url('../assets/fonts/GlacialIndifference-Regular.woff2') format('woff2');
+  font-weight:400;
+  font-style:normal;
+  /* swap, not block: a late wordmark beats a bar with a hole in it. */
+  font-display:swap;
+}
+
+/* Design tokens (colors, fonts): css/tokens.css. */
+
+*{ box-sizing:border-box; }
+
+html,body{
+  margin:0;
+  padding:0;
+  height:100%;
+  background:var(--ink);
+  color:var(--text);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- Top bar ----------
+   Mobile-first base: two rows -- row1 (wordmark + icon cluster) stays put,
+   row2 (chips) gets the full viewport width to scroll within. Desktop
+   (>=720px, see override below) unwraps back to the original single row. */
+.topbar{
+  position:fixed;
+  top:0; left:0; right:0;
+  z-index:20;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding:18px 20px 14px;
+  background:linear-gradient(to bottom, rgba(20,19,17,0.78), rgba(20,19,17,0.30) 62%, rgba(20,19,17,0));
+  pointer-events:none;
+}
+.topbar *{ pointer-events:auto; }
+
+.topbar-row1{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.topbar-icons{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+
+.wordmark{
+  font-family:var(--sans);
+  font-weight:600;
+  font-size:1.25rem;
+  letter-spacing:0.01em;
+  color:#fff;
+  white-space:nowrap;
+  text-decoration:none;
+}
+
+.chips{
+  display:flex;
+  gap:6px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+  width:100%;
+}
+.chips::-webkit-scrollbar{ display:none; }
+
+.chip{
+  flex:none;
+  font-family:var(--sans);
+  font-size:0.72rem;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.75);
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.18);
+  border-radius:999px;
+  padding:7px 14px;
+  cursor:pointer;
+  transition:all 0.2s ease;
+  backdrop-filter: blur(6px);
+}
+.chip:hover{ color:#fff; border-color:rgba(255,255,255,0.4); }
+.chip.active{
+  background:var(--gold);
+  border-color:var(--gold);
+  color:#fff;
+  font-weight:500;
+}
+
+.search-toggle{
+  flex:none;
+  width:34px; height:34px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,0.18);
+  background:rgba(255,255,255,0.08);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  backdrop-filter: blur(6px);
+  transition:all 0.2s ease;
+}
+.search-toggle:hover, .search-toggle.active{
+  border-color:var(--gold-soft);
+  color:#fff;
+}
+.search-toggle.active{
+  background:var(--gold);
+  color:#fff;
+  border-color:var(--gold);
+}
+
+.music-toggle{
+  flex:none;
+  width:34px; height:34px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,0.18);
+  background:rgba(255,255,255,0.08);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  backdrop-filter: blur(6px);
+  transition:all 0.2s ease;
+}
+.music-toggle:hover{ border-color:var(--gold-soft); }
+.music-toggle.active{
+  background:var(--gold);
+  color:#fff;
+  border-color:var(--gold);
+}
+
+/* Same treatment as .search-toggle/.music-toggle, so all four topbar
+   icons read as one consistent set. */
+.discover-toggle,
+.collection-toggle{
+  flex:none;
+  width:34px; height:34px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,0.18);
+  background:rgba(255,255,255,0.08);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  backdrop-filter: blur(6px);
+  transition:all 0.2s ease;
+}
+.discover-toggle:hover,
+.collection-toggle:hover{ border-color:var(--gold-soft); }
+
+/* Shown only while music is actually playing (updateMusicCredit() in
+   app.js), so it never appears with nothing audible behind it. */
+.music-credit{
+  position:fixed;
+  left:20px;
+  bottom:calc(14px + env(safe-area-inset-bottom));
+  z-index:6;
+  max-width:56vw;
+  opacity:0;
+  transition:opacity 0.4s ease;
+  pointer-events:none;
+}
+.music-credit.show{
+  opacity:1;
+  pointer-events:auto;
+}
+.music-credit a{
+  font-family:var(--sans);
+  font-size:0.66rem;
+  line-height:1.4;
+  color:rgba(255,255,255,0.45);
+  text-decoration:underline;
+  text-decoration-color:rgba(255,255,255,0.2);
+}
+.music-credit a:hover{ color:rgba(255,255,255,0.75); }
+
+/* ---------- Feed ---------- */
+.feed{
+  /* Explicit, since <tranquilo-feed> has no user-agent default block
+     display like <main> did -- an unstyled custom element defaults to
+     inline, which silently breaks every rule below it. */
+  display:block;
+  height:100vh;
+  height:100svh;
+  overflow-y:scroll;
+  scroll-snap-type:y mandatory;
+  scroll-behavior:smooth;
+}
+/* Matches the lightbox/detail-modal/storyline-mode pattern of locking
+   interaction to whatever's open -- needed here specifically because,
+   unlike those full-screen overlays, the search panel is a small strip
+   near the top and doesn't otherwise block touch/scroll on the feed
+   still visible underneath it. */
+.feed.scroll-locked{ overflow:hidden; }
+
+/* Shown briefly while app.js awaits fetch('/api/items') on first load
+   (see curio-static-to-postgres-migration-v1.md) -- feedEl.innerHTML is
+   fully replaced the moment renderFeed() actually runs, so neither of
+   these needs any explicit cleanup code. Most loads should barely show
+   this at all (api/items.js is CDN-cached), but a cold cache or slow
+   connection needs *something* here rather than a blank screen. */
+.feed-loading, .feed-load-error{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  padding:24px;
+  text-align:center;
+  font-family:var(--sans);
+  color:var(--ink-soft);
+}
+.feed-loading-wordmark{
+  font-family:var(--serif);
+  font-style:italic;
+  font-weight:600;
+  font-size:1.6rem;
+  color:var(--text);
+  animation:feedLoadingPulse 1.6s ease-in-out infinite;
+}
+@keyframes feedLoadingPulse{
+  0%,100%{ opacity:0.35; }
+  50%{ opacity:0.9; }
+}
+.feed-load-error p{
+  font-size:0.9rem;
+  max-width:320px;
+  line-height:1.5;
+}
+
+/* svh (not dvh) deliberately: dvh live-recalculates as the mobile browser
+   chrome (address bar) shows/hides, and since every one of ~200+ slides
+   here uses that same unit, a single chrome-resize event multiplies into
+   a huge total-document-height change -- scrollTop is a fixed pixel
+   offset that doesn't renormalize when that happens, so it ends up
+   pointing at a totally different (often far-away) slide, which reads as
+   a random other artwork "flashing" into view mid-scroll. svh is fixed
+   (always assumes the chrome is visible), so it can't drift like that;
+   the only cost is a sliver of empty space at the bottom on the rare
+   frame where the chrome happens to be hidden, not a functional bug. */
+.slide{
+  position:relative;
+  height:100vh;
+  height:100svh;
+  width:100%;
+  scroll-snap-align:start;
+  scroll-snap-stop:always;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:var(--ink);
+  transition:background-color 0.8s ease;
+  overflow:hidden;
+}
+
+/* intro slide */
+.slide.intro{
+  background:var(--surface);
+  color:var(--text);
+  text-align:center;
+  padding:0 32px;
+}
+.slide.intro .intro-eyebrow{
+  font-family:var(--sans);
+  font-size:0.72rem;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:18px;
+}
+.slide.intro h1{
+  font-family:var(--serif);
+  font-weight:500;
+  font-size:2.6rem;
+  line-height:1.15;
+  margin:0 0 18px;
+  max-width:560px;
+}
+.slide.intro p{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:1rem;
+  line-height:1.6;
+  color:var(--ink-soft);
+  max-width:420px;
+  margin:0 auto;
+}
+.slide.intro .intro-rule{
+  width:40px;
+  height:1px;
+  background:var(--gold);
+  margin:26px auto;
+}
+.intro-links{
+  margin-top:34px;
+  font-family:var(--sans);
+  font-size:0.76rem;
+  letter-spacing:0.03em;
+}
+.intro-links a{
+  color:var(--ink-soft);
+  text-decoration:none;
+  transition:color 0.15s ease;
+}
+.intro-links a:hover{ color:var(--gold-soft); }
+.intro-links .sep{ margin:0 10px; color:var(--hairline); }
+
+/* artwork image */
+.art-frame{
+  position:relative;
+  flex:1;
+  min-height:0;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:140px 24px 210px;
+  cursor:zoom-in;
+}
+.art-frame img{
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+  box-shadow:0 30px 70px -20px rgba(0,0,0,0.6);
+  background:#0000;
+}
+
+/* Storyline stack cue: 1-2 muted "card edge" layers peeking out behind
+   the current artwork, saying "there's more here" before anyone's read
+   anything. Capped at 2 (per spec) regardless of how many items are
+   actually in the storyline, since more than that reads as clutter, not
+   depth -- deeper layers get a larger offset/rotation and a softer
+   shadow, so they recede rather than compete with the real image. */
+.art-stack-layer{
+  position:absolute;
+  inset:96px 24px 210px;
+  border-radius:4px;
+  background:var(--surface);
+  box-shadow:0 20px 50px -20px rgba(0,0,0,0.5);
+  pointer-events:none;
+}
+.art-stack-layer.layer-1{
+  transform:translateY(7px) rotate(-2deg);
+  opacity:0.55;
+  z-index:0;
+}
+.art-stack-layer.layer-2{
+  transform:translateY(14px) rotate(2.5deg);
+  opacity:0.35;
+  z-index:-1;
+  box-shadow:0 14px 36px -18px rgba(0,0,0,0.4);
+}
+.art-frame img{ position:relative; z-index:1; }
+/* .art-skeleton needs position:absolute (see its own rule below) to be
+   sized/stretched by its inset values, like a plinth filling the same
+   space the image occupies -- z-index only, not position, so it isn't
+   pulled back to position:relative (a more-specific selector like this
+   one wins over .art-skeleton's own single-class rule regardless of
+   source order, which is exactly what broke this: the skeleton was
+   rendering as a tiny, offset-shifted, content-sized box instead of
+   filling the frame -- same bug on both mobile and desktop, nothing
+   about it was viewport-specific). */
+.art-frame .art-skeleton{ z-index:1; }
+
+.storyline-chip{
+  flex:none;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  font-family:var(--sans);
+  font-size:0.7rem;
+  font-weight:500;
+  letter-spacing:0.04em;
+  color:#1a1608;
+  background:var(--gold-soft);
+  border:none;
+  border-radius:999px;
+  padding:6px 13px;
+  cursor:pointer;
+  transition:transform 0.15s ease, background 0.15s ease;
+}
+.storyline-chip:hover{ transform:scale(1.04); }
+.storyline-chip svg{ flex:none; }
+
+/* Same shape as .storyline-chip, deliberately different color (a deliberate
+   choice) so the two badges read as distinct at a glance -- the
+   app's OTHER accent (--gold, violet) rather than a new one-off color. */
+.set-of-works-chip{
+  flex:none;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  font-family:var(--sans);
+  font-size:0.7rem;
+  font-weight:500;
+  letter-spacing:0.04em;
+  color:var(--text);
+  background:var(--gold);
+  border:none;
+  border-radius:999px;
+  padding:6px 13px;
+  cursor:pointer;
+  transition:transform 0.15s ease, background 0.15s ease;
+}
+.set-of-works-chip:hover{ transform:scale(1.04); }
+.set-of-works-chip svg{ flex:none; }
+.art-frame.loading img, .art-frame.failed img{ opacity:0; }
+.art-skeleton{
+  position:absolute;
+  inset:96px 24px 210px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(100deg, #1a1a18 30%, #232220 50%, #1a1a18 70%);
+  background-size:200% 100%;
+  animation:shimmer 1.6s ease-in-out infinite;
+}
+/* .art-skeleton's own display:flex above is equal-specificity with (and,
+   being an author rule, would otherwise win over) the browser default
+   [hidden]{ display:none } -- this explicit override, one selector more
+   specific, is what actually makes the `hidden` property/attribute work
+   on this element (see wireArtworkImageState()'s markLoaded()/
+   startLoad() in app.js, needed for the lightbox's persistent, reused
+   skeleton). */
+.art-skeleton[hidden]{ display:none; }
+@keyframes shimmer{
+  0%{ background-position:200% 0; }
+  100%{ background-position:-200% 0; }
+}
+
+/* Failed-load state (see wireArtworkImageState() in app.js) -- a source
+   CDN that's slow or down (confirmed directly against Smithsonian's
+   ids.si.edu) previously left the shimmer running forever with no way
+   to tell "still loading" from "never going to load." Swaps to a
+   static, non-animated fill with an icon + label, and the frame itself
+   becomes the retry target -- no separate button needed, matches the
+   existing "the frame is the interactive surface" pattern (feed frames
+   already open the lightbox on click). */
+.art-frame.failed .art-skeleton, .d-frame.failed .art-skeleton, .lightbox.failed .art-skeleton{
+  flex-direction:column;
+  gap:10px;
+  animation:none;
+  /* A scrim, not an opaque panel: a failed image degrades to a soft
+     version of the artwork via its blur_placeholder instead of a grey
+     box, and the scrim keeps error text legible over any blur colour. */
+  background:linear-gradient(rgba(16,15,13,0.62), rgba(16,15,13,0.62));
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+  color:rgba(242,239,230,0.72);
+  cursor:pointer;
+}
+.art-frame.failed .art-skeleton span, .d-frame.failed .art-skeleton span, .lightbox.failed .art-skeleton span{
+  font-family:var(--sans);
+  font-size:0.78rem;
+  letter-spacing:0.01em;
+  text-align:center;
+  padding:0 24px;
+}
+.art-frame.failed .art-skeleton:hover, .d-frame.failed .art-skeleton:hover, .lightbox.failed .art-skeleton:hover{
+  color:rgba(242,239,230,0.8);
+}
+
+/* ---------- Nudity tap-to-reveal gate ---------- */
+/* Scoped to items where category === "Photography" AND contains_nudity is
+   true (applyNudityGate() in app.js) -- painted/sculpted nudity renders
+   unchanged. One deliberate extra tap, not a content-moderation system.
+   Base rule covers full-size surfaces; .compact adapts it to thumbnails. */
+.nudity-gated img{
+  filter:blur(32px) brightness(0.75);
+}
+.nudity-gate-overlay{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  background:rgba(8,7,6,0.35);
+  border:none;
+  cursor:pointer;
+  color:#fff;
+  text-align:center;
+  padding:16px;
+}
+.nudity-gate-overlay:hover{ background:rgba(8,7,6,0.5); }
+.nudity-gate-overlay svg{ width:28px; height:28px; opacity:0.9; flex:none; }
+.nudity-gate-overlay span{
+  font-family:var(--sans);
+  font-size:0.78rem;
+  letter-spacing:0.02em;
+  line-height:1.4;
+  max-width:220px;
+}
+/* Compact variant for small thumbnails (shelf row, storyline cover) --
+   icon only, no room for label text without it reading as clutter. */
+.nudity-gate-overlay.compact{ gap:0; padding:0; }
+.nudity-gate-overlay.compact span{ display:none; }
+.nudity-gate-overlay.compact svg{ width:18px; height:18px; }
+
+.art-frame .nudity-gate-overlay{ inset:96px 24px 210px; }
+.detail-modal-inner .d-frame .nudity-gate-overlay{ inset:0; }
+/* .storyline-intro-stack is already position:relative in its own rule
+   below, sized 140x180 with its img at inset:0 -- the base overlay rule
+   fits it with no override needed. */
+.storyline-chapter-frame{ position:relative; }
+.shelf-item{ position:relative; }
+.shelf-item .nudity-gate-overlay{ inset:auto; top:0; left:0; width:130px; height:130px; border-radius:6px; }
+
+/* caption */
+.caption{
+  position:absolute;
+  left:0; right:0; bottom:0;
+  z-index:5;
+  background:linear-gradient(to top, rgba(10,9,8,0.92) 10%, rgba(10,9,8,0.75) 55%, rgba(10,9,8,0));
+  padding:64px 24px calc(26px + env(safe-area-inset-bottom));
+  color:#f2efe6;
+}
+.caption-inner{ max-width:640px; margin:0 auto; }
+
+.cat-label{
+  font-size:0.68rem;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--gold-soft);
+  margin-bottom:8px;
+}
+
+.art-title{
+  margin:0 0 6px;
+}
+.art-title-btn{
+  -webkit-appearance:none;
+  appearance:none;
+  font-family:var(--serif);
+  font-weight:500;
+  font-style:italic;
+  font-size:1.55rem;
+  line-height:1.25;
+  color:#f2efe6;
+  text-align:left;
+  background:none;
+  border:1px solid rgba(242,239,230,0.3);
+  border-radius:12px;
+  padding:8px 14px;
+  cursor:pointer;
+  transition:border-color 0.2s ease, background 0.2s ease;
+  overflow:hidden;
+  max-width:100%;
+}
+/* The clamp lives on this inner span, not the button itself -- a <button>'s
+   own internal box layout keeps -webkit-line-clamp from actually clipping
+   the overflow on some mobile browsers, so the ellipsis appeared but a
+   sliver of the third line still painted past the border (a follow-up fix,
+   reported live on tranquilo.art). A plain span has no such internal box. */
+.art-title-btn-text{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.art-title-btn:hover, .art-title-btn:active{
+  border-color:var(--gold-soft);
+  background:rgba(255,255,255,0.06);
+}
+
+.art-meta{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.86rem;
+  color:rgba(242,239,230,0.82);
+  margin:0 0 2px;
+}
+.art-meta .artist{ font-weight:500; }
+.art-meta .sep{ margin:0 6px; color:rgba(242,239,230,0.4); }
+
+.art-medium{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.78rem;
+  color:rgba(242,239,230,0.55);
+  margin:2px 0 0;
+}
+
+/* Plot Twist badge + teaser (feed card) -- see curio-plot-twist-spec-v1.md
+   Section 4. Icon+text in one row rather than a separate floating badge
+   on the artwork, so it stays "small enough not to compete with the
+   artwork" per spec Section 6 -- conditionally rendered, only present
+   when item.twist_category is set. */
+.twist-hook{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  font-family:var(--sans);
+  font-weight:400;
+  font-style:italic;
+  font-size:0.8rem;
+  color:var(--gold-soft);
+  margin:2px 0 0;
+}
+.twist-hook svg{ flex:none; }
+
+.caption-actions{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin-top:16px;
+  margin-bottom:12px;
+  position:relative;
+}
+
+.btn-collect{
+  background:none;
+  border:none;
+  cursor:pointer;
+  padding:4px;
+  color:rgba(242,239,230,0.7);
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+  transition:transform 0.15s ease, color 0.15s ease;
+}
+.btn-collect svg{ fill:none; transition:fill 0.15s ease; }
+.btn-collect:hover{ transform:scale(1.12); }
+.btn-collect.active{ color:var(--gold-soft); }
+.btn-collect.active svg{ fill:currentColor; }
+
+.btn-share{
+  background:none;
+  border:none;
+  cursor:pointer;
+  padding:4px;
+  color:rgba(242,239,230,0.7);
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+  transition:transform 0.15s ease, color 0.15s ease;
+}
+.btn-share:hover{ transform:scale(1.12); color:var(--gold-soft); }
+
+.btn-report{
+  background:none;
+  border:none;
+  cursor:pointer;
+  padding:4px;
+  color:rgba(242,239,230,0.7);
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+  transition:transform 0.15s ease, color 0.15s ease;
+  /* Optical alignment only -- the flag glyph's own bounding box sits a
+     couple pixels lower than the share icon's circles at the same font
+     size, so the two read as uneven in the row without this. */
+  margin-top:-2px;
+}
+.btn-report:hover{ transform:scale(1.12); color:var(--gold-soft); }
+.btn-report[aria-expanded="true"]{ color:var(--gold-soft); }
+
+.report-menu{
+  position:absolute;
+  top:100%;
+  right:0;
+  z-index:20;
+  margin-top:8px;
+  min-width:250px;
+  background:var(--surface);
+  border:1px solid var(--hairline);
+  border-radius:12px;
+  padding:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.35);
+}
+/* display:flex on the bare selector would win over the browser's own
+   [hidden]{display:none} default -- an author rule beats the UA
+   stylesheet regardless of specificity -- which is exactly the bug this
+   shipped with: the `hidden` attribute kept toggling correctly in the DOM
+   while the menu stayed visually on screen the whole time, on every item,
+   before a single click. Scoping the flex layout to :not([hidden]) keeps
+   the attribute authoritative. */
+.report-menu:not([hidden]){
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.report-checkbox{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:7px 6px;
+  border-radius:8px;
+  font-family:var(--sans);
+  font-size:0.85rem;
+  color:var(--text);
+  cursor:pointer;
+}
+.report-checkbox:hover{ background:var(--surface-deep); }
+.report-checkbox input[type="checkbox"]{
+  accent-color:var(--gold-soft);
+  width:15px;
+  height:15px;
+  flex:none;
+  cursor:pointer;
+}
+.report-comment{
+  width:100%;
+  min-height:56px;
+  resize:vertical;
+  background:var(--surface-deep);
+  border:1px solid var(--hairline);
+  border-radius:8px;
+  padding:8px;
+  margin-top:6px;
+  font-family:var(--sans);
+  font-size:0.85rem;
+  color:var(--text);
+}
+.report-send{
+  align-self:flex-end;
+  margin-top:8px;
+  background:var(--gold-soft);
+  color:var(--ink);
+  border:none;
+  border-radius:8px;
+  padding:6px 14px;
+  font-family:var(--sans);
+  font-size:0.82rem;
+  font-weight:600;
+  cursor:pointer;
+}
+
+/* ---------- Lightbox: moved to css/components/tranquilo-lightbox.css ---------- */
+/* ---------- Filter banner (artist / search results) ---------- */
+.filter-banner{
+  /* Aug 2026, search status in the header: in the header's flow, not fixed
+     over the feed. Was
+     position:fixed at top:var(--topbar-h) with an opaque background, which
+     made a hard bar across the artwork and left the art scrolling under it --
+     the only overlay in the app that did not float on a fading gradient.
+     In flow it needs no background of its own: the topbar's gradient is
+     already behind it, and --topbar-h now measures it for free. */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  padding:4px 20px;
+  color:#f2efe6;
+  font-family:var(--sans);
+  font-size:0.78rem;
+  font-weight:300;
+  text-align:center;
+}
+.filter-banner strong{ font-weight:500; color:var(--gold-soft); }
+.filter-banner button{
+  font-family:var(--sans);
+  font-size:0.7rem;
+  letter-spacing:0.04em;
+  color:rgba(242,239,230,0.8);
+  background:none;
+  border:1px solid rgba(242,239,230,0.3);
+  border-radius:999px;
+  padding:4px 12px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.filter-banner button:hover{ color:#fff; border-color:var(--gold-soft); }
+
+/* Pushes the feed down below the filter banner instead of letting it
+   float on top of the artwork -- same "#feed.search-push" pattern used
+   for the search panel (see below), and the same underlying bug: an
+   always-on-top fixed banner covering the title/artist/date right under
+   the image (reported directly, with a screenshot -- "My Collection"
+   sitting over the top of the piece). --filter-banner-h is kept in sync
+   via a ResizeObserver in app.js, same as --search-bar-h. */
+#feed.filter-push{
+  margin-top:var(--filter-banner-h, 0px);
+  height:calc(100vh - var(--filter-banner-h, 0px));
+  height:calc(100svh - var(--filter-banner-h, 0px));
+}
+#feed.filter-push .slide{
+  height:calc(100vh - var(--filter-banner-h, 0px));
+  height:calc(100svh - var(--filter-banner-h, 0px));
+}
+
+/* ---------- Search bar ---------- */
+/* One persistent panel that changes state (empty / suggestions / results)
+   instead of switching over to .filter-banner on submit -- .filter-banner
+   itself is untouched and still used for the artist-filter case
+   (setArtistFilter), a separate non-search flow. Column layout so the
+   panel can grow by a line or two for results/suggestions without ever
+   becoming a second fixed block; max-height + scroll keeps a long
+   suggestion/history list from pushing off-screen on short viewports. */
+.search-bar{
+  position:fixed;
+  top:var(--topbar-h, 64px);
+  left:0; right:0;
+  z-index:19;
+  flex-direction:column;
+  padding:10px 16px;
+  background:rgba(10,9,8,0.92);
+  backdrop-filter: blur(8px);
+  max-height:min(70vh, 520px);
+  overflow-y:auto;
+}
+.search-input-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.search-bar input{
+  flex:1;
+  min-width:0;
+  font-family:var(--sans);
+  font-size:0.88rem;
+  color:#fff;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.24);
+  border-radius:999px;
+  padding:9px 16px;
+  outline:none;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.search-bar input::placeholder{ color:rgba(255,255,255,0.45); }
+.search-bar input:focus{ border-color:var(--gold-soft); }
+
+/* Pushes the feed down below the search panel instead of letting it
+   float on top of the artwork -- originally desktop-only (an overlay
+   was judged "fine, familiar" on mobile), but that let the panel cover
+   the very thing someone opened search to look past: the title/artist/
+   date sitting right under the image. Applies everywhere now.
+   --search-bar-h is kept in sync with the panel's actual rendered
+   height via a ResizeObserver in app.js, since the panel's height
+   genuinely varies by state (empty vs. showing suggestions vs. showing
+   results). */
+#feed.search-push{
+  margin-top:var(--search-bar-h, 0px);
+  height:calc(100vh - var(--search-bar-h, 0px));
+  height:calc(100svh - var(--search-bar-h, 0px));
+}
+#feed.search-push .slide{
+  height:calc(100vh - var(--search-bar-h, 0px));
+  height:calc(100svh - var(--search-bar-h, 0px));
+}
+.search-input-row button{
+  flex:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:none;
+  border:1px solid rgba(255,255,255,0.3);
+  color:#fff;
+  width:36px; height:36px;
+  border-radius:50%;
+  cursor:pointer;
+  font-size:1.1rem;
+  line-height:1;
+}
+.search-input-row button:hover{ border-color:var(--gold-soft); }
+#searchClose{ font-size:1.3rem; }
+
+/* Results / did-you-mean line -- lives *inside* the panel as a second
+   line under the input, not a separate fixed strip, so the panel's
+   footprint only grows when there's actually something to say. */
+.search-results-line{
+  margin-top:9px;
+  padding:0 5px;
+  font-family:var(--sans);
+  font-size:0.76rem;
+  font-weight:300;
+  line-height:1.5;
+  color:rgba(242,239,230,0.75);
+}
+.search-results-line:empty{ display:none; }
+.search-results-line strong{ font-weight:500; color:var(--gold-soft); }
+.search-results-line .did-you-mean-link{
+  background:none;
+  border:none;
+  padding:0;
+  font:inherit;
+  color:var(--gold-soft);
+  text-decoration:underline;
+  cursor:pointer;
+}
+.search-results-line .did-you-mean-link:hover{ color:#fff; }
+
+/* Autocomplete suggestions + search history, sharing one container so
+   only one or the other ever shows (history only when the input is
+   focused-and-empty, per spec). */
+.search-suggestions{ margin-top:8px; }
+.search-suggestions:empty{ display:none; }
+.search-suggestion-group-label{
+  font-family:var(--sans);
+  font-size:0.64rem;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin:12px 0 4px;
+  padding:0 5px;
+}
+.search-suggestion-group-label:first-child{ margin-top:2px; }
+.search-suggestion-list{ list-style:none; margin:0; padding:0; }
+.search-suggestion-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  width:100%;
+  background:none;
+  border:none;
+  text-align:left;
+  padding:8px 5px;
+  border-radius:6px;
+  cursor:pointer;
+  font-family:var(--sans);
+  font-size:0.86rem;
+  color:var(--text);
+}
+.search-suggestion-item:hover,
+.search-suggestion-item.highlighted{ background:rgba(255,255,255,0.08); }
+.search-suggestion-item mark{
+  background:none;
+  color:var(--gold-soft);
+  font-weight:500;
+}
+.search-suggestion-count{
+  flex:none;
+  font-size:0.7rem;
+  color:var(--ink-soft);
+}
+
+.search-history-label{
+  font-family:var(--sans);
+  font-size:0.64rem;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin:2px 0 8px;
+  padding:0 5px;
+}
+.search-history-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  padding:0 1px;
+}
+.search-history-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  font-family:var(--sans);
+  font-size:0.76rem;
+  color:rgba(255,255,255,0.75);
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.18);
+  border-radius:999px;
+  padding:6px 13px;
+  cursor:pointer;
+}
+.search-history-chip:hover{ border-color:var(--gold-soft); color:#fff; }
+.search-history-chip svg{ flex:none; opacity:0.6; }
+
+.search-hint-label{
+  font-family:var(--sans);
+  font-size:0.64rem;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin:12px 0 8px;
+  padding:0 5px;
+}
+.search-hint-label:first-child{ margin-top:2px; }
+.search-hint-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  padding:0 1px;
+}
+.search-hint-chip{
+  font-family:var(--sans);
+  font-size:0.76rem;
+  color:rgba(255,255,255,0.75);
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.18);
+  border-radius:999px;
+  padding:6px 13px;
+  cursor:pointer;
+}
+.search-hint-chip:hover{ border-color:var(--gold-soft); color:#fff; }
+
+/* ---------- Toast ---------- */
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:70px;
+  transform:translateX(-50%) translateY(8px);
+  /* Above EVERY full-screen overlay, because this one element is raised from
+     inside all of them: lightbox (100), detail modal (200), storyline mode
+     (250), support dialog (400).
+     At 150 it cleared only the lightbox, so sharing from a detail page copied
+     the link and painted the confirmation behind the modal -- the copy worked
+     and the visitor saw nothing, which is indistinguishable from a dead button.
+     A toast that can be occluded by the thing that raised it is not a toast. */
+  z-index:500;
+  max-width:86vw;
+  background:rgba(20,19,17,0.95);
+  color:#f2efe6;
+  border:1px solid rgba(242,239,230,0.18);
+  padding:11px 20px;
+  border-radius:999px;
+  font-family:var(--sans);
+  font-size:0.8rem;
+  text-align:center;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.25s ease, transform 0.25s ease;
+}
+.toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+
+/* ---------- Upsell toast: moved to css/components/tranquilo-upsell-toast.css. .upsell-cta below is shared with the export modal and stays here. ---------- */
+.upsell-cta{
+  font-family:var(--sans);
+  font-size:0.74rem;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  font-weight:500;
+  color:#fff;
+  background:var(--gold);
+  border:none;
+  border-radius:999px;
+  padding:9px 18px;
+  cursor:pointer;
+  transition:background 0.15s ease;
+}
+.upsell-cta:hover{ background:var(--gold-soft); }
+/* .upsell-close: moved to css/components/tranquilo-upsell-toast.css */
+
+/* ---------- Detail modal: moved to css/components/tranquilo-detail-modal.css ---------- */
+/* Shared close-button treatment across full-screen overlays -- 44x44px
+   meets the mobile minimum tap target; a solid dark scrim reads reliably
+   against a bright artwork image. Positioning stays per-overlay:
+   .detail-close floats fixed over the artwork, .storyline-close/
+   .shelves-close are flex children in their own header row. */
+.detail-close,
+.storyline-close,
+.shelves-close{
+  background:rgba(0,0,0,0.45);
+  border:1px solid rgba(255,255,255,0.28);
+  color:#fff;
+  width:44px; height:44px;
+  border-radius:50%;
+  font-size:1.4rem;
+  line-height:1;
+  cursor:pointer;
+}
+.detail-close:hover,
+.storyline-close:hover,
+.shelves-close:hover{ background:rgba(0,0,0,0.6); }
+/* .detail-close's own position: moved to css/components/tranquilo-detail-modal.css */
+
+/* Shelf-browse chrome + .detail-modal-inner content: moved to css/components/tranquilo-detail-modal.css */
+
+/* Field labels: quieter than the value they introduce. Uppercase +
+   letter-spacing rather than bold, so a row scans as label-then-value
+   without the label pulling the eye first. */
+.meta-label{
+  font-size:0.72rem;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--ink-faint, var(--ink-soft));
+  opacity:0.72;
+  margin-right:0.15em;
+}
+/* The meta line under the title sets its own rhythm; keep the label from
+   colliding with the middot separator between Artist and Created. */
+.art-meta .meta-label{ margin-left:0.15em; }
+/* .detail-modal-inner a / a:hover: moved to css/components/tranquilo-detail-modal.css */
+
+/* Outbound source links (.source-link): moved to css/components/tranquilo-detail-modal.css */
+
+/* ---------- Storyline mode: moved to css/components/tranquilo-storyline-mode.css ---------- */
+
+/* ---------- Scroll hint ---------- */
+.hint{
+  position:fixed;
+  bottom:18px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:0.68rem;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.5);
+  z-index:10;
+  pointer-events:none;
+  transition:opacity 0.4s ease;
+}
+.hint::after{
+  content:"";
+  display:block;
+  width:1px; height:16px;
+  background:rgba(255,255,255,0.4);
+  margin:6px auto 0;
+  animation:hintbob 1.6s ease-in-out infinite;
+}
+@keyframes hintbob{
+  0%,100%{ transform:translateY(0); opacity:0.4; }
+  50%{ transform:translateY(6px); opacity:1; }
+}
+.hint.hidden{ opacity:0; }
+
+/* ==================================================================
+   Marketing pages (home / about / submit / pro)
+   ================================================================== */
+
+.mkt-nav{
+  position:sticky;
+  top:0;
+  z-index:20;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:18px 24px;
+  background:rgba(11,11,18,0.85);
+  backdrop-filter: blur(8px);
+  border-bottom:1px solid var(--hairline);
+}
+.mkt-nav-links{
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+.mkt-nav-links a{
+  font-family:var(--sans);
+  font-size:0.82rem;
+  font-weight:500;
+  color:var(--ink-soft);
+  text-decoration:none;
+  padding:8px 12px;
+  border-radius:8px;
+  transition:color 0.15s ease, background 0.15s ease;
+}
+.mkt-nav-links a:hover{ color:var(--text); background:rgba(255,255,255,0.06); }
+.mkt-nav-links a.current{ color:var(--text); }
+
+.mkt-page{
+  min-height:100vh;
+  min-height:100dvh;
+  background:var(--ink);
+  color:var(--text);
+}
+.mkt-main{
+  max-width:720px;
+  margin:0 auto;
+  padding:64px 24px 100px;
+}
+.mkt-main.narrow{ max-width:560px; }
+
+.mkt-eyebrow{
+  font-family:var(--sans);
+  font-size:0.72rem;
+  font-weight:600;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--gold-soft);
+  margin:0 0 14px;
+}
+.mkt-h1{
+  font-family:var(--sans);
+  font-weight:700;
+  font-size:2.1rem;
+  line-height:1.2;
+  margin:0 0 16px;
+  color:var(--text);
+}
+.mkt-h2{
+  font-family:var(--sans);
+  font-weight:700;
+  font-size:1.3rem;
+  line-height:1.3;
+  margin:0 0 12px;
+  color:var(--text);
+}
+.mkt-lead{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:1.02rem;
+  line-height:1.6;
+  color:var(--ink-soft);
+  margin:0 0 28px;
+  max-width:520px;
+}
+.mkt-section{
+  margin:0 0 56px;
+}
+.mkt-section:last-child{ margin-bottom:0; }
+
+.btn-primary{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-family:var(--sans);
+  font-size:0.86rem;
+  font-weight:600;
+  letter-spacing:0.01em;
+  text-decoration:none;
+  border-radius:999px;
+  padding:13px 26px;
+  cursor:pointer;
+  transition:filter 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  background:linear-gradient(135deg, var(--gold) 0%, var(--accent-deep) 100%);
+  color:#fff;
+  border:none;
+}
+.btn-primary:hover{ filter:brightness(1.08); }
+.btn-primary.block{ display:flex; width:100%; }
+.btn-primary:disabled{ opacity:0.6; cursor:not-allowed; }
+
+.badge{
+  display:inline-block;
+  font-family:var(--sans);
+  font-size:0.72rem;
+  font-weight:700;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:#08201c;
+  background:var(--gold-soft);
+  padding:6px 14px;
+  border-radius:999px;
+  margin:0 0 18px;
+}
+
+.mkt-callout{
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+  background:var(--surface);
+  border:1px solid var(--hairline);
+  border-radius:14px;
+  padding:18px 20px;
+  margin:0 0 28px;
+}
+.mkt-callout .icon-chip{ flex:none; }
+.mkt-callout p{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.92rem;
+  line-height:1.55;
+  color:var(--ink-soft);
+  margin:0;
+}
+
+.icon-chip{
+  width:38px; height:38px;
+  border-radius:10px;
+  background:var(--surface-deep);
+  border:1px solid var(--hairline);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--gold-soft);
+  flex:none;
+}
+.icon-chip svg{ width:19px; height:19px; }
+
+.faq-item{
+  border-bottom:1px solid var(--hairline);
+  padding:18px 0;
+}
+.faq-item:first-child{ padding-top:0; }
+.faq-item h3{
+  font-family:var(--sans);
+  font-weight:600;
+  font-size:0.94rem;
+  margin:0 0 8px;
+  color:var(--text);
+}
+.faq-item p{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.86rem;
+  line-height:1.55;
+  color:var(--ink-soft);
+  margin:0;
+}
+
+.mkt-footer{
+  border-top:1px solid var(--hairline);
+  padding:32px 24px 48px;
+  text-align:center;
+}
+.mkt-footer-links{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:8px 18px;
+  margin:0 0 14px;
+}
+.mkt-footer-links a{
+  font-family:var(--sans);
+  font-size:0.82rem;
+  color:var(--ink-soft);
+  text-decoration:none;
+}
+.mkt-footer-links a:hover{ color:var(--text); }
+.mkt-footer p{
+  font-family:var(--sans);
+  font-size:0.76rem;
+  color:rgba(165,162,179,0.6);
+  margin:0;
+}
+
+/* ---- Form (submit a collection) ---- */
+.mkt-form{ display:flex; flex-direction:column; gap:20px; }
+.field label{
+  display:block;
+  font-family:var(--sans);
+  font-size:0.82rem;
+  font-weight:500;
+  color:var(--ink-soft);
+  margin:0 0 8px;
+}
+.field input, .field select, .field textarea{
+  width:100%;
+  font-family:var(--sans);
+  font-size:0.92rem;
+  color:var(--text);
+  background:var(--surface-deep);
+  border:1px solid var(--hairline);
+  border-radius:10px;
+  padding:12px 14px;
+  outline:none;
+  -webkit-appearance:none;
+  appearance:none;
+  transition:border-color 0.15s ease;
+}
+.field select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a5a2b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  padding-right:36px;
+}
+.field textarea{ resize:vertical; min-height:88px; font-family:var(--sans); }
+.field input:focus, .field select:focus, .field textarea:focus{ border-color:var(--gold); }
+.field input::placeholder, .field textarea::placeholder{ color:rgba(165,162,179,0.55); }
+.field-hint{
+  display:block;
+  font-family:var(--sans);
+  font-size:0.76rem;
+  color:rgba(165,162,179,0.75);
+  margin-top:6px;
+}
+.field.error input, .field.error select, .field.error textarea{ border-color:#f87171; }
+.field .error-msg{
+  display:none;
+  font-family:var(--sans);
+  font-size:0.78rem;
+  color:#f87171;
+  margin-top:6px;
+}
+.field.error .error-msg{ display:block; }
+
+.field-check{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+}
+.field-check input{ width:auto; margin-top:3px; accent-color:var(--gold); }
+.field-check label{
+  margin:0;
+  font-weight:300;
+  color:var(--ink-soft);
+  font-size:0.86rem;
+  line-height:1.5;
+}
+
+.submit-error-msg{
+  display:none;
+  font-family:var(--sans);
+  font-size:0.82rem;
+  color:#f87171;
+  text-align:center;
+  margin:12px 0 0;
+}
+.submit-error-msg.show{ display:block; }
+
+.form-note{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:rgba(165,162,179,0.75);
+  text-align:center;
+  margin:16px 0 0;
+}
+
+.form-success{
+  display:none;
+  text-align:center;
+  padding:40px 20px;
+}
+.form-success.show{ display:block; }
+.form-success .icon-chip{ margin:0 auto 18px; width:52px; height:52px; border-radius:14px; }
+.form-success .icon-chip svg{ width:26px; height:26px; }
+
+/* ---------- Discover (mood shelves): moved to css/components/tranquilo-shelves-mode.css ---------- */
+
+/* ---------- Export modal: moved to css/components/tranquilo-export-modal.css ---------- */
+
+/* ---------- Responsive ---------- */
+@media (min-width:720px){
+  /* Collapse the mobile two-row topbar back into the original single row:
+     unwrap both wrapper divs so wordmark, chips, and the 4 icon buttons
+     become flat flex children of .topbar again, then use `order` to
+     restore the original left-to-right sequence regardless of where each
+     element now sits in the DOM. */
+  .topbar{
+    flex-direction:row;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 20px 28px;
+    /* 12px -> 8px: the flattened row's only spacing mechanism, so this is what
+       sets both wordmark-to-chips and the gaps inside the icon cluster. */
+    gap:8px;
+  }
+  .topbar-row1{ display:contents; }
+  .topbar-icons{ display:contents; }
+  /* Scoped to the top bar -- unscoped, this also reorders .mkt-nav
+     .wordmark on the static pages, which has no order of its own. */
+  .topbar .wordmark{ order:1; }
+  /* max-width here is LOAD-BEARING -- do not remove it.
+     .chips is overflow-x:auto with the scrollbar suppressed, unreachable
+     with a mouse past a few chips. `flex-wrap` + `max-width:none` fixes
+     that but destabilizes the lightbox: a header that can grow breaks
+     .art-frame's assumption of a fixed-height bar above it. Chips are
+     tightened instead (below); a "More" menu is the real fix for what
+     still overflows -- see the test.fixme in
+     tests/e2e/chips-reachable.spec.mts. */
+  .chips{ order:2; max-width:72vw; }
+  /* Tightened to buy the row back some width. */
+  .chip{ font-size:0.68rem; letter-spacing:0.04em; padding:6px 11px; }
+  /* Same slot as the chips it replaces -- never both up. flex:1 absorbs
+     the row's free space, keeping the icon group together. */
+  .filter-banner{ order:2; flex:1; justify-content:flex-start; padding:0; }
+  /* `margin-left:auto` here broke the lightbox (Playwright: art frame
+     never stable) by letting space-between scatter the icons once
+     neither .chips nor .filter-banner was present to absorb it. Fixed by
+     giving .filter-banner flex:1 above instead. */
+  /* Spacer for the one state neither .chips nor .filter-banner covers:
+     search panel reopened while a search is active, hiding both. A
+     pseudo-element on purpose -- `.topbar *` sets pointer-events:auto,
+     and ::after isn't matched by it, so this can't become an invisible
+     click target over the artwork. */
+  body.search-panel-open .topbar::after{ content:""; order:2; flex:1; }
+  /* Smaller footprint for the four icons -- every pixel here is a pixel
+     the chips don't have. Spacing comes from .topbar's own `gap`,
+     tightened below; an explicit margin here would ADD to that gap. */
+  .music-toggle, .search-toggle, .discover-toggle, .collection-toggle{
+    width:30px; height:30px;
+  }
+  .music-toggle{ order:3; }
+  /* Same reason, unsearched state: chips grow to fill rather than
+     relying on max-width happening to be wide enough. */
+  .chips{ flex:1; }
+  .search-toggle{ order:4; }
+  .discover-toggle{ order:5; }
+  .collection-toggle{ order:6; }
+
+  .art-frame{ padding:110px 60px 230px; }
+  .caption{ padding:90px 40px calc(36px + env(safe-area-inset-bottom)); }
+  .art-title-btn{ font-size:1.9rem; }
+  /* .detail-modal-inner{ padding-top:110px; } moved to css/components/tranquilo-detail-modal.css */
+
+  .mkt-main{ padding:88px 24px 120px; }
+  .mkt-h1{ font-size:2.6rem; }
+  .steps{ grid-template-columns:repeat(3, 1fr); }
+}
+
+/* ---------- Support strip + Donate chooser ---------- */
+/* Appears on the homepage's intro slide and at the foot of the Support Us
+   page. One component, two hosts -- see js/support.js. */
+.support-strip{
+  margin-top:34px;
+  padding-top:26px;
+  border-top:1px solid var(--hairline);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:14px;
+  max-width:420px;
+  margin-left:auto;
+  margin-right:auto;
+}
+.support-strip-line{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.88rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  margin:0;
+  text-align:center;
+}
+/* Shown only if sandbox links ever reach the live domain -- see
+   liveConfigProblem(). Deliberately calm: the visitor did nothing wrong. */
+.support-strip-note{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  opacity:0.75;
+  margin:0;
+  text-align:center;
+}
+.support-strip-actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+.support-donate-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 20px;
+  border-radius:999px;
+  font-family:var(--sans);
+  font-size:0.85rem;
+  font-weight:500;
+  cursor:pointer;
+}
+.support-card-icon svg{ width:16px; height:16px; display:block; }
+
+.support-dialog{
+  position:fixed; inset:0;
+  z-index:400;              /* above the lightbox (100) and storyline mode (250) */
+  background:rgba(8,7,6,0.72);
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.2s ease;
+}
+.support-dialog.open{ opacity:1; pointer-events:auto; }
+.support-dialog-inner{
+  position:relative;
+  background:var(--surface);
+  border:1px solid var(--hairline);
+  border-radius:16px;
+  padding:30px 28px 24px;
+  width:100%;
+  max-width:420px;
+  max-height:90vh;
+  overflow-y:auto;
+  text-align:left;
+}
+.support-dialog-close{
+  position:absolute;
+  top:14px; right:14px;
+  background:none;
+  border:none;
+  color:var(--ink-soft);
+  font-size:1.5rem;
+  line-height:1;
+  cursor:pointer;
+  padding:4px 8px;
+}
+.support-dialog-close:hover{ color:var(--text); }
+.support-dialog-title{
+  font-family:var(--serif);
+  font-weight:500;
+  font-size:1.5rem;
+  margin:0 0 8px;
+  color:var(--text);
+}
+.support-dialog-body{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.88rem;
+  line-height:1.55;
+  color:var(--ink-soft);
+  margin:0 0 22px;
+}
+.support-group{ margin-bottom:20px; }
+.support-group-label{
+  font-family:var(--sans);
+  font-size:0.68rem;
+  font-weight:600;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--gold-soft);
+  margin:0 0 10px;
+}
+.support-once{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:14px 16px;
+  border:1px solid var(--hairline);
+  border-radius:12px;
+  font-family:var(--sans);
+  font-size:0.9rem;
+  color:var(--text);
+  text-decoration:none;
+  transition:border-color 0.2s ease, background-color 0.2s ease;
+}
+.support-once:hover{ border-color:var(--gold); background:var(--surface-deep); }
+.support-once .link-arrow{ transition:transform 0.15s ease; color:var(--gold-soft); }
+.support-once:hover .link-arrow{ transform:translateX(3px); }
+
+/* Three across on any sane width; they wrap rather than shrink to unreadable. */
+.support-tiers{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
+.support-tier{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:2px;
+  padding:14px 6px;
+  border:1px solid var(--hairline);
+  border-radius:12px;
+  text-decoration:none;
+  transition:border-color 0.2s ease, background-color 0.2s ease;
+}
+.support-tier:hover{ border-color:var(--gold); background:var(--surface-deep); }
+.support-tier-amount{
+  font-family:var(--sans);
+  font-size:1rem;
+  font-weight:600;
+  color:var(--text);
+  font-variant-numeric:tabular-nums;
+}
+.support-tier-sub{
+  font-family:var(--sans);
+  font-size:0.68rem;
+  color:var(--ink-soft);
+  white-space:nowrap;
+}
+.support-dialog-note{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.74rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  opacity:0.85;
+  margin:18px 0 0;
+  padding-top:14px;
+  border-top:1px solid var(--hairline);
+}
+.support-once:focus-visible,
+.support-tier:focus-visible,
+.support-donate-btn:focus-visible{
+  outline:2px solid var(--gold-soft);
+  outline-offset:3px;
+}
+@media (max-width: 380px){
+  .support-tiers{ grid-template-columns:1fr; }
+}
+@media (prefers-reduced-motion: reduce){
+  .support-dialog, .support-once, .support-tier,
+  .support-once .link-arrow{ transition:none; }
+}
+
+/* Named once instead of repeated as an inline style on every <p>. */
+.about-body{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.94rem;
+  line-height:1.7;
+  color:var(--ink-soft);
+  margin:0 0 16px;
+}
+.about-body:last-child{ margin-bottom:0; }
+.about-list{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.94rem;
+  line-height:1.7;
+  color:var(--ink-soft);
+  margin:0 0 16px;
+  padding-left:20px;
+}
+.about-list li{ margin-bottom:14px; }
+.about-list li:last-child{ margin-bottom:0; }
+.about-list strong{ color:var(--text); font-weight:600; }
+/* Inline links in body copy. The About page leans on these more than any other
+   page -- terms, support and submit all appear mid-sentence -- so they need to
+   read as links without shouting over the prose. */
+.about-list a,
+.about-body a{
+  color:var(--gold-soft);
+  text-decoration:underline;
+  text-underline-offset:3px;
+  text-decoration-color:rgba(203,184,136,0.45);
+  transition:color 0.2s ease, text-decoration-color 0.2s ease;
+}
+.about-list a:hover,
+.about-body a:hover{ color:#fff; text-decoration-color:rgba(255,255,255,0.6); }
+@media (prefers-reduced-motion: reduce){
+  .about-list a, .about-body a{ transition:none; }
+}
+
+/* .meta-license-link: moved to css/components/tranquilo-detail-modal.css */
+
+/* Legal pages: headings sit closer to their own text than the 56px section
+   rhythm allows -- a numbered clause and its body are one unit. */
+.legal-body .mkt-h2{ margin-top:38px; margin-bottom:12px; }
+.legal-body .mkt-h2:first-child{ margin-top:0; }
+
+/* Clause numbers are generated (a CSS counter), not typed -- a gated clause
+   (e.g. Donations behind [data-donations]) would otherwise leave a numbering
+   hole. Scoped to `.numbered`: privacy.html shares .legal-body but its
+   headings stay deliberately unnumbered. */
+.legal-body.numbered{ counter-reset: legal-clause; }
+.legal-body.numbered .mkt-h2::before{
+  counter-increment: legal-clause;
+  content: counter(legal-clause) ". ";
+}
+.legal-meta{
+  font-family:var(--sans);
+  font-size:0.78rem;
+  letter-spacing:0.04em;
+  color:var(--ink-soft);
+  opacity:0.75;
+  margin:0 0 18px;
+}
+
+/* ---------- Logo ---------- */
+/* The flower cropped out of the full lockup, beside the wordmark. Violet:
+   the top bar is only a 55% scrim, so white vanishes over a pale painting
+   and the original blue measured 2.4:1 against the background -- violet
+   held on both. */
+.wordmark{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+}
+.wordmark-mark{
+  height:30px;
+  width:auto;
+  display:block;
+  flex:none;
+}
+/* Below ~30px the flower's interior detail starts to close up, so it shrinks
+   only slightly on narrow screens rather than scaling with the text. */
+@media (max-width: 420px){
+  .wordmark-mark{ height:26px; }
+}
+
+/* The lockup on the intro slide. Sized in rem so it tracks the type scale, and
+   capped so it never dominates the first thing a visitor sees. */
+.intro-lockup{
+  display:block;
+  width:var(--lockup-w);
+  height:auto;
+}
+
+/* The h1 stays in the document for search engines and screen readers -- the
+   lockup is an image, and "A calmer way to scroll" is the page's actual
+   heading. Hiding it visually is not the same as deleting it. */
+.visually-hidden{
+  position:absolute;
+  width:1px; height:1px;
+  padding:0; margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+}
+
+/* The top bar keeps the mark and drops the word once you're looking at
+   art -- the name is said in full on the intro slide. Collapsed by width
+   and opacity rather than display:none so it reads as a movement, not a
+   flicker; the <a> keeps an aria-label regardless. */
+.topbar .wordmark span{
+  display:inline-block;
+  max-width:12ch;
+  overflow:hidden;
+  white-space:nowrap;
+  opacity:1;
+  transition:max-width 0.32s cubic-bezier(.2,.7,.3,1), opacity 0.2s ease;
+}
+.topbar.compact .wordmark span{
+  max-width:0;
+  opacity:0;
+}
+/* The gap would otherwise hold open a 9px space next to nothing. */
+.topbar.compact .wordmark{ gap:0; }
+
+@media (prefers-reduced-motion: reduce){
+  .topbar .wordmark span{ transition:none; }
+}
+
+/* The intro slide's content is centred in the viewport, but the top bar and the
+   category chips are fixed on top of it -- about 120px on a phone. Without this
+   the lockup sits directly under the chips. Desktop has the height to absorb
+   it; a phone does not. */
+@media (max-width: 600px){
+  /* Must CLEAR the top bar (fixed, ~108px with the chips row, takes no
+     layout space) and the fixed scroll cue at the bottom -- both can
+     overlap the content otherwise. */
+  .slide.intro{ padding-top:132px; padding-bottom:76px; }
+}
+/* Short viewports (keyed on height, the axis that runs out) need more
+   padding and less content-height to fit inside it. Below ~700px the slide
+   is allowed to scroll rather than shrink to unreadable -- min-height:100svh
+   still fills the screen and still snaps, just taller when it needs to be.
+   The scroll cue (position:fixed) hides here too, since a page that
+   visibly continues past the fold doesn't need to be told it scrolls. */
+@media (max-height: 700px){
+  .slide.intro{
+    height:auto;
+    min-height:100svh;
+    padding-top:120px;
+    padding-bottom:40px;
+  }
+  .hint{ display:none; }
+  .intro-lockup-wrap{ --lockup-w:min(74px, 20vw); gap:8px; }
+  .slide.intro p{ font-size:0.85rem; }
+}
+
+/* One more step down for 700-760px tall, so the slide still fits one
+   screen rather than scrolling a few pixels and fighting scroll-snap. */
+@media (max-height: 760px){
+  .slide.intro{ padding-top:120px; padding-bottom:70px; }
+  .intro-lockup-wrap{ --lockup-w:min(78px, 22vw); }
+  .slide.intro p{ font-size:0.85rem; }
+  .intro-links{ margin-top:22px; }
+  .support-strip{ margin-top:16px; padding-top:14px; }
+}
+
+@media (max-height: 800px){
+  .intro-lockup-wrap{ --lockup-w:min(88px, 24vw); gap:calc(var(--lockup-w) * 0.16); }
+  .slide.intro p{ font-size:0.9rem; }
+  .intro-rule{ margin:18px auto; }
+  .support-strip{ margin-top:22px; padding-top:18px; gap:10px; }
+}
+
+/* The mark sits over whatever painting is behind the bar, and the 55% scrim
+   only does so much on a pale one. A soft dark shadow gives it an edge to
+   hold on a light background, costing nothing on a dark one. */
+.topbar .wordmark-mark{
+  /* Two tight shadows, not one soft one: a blurred shadow barely lifts a
+     thin outline off a pale painting, a doubled 1px hard edge draws an
+     actual keyline around the strokes. */
+  filter:drop-shadow(0 0 1px rgba(0,0,0,0.9)) drop-shadow(0 0 1px rgba(0,0,0,0.9));
+}
+
+/* Top-bar wordmark, matching the lockup's treatment. All caps, truncated to
+   TRANQUILO (the lockup itself says TRANQUILO.ART in full).
+   --wordmark-track is derived from the lockup SVG's own glyph spacing, kept
+   as a variable so it can be re-tuned once compared directly. */
+:root{ --wordmark-track:0.2em; }
+
+.topbar .wordmark span{
+  font-family:var(--wordmark-font);
+  text-transform:uppercase;
+  letter-spacing:var(--wordmark-track);
+  font-size:1.02rem;
+  font-weight:500;
+  /* Tracking adds a trailing space the eye reads as a gap; pulled back to
+     keep the word optically centred. */
+  margin-right:calc(var(--wordmark-track) * -1);
+  text-shadow:0 1px 3px rgba(0,0,0,0.55);
+}
+
+/* Intro lockup: icon plus live text rather than one flat image (the words
+   used to be outlines in the SVG -- no selectable text, and drift-prone
+   against the font once it was self-hosted). */
+.intro-lockup-wrap{
+  /* Every measurement below is a ratio taken from the original artwork, so
+     the icon, gap and wordmark all scale together and keep the designer's
+     proportions. */
+  --lockup-w:min(128px, 33vw);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:calc(var(--lockup-w) * 0.175);
+  margin:0 auto 20px;
+}
+.intro-lockup-word{
+  font-family:var(--wordmark-font);
+  font-size:calc(var(--lockup-w) * 0.196);
+  font-weight:400;
+  text-transform:uppercase;
+  letter-spacing:var(--wordmark-track);
+  margin-right:calc(var(--wordmark-track) * -1);
+  color:var(--text);
+  line-height:1;
+}
+
+/* ---------- Chips overflow menu ---------- */
+/* Chips that do not fit move in here rather than off the edge of a row a mouse
+   cannot scroll. Wrapping the row was tried first and reverted -- it grew the
+   header, and .art-frame clears the bar with a static padding, so a chip
+   started intercepting clicks meant for the artwork. This keeps the row one
+   line tall, which is the constraint that matters. */
+.chip-more[hidden]{ display:none; }
+.chip-more::after{
+  content:"";
+  display:inline-block;
+  margin-left:6px;
+  border:3px solid transparent;
+  border-top-color:currentColor;
+  transform:translateY(2px);
+}
+
+#chipsMoreMenu{
+  position:absolute;
+  /* top/left are set in JS at open time, anchored to the More button -- see
+     positionChipsMenu(). These are only the pre-measurement fallback. */
+  top:100%;
+  left:0;
+  z-index:21;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:4px;
+  padding:8px;
+  min-width:200px;
+  max-height:min(60vh, 420px);
+  overflow-y:auto;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.18);
+  background:rgba(10,9,8,0.96);
+  backdrop-filter: blur(8px);
+  box-shadow:0 18px 40px rgba(0,0,0,0.45);
+}
+#chipsMoreMenu[hidden]{ display:none; }
+/* Left-aligned and full width in here: this is a list to read down, not a row
+   to scan across, so the pill shape the row uses would be the wrong affordance.
+
+   The chip's own border and fill are dropped as well. Inside a panel that
+   already has a border, they read as a button drawn inside a box -- two
+   outlines saying the same thing. The border stays in the box model as
+   transparent rather than being removed, so hovering does not shift the row by
+   a pixel. */
+#chipsMoreMenu .chip{
+  width:100%;
+  text-align:left;
+  border-radius:8px;
+  white-space:nowrap;
+  border-color:transparent;
+  background:transparent;
+  backdrop-filter:none;
+}
+#chipsMoreMenu .chip:hover{
+  background:rgba(255,255,255,0.08);
+  border-color:transparent;
+  color:#fff;
+}
+/* Defensive: reflowChips() never parks the active chip here, but if that
+   changes the current filter should still be legible. */
+#chipsMoreMenu .chip.active{
+  background:var(--gold);
+  border-color:var(--gold);
+}
+
+/* The bookmark is the only route into the collection, so it carries the
+   count the old "My Collection (n)" chip used to show. */
+.collection-toggle{
+  position:relative;
+}
+/* Nudged up from centre to sit in the bookmark's flag, not over the notch. */
+.collection-count{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -62%);
+  font-family:var(--sans);
+  font-size:0.55rem;
+  font-weight:700;
+  line-height:1;
+  letter-spacing:0;
+  font-variant-numeric:tabular-nums;
+  pointer-events:none;
+  /* The bookmark's interior is transparent, so this number sits directly on
+     whatever painting is behind the bar -- white on a pale one is invisible,
+     which is exactly how it first shipped. Same keyline the mark uses. */
+  text-shadow:0 0 2px rgba(0,0,0,0.95), 0 0 1px rgba(0,0,0,0.95);
+}
+/* Empty is a state, not a zero. Nothing saved means nothing to say. */
+.collection-toggle:not(.has-items) .collection-count{ display:none; }
+
+/* Active matches an active category chip exactly, because it is doing the same
+   job -- filtering the feed -- and looked like a different kind of control. */
+.collection-toggle.active .collection-count{ text-shadow:none; }
+.collection-toggle.active{
+  background:var(--gold);
+  color:#fff;
+  border-color:var(--gold);
+  font-weight:500;
+}
+
+/* Must come AFTER .intro-lockup-wrap's own --lockup-w: same specificity, so
+   source order decides which value wins. */
+@media (max-width: 600px){
+  .intro-lockup-wrap{ --lockup-w:min(112px, 29vw); }
+}
+
+/* Marketing header wordmark, same brand face as the app's. No <span> to
+   collapse, so the rules hang off .wordmark itself. */
+.mkt-nav .wordmark{
+  font-family:var(--wordmark-font);
+  font-size:1.05rem;
+  font-weight:400;
+  text-transform:uppercase;
+  letter-spacing:var(--wordmark-track);
+  margin-right:calc(var(--wordmark-track) * -1);
+}
+
+/* Header dressing: moved to css/components/tranquilo-shelves-mode.css */
+
+/* .lightbox-upgrading/.lightbox-spinner: moved to css/components/tranquilo-lightbox.css */
+
+/* .shelf-section: moved to css/components/tranquilo-shelves-mode.css */
+
+/* Pre-launch state: a line of text, not a disabled button -- a button that
+   can't be pressed invites a press and then refuses it. */
+.support-strip-soon{
+  font-family:var(--sans);
+  font-size:0.76rem;
+  font-weight:500;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--gold-soft);
+  margin:0;
+  padding:7px 16px;
+  border:1px solid rgba(94,234,212,0.28);
+  border-radius:999px;
+}
+
+/* The marketing nav doesn't fit on a phone at all -- measured overflow on
+   every common width. Stacked instead: wordmark on its own line, links
+   centred and wrapping beneath (wrapping, not scrolling -- four short
+   links read as a menu, not a list worth a horizontal scroller). */
+@media (max-width: 620px){
+  .mkt-nav{
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+    padding:14px 16px;
+  }
+  .mkt-nav .wordmark{ justify-content:center; }
+  .mkt-nav-links{
+    width:100%;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:2px 6px;
+  }
+  .mkt-nav-links a{ padding:5px 9px; }
+}
+
+/* The fourth top-bar icon fell off a narrow phone -- the wordmark's own
+   growth (icon + letterspaced caps) took its space. Same collapse the bar
+   already does on scroll, just also triggered by narrow width. Placed
+   after .topbar.compact so it wins in both directions. */
+@media (max-width: 400px){
+  .topbar .wordmark span{ max-width:0; opacity:0; }
+  .topbar .wordmark{ gap:0; }
+  .topbar-icons{ gap:12px; }
+}
+
+/* ---------- Donations gate ----------
+
+   Donations are OPEN. The markup still carries data-donations attributes
+   throughout on purpose: closing donations again means re-adding one rule
+   and two redirects, not rewriting six static pages.
+
+   TO CLOSE DONATIONS AGAIN, all three, or the gate is half-open:
+
+     1. restore the rule            display:none !important on data-donations
+     2. restore two redirects       vercel.json, /pages/support.html and
+                                    /pages/thank-you.html, 307 NOT 308
+     3. set COMING_SOON = true      js/support.js
+
+   tests/donations-flag.test.js holds 1 and 2 together and passes in BOTH
+   states, so a half-flip fails a test rather than shipping.
+
+     307, not 308 -- a permanent redirect stays cached in visitors' browsers
+     long after the gate lifts, with no way to undo it from our side.
+
+     No robots.txt Disallow -- a crawler has to fetch the page and see the
+     redirect to remove it from the index; Disallow just freezes it in place.
+
+   Documented here rather than in vercel.json because JSON rejects unknown
+   keys -- a `_comment` key there fails the deploy at schema validation.
+
+   `!important` is load-bearing: [data-donations] scores (0,1,0) and loses
+   to .mkt-nav-links a at (0,1,1). Anything restoring the gate needs it. */
+
+/* ---------- AI-drafted disclosure ----------
+
+   Subtle by design -- this sits beside artwork, which is what people came
+   for; a badge nobody can ignore reads as a warning, not a note.
+
+   A question mark, not the letters "AI": beside "Did you know?" the letters
+   read as a label ON the caption rather than a control that explains it. */
+.ai-badge{
+  appearance:none;
+  background:none;
+  border:0;
+  padding:0 0 0 6px;
+  line-height:1;
+  color:var(--ink-soft);
+  opacity:0.45;
+  cursor:pointer;
+  vertical-align:-0.12em;
+  transition:opacity 0.15s ease;
+}
+.ai-badge svg{ width:12px; height:12px; display:block; }
+.ai-badge:hover,
+.ai-badge[aria-expanded="true"]{ opacity:0.9; }
+/* Keyboard users get a real ring -- an opacity shift isn't a focus indicator. */
+.ai-badge:focus-visible{
+  opacity:1;
+  outline:2px solid var(--gold-soft);
+  outline-offset:3px;
+  border-radius:50%;
+}
+
+/* Hidden by CSS rather than the `hidden` attribute, because only a stylesheet
+   knows whether this device can hover. The handler owns aria-expanded; these
+   rules own visibility. */
+.ai-badge-note{
+  display:none;
+  margin:6px 0 0;
+  font-family:var(--sans);
+  font-size:0.78rem;
+  font-weight:400;
+  line-height:1.55;
+  letter-spacing:0;
+  text-transform:none;
+  /* The badge is subtle; the note isn't -- quiet until asked for, legible
+     once asked. A test pins its contrast ratio against WCAG AA. */
+  color:var(--text);
+  opacity:1;
+}
+/* border-bottom:none is load-bearing: `.detail-modal-inner a` gives every
+   link a gold border-bottom underline, and this rule (same specificity)
+   only wins on properties it actually declares -- text-decoration flips to
+   underline, the border stays. Kept as text-decoration since this note
+   inherits a muted colour and a gold rule under grey text looks wrong. */
+.ai-badge-note a{ color:inherit; text-decoration:underline; border-bottom:none; }
+
+/* Tap route, everywhere: expands in flow, since a floating tooltip on a
+   narrow screen would sit over the very sentence it describes. */
+.ai-badge[aria-expanded="true"] + .ai-badge-note{ display:block; }
+
+/* Pointer route, only where hovering is real. Keyed on hover/pointer media
+   features rather than width -- a touchscreen laptop is wide and
+   hover-less, a narrow desktop window is neither. */
+@media (hover: hover) and (pointer: fine){
+  /* .fact-label{ position:relative; } moved to css/components/tranquilo-detail-modal.css */
+  .ai-badge-note{
+    position:absolute;
+    left:0;
+    top:calc(100% + 8px);
+    z-index:5;
+    width:min(320px, 92%);
+    margin:0;
+    padding:10px 12px;
+    background:var(--surface);
+    border:1px solid var(--hairline);
+    border-radius:8px;
+    box-shadow:0 12px 28px -12px rgba(0,0,0,0.7);
+  }
+  /* Focus as well as hover: a keyboard can't hover. Click still works too. */
+  .ai-badge:hover + .ai-badge-note,
+  .ai-badge:focus-visible + .ai-badge-note{ display:block; }
+
+  /* On the storyline intro page the note pins to the viewport instead of
+     anchoring under the badge: the intro page centres its content and
+     doesn't scroll, so an anchored note ran off the bottom and clipped
+     mid-sentence. position:fixed can't overflow or displace anything. */
+  /* Hover-reveal is wrong for a detached, viewport-pinned panel: a mouse
+     user can't reach a link inside it without leaving the badge and
+     dismissing it first. Click to toggle, focus for keyboards, no hover. */
+  .storyline-intro-page .ai-badge:hover + .ai-badge-note{ display:none; }
+  .storyline-intro-page .ai-badge:focus-visible + .ai-badge-note,
+  .storyline-intro-page .ai-badge[aria-expanded="true"] + .ai-badge-note{ display:block; }
+
+  .storyline-intro-page .ai-badge-note{
+    position:fixed;
+    left:50%;
+    transform:translateX(-50%);
+    top:auto;
+    bottom:64px;
+    width:min(420px, calc(100% - 56px));
+    max-height:45vh;
+    overflow-y:auto;
+  }
+}
