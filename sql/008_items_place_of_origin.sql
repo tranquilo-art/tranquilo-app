@@ -1,0 +1,37 @@
+-- The object's own place, kept as its own fact.
+--
+-- Run once by hand in Neon's web SQL editor, same convention as
+-- sql/003_items_harmonization.sql. Safe to re-run.
+--
+-- ---------------------------------------------------------------------------
+-- Why a separate column rather than reusing `bio`
+-- ---------------------------------------------------------------------------
+-- `bio` already means different things per source: the artist's nationality
+-- and dates for Met/Cleveland/Smithsonian, a place for Europeana/Commons.
+-- classify_region() reads it for every source, so `region_primary` is built
+-- from two different facts wearing one name, with nothing recording which.
+--
+-- Writing a third meaning into `bio` would deepen exactly that. The product
+-- rule: "I don't want to have consistent labels everywhere, I want to show
+-- what we know to be true when we know it." A row cannot say what it knows
+-- unless the field says which fact it holds.
+--
+-- So: `place_of_origin` is where the OBJECT came from, set only where a source
+-- genuinely records it, and never inferred from an artist's nationality --
+-- which is a different claim about a different subject. A French designer's
+-- work made in England originates in England.
+--
+-- Populated today by smithsonian.py from indexedStructured.place /
+-- geoLocation. Cooper Hewitt is largely anonymous design objects, so artist
+-- nationality resolved a region for 1 record in 6 while place resolved 6 in 6;
+-- before this, 68% of a pull quarantined on schema.region_unresolved and the
+-- run-level guard aborted it.
+
+ALTER TABLE items ADD COLUMN IF NOT EXISTS place_of_origin TEXT;
+
+-- ---------------------------------------------------------------------------
+-- Verify (optional)
+-- ---------------------------------------------------------------------------
+-- SELECT source, count(*) FILTER (WHERE place_of_origin IS NOT NULL) AS with_place,
+--        count(*) AS total
+-- FROM items GROUP BY 1 ORDER BY 2 DESC;

@@ -1,0 +1,47 @@
+/* Collect-upsell toast's own box. .upsell-cta itself is shared with the export modal and stays in css/style.css.
+   Rules shared with other components stay in css/style.css. */
+
+/* ---------- Upsell toast (collect -> Tranquilo Pro upgrade) ---------- */
+.upsell-toast{
+  position:fixed;
+  left:50%;
+  bottom:calc(96px + env(safe-area-inset-bottom));
+  transform:translateX(-50%) translateY(12px);
+  z-index:160;
+  width:min(360px, 90vw);
+  background:rgba(20,19,17,0.97);
+  backdrop-filter: blur(6px);
+  color:#f2efe6;
+  border:1px solid rgba(242,239,230,0.18);
+  border-radius:14px;
+  padding:18px 44px 18px 20px;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.3s ease, transform 0.3s ease;
+}
+.upsell-toast.show{
+  opacity:1;
+  pointer-events:auto;
+  transform:translateX(-50%) translateY(0);
+}
+.upsell-toast p{
+  margin:0 0 14px;
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.86rem;
+  line-height:1.5;
+  color:rgba(242,239,230,0.9);
+}
+
+.upsell-close{
+  position:absolute;
+  top:10px; right:10px;
+  background:none;
+  border:none;
+  color:rgba(242,239,230,0.55);
+  font-size:1.2rem;
+  line-height:1;
+  cursor:pointer;
+  padding:6px;
+}
+.upsell-close:hover{ color:#fff; }

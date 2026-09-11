@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Tranquilo — A calmer way to discover art</title>
+<meta name="description" content="A calm, curated way to browse public-domain art from the world's great museums — one piece at a time. No accounts, no ads, no algorithm.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="author" href="humans.txt">
+<!-- HEAD:SHARED -->
+<link rel="stylesheet" href="css/components/tranquilo-lightbox.css">
+<link rel="stylesheet" href="css/components/tranquilo-detail-modal.css">
+<link rel="stylesheet" href="css/components/tranquilo-storyline-mode.css">
+<link rel="stylesheet" href="css/components/tranquilo-set-of-works-mode.css">
+<link rel="stylesheet" href="css/components/tranquilo-shelves-mode.css">
+<link rel="stylesheet" href="css/components/tranquilo-export-modal.css">
+<link rel="stylesheet" href="css/components/tranquilo-upsell-toast.css">
+</head>
+<body>
+
+<tranquilo-topbar></tranquilo-topbar>
+
+<tranquilo-music-toggle></tranquilo-music-toggle>
+
+<tranquilo-search-bar></tranquilo-search-bar>
+
+<tranquilo-feed id="feed" class="feed">
+  <div class="feed-loading"><div class="feed-loading-wordmark">Tranquilo</div></div>
+</tranquilo-feed>
+
+<tranquilo-lightbox class="lightbox" id="lightbox" aria-hidden="true"></tranquilo-lightbox>
+
+<tranquilo-detail-modal class="detail-modal" id="detailModal" aria-hidden="true"></tranquilo-detail-modal>
+
+<div class="hint" id="scrollHint">scroll to explore</div>
+
+<div class="toast" id="toast"></div>
+
+<tranquilo-upsell-toast class="upsell-toast" id="upsellToast" role="status"></tranquilo-upsell-toast>
+
+<tranquilo-storyline-mode class="storyline-mode" id="storylineMode" aria-hidden="true"></tranquilo-storyline-mode>
+
+<tranquilo-set-of-works-mode class="set-of-works-mode" id="setOfWorksMode" aria-hidden="true"></tranquilo-set-of-works-mode>
+
+<tranquilo-shelves-mode class="shelves-mode" id="shelvesMode" aria-hidden="true"></tranquilo-shelves-mode>
+
+<tranquilo-export-modal class="export-modal" id="exportModal" aria-hidden="true"></tranquilo-export-modal>
+
+<script type="module" src="src/app.ts"></script>
+</body>
+</html>

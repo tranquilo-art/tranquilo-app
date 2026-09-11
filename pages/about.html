@@ -1,0 +1,80 @@
+<extends src="_base.html">
+<block name="head" type="append">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>About — Tranquilo</title>
+<meta name="description" content="Why Tranquilo exists, how it works, and what it's trying to be.">
+</block>
+
+<block name="main">
+  <main class="mkt-main narrow">
+
+    <section class="mkt-section">
+      <div class="mkt-eyebrow">About Tranquilo</div>
+      <h1 class="mkt-h1">Why Tranquilo exists</h1>
+      <p class="mkt-lead">Hey! I'm Mel, the creator of Tranquilo.art, an app that lets you browse public domain art in your browser for free. It's privacy-friendly and ad-free.</p>
+
+      <p class="about-body">The origin of Tranquilo is personal for me. Not too long ago, I stepped back from corporate product &amp; design to take care of my health. While focusing on rest, I noticed that scrolling through the usual apps was more stressful than enjoyable.</p>
+
+      <p class="about-body">As I began to gain energy, I prototyped an app so that I could rest in bed and browse art from The Met. It started with about 40 works of art. As I used it during my downtime, I began discovering fun stories behind the artwork and thinking about how to bring the joy of discovering art to other people. Before I knew it, suggestions from friends and beyond began trickling in. I have been iterating ever since. Now it's grown to over a thousand works across a growing set of institutions, and I am genuinely excited about each new set of works that are brought into our catalog.</p>
+
+      <p class="about-body">A couple of things I'm focused on:</p>
+
+      <ul class="about-list">
+        <li>
+          <strong>An honest product</strong> that doesn't extract from users. I'm aiming to make Tranquilo sustainable, not growth-first. I'll continue to support a robust, free, public product. <a href="terms.html">No ads. No cookies. No tracking.</a><span data-donations> You can <a data-donations href="support.html">donate here</a> to help keep Tranquilo free and privacy-friendly.</span>
+        </li>
+        <li>
+          <strong>Focusing on public domain</strong> (and equivalents). There's so much fabulous open access art out there waiting to be appreciated. I care a great deal about making it easy to find and browse these works.
+        </li>
+      </ul>
+
+      <p class="about-body">It's still early stage. I hope you'll give me feedback and join me for the journey.</p>
+    </section>
+
+    <section class="mkt-section">
+      <div class="mkt-callout">
+        <div class="icon-chip" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21l2-7.5L2 9h7z"></path></svg>
+        </div>
+        <p><strong style="color:var(--text);">Openly licensed, always.</strong> Every piece on Tranquilo is public domain or otherwise openly licensed (CC0, CC-BY, and equivalents). If you steward a collection under one of those licenses, I'd like to hear from you &mdash; see <a href="submit.html" style="color:var(--gold-soft);">submission eligibility</a>.</p>
+      </div>
+    </section>
+
+    <section class="mkt-section">
+      <h2 class="mkt-h2">Frequently asked questions</h2>
+      <div class="faq-list">
+        <div class="faq-item">
+          <h3>Is Tranquilo free?</h3>
+          <p>Yes. Browsing and collecting are free, with your collection saved locally in your browser.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What license types are accepted for submitted collections?</h3>
+          <p>CC0, CC-BY, CC-BY-SA, public domain, or an equivalent open license for both the images and their metadata. I don't accept rights-restricted or unlicensed material &mdash; see the full eligibility statement on the <a href="submit.html" style="color:var(--gold-soft);">submission page</a>.</p>
+        </div>
+        <div class="faq-item">
+          <h3>I think I see a bug. How do I report it?</h3>
+          <p>Even though I'm testing, you might find some bugs that escape my visibility. The <a href="feedback.html" style="color:var(--gold-soft);">feedback form</a> is the best way to report one &mdash; it notes which page you came from automatically. Please include the device you were using (laptop or phone, and the model) and your browser and version.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="mkt-section">
+      <h2 class="mkt-h2">Stay in the loop</h2>
+      <p class="about-body">Get a note when new features ship, or anything else worth knowing about. No spam, unsubscribe any time.</p>
+      <form class="mkt-form" id="notifyForm" novalidate style="max-width:360px; margin-top:16px;">
+        <div class="field" data-field="notifyEmail">
+          <label for="notifyEmail">Email</label>
+          <input type="email" id="notifyEmail" name="notifyEmail" placeholder="you@example.com">
+          <div class="error-msg">Please enter a valid email address.</div>
+        </div>
+        <button class="btn-primary block" type="submit" id="notifySubmitBtn">Notify me</button>
+        <p class="submit-error-msg" id="notifyErrorMsg"></p>
+      </form>
+      <p class="form-note" id="notifySuccess" style="display:none;">You're on the list &mdash; we'll be in touch.</p>
+    </section>
+
+  </main>
+</block>
+
+<block name="script"><script type="module" src="../src/pages/about.ts"></script></block>
+</extends>

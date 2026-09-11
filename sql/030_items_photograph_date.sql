@@ -1,0 +1,42 @@
+-- Some records date the photograph, not the object it depicts.
+--
+-- Run once by hand in Neon's web SQL editor, same convention as
+-- sql/014_items_department.sql. Safe to re-run.
+--
+-- ---------------------------------------------------------------------------
+-- What went wrong without it
+-- ---------------------------------------------------------------------------
+-- Sweden's Army Museum (Europeana provider 91616) supplies two record types
+-- under one credit: `arme_object_*` (real artifacts -- paintings, epaulettes,
+-- a telephone apparatus) and `arme_photo_*` (imaging records, all titled
+-- "Imaging in gouache depicting [trophy] taken by the Swedish army"). The
+-- object records correctly carry no date at all. The photo records carry a
+-- date -- but it is the date the 2006 imaging project ran (331 of 336 share
+-- the literal value "2006-01-01/2006-01-01"), not when any trophy was made.
+-- Treating it as the object's `date` would classify centuries-old military
+-- trophies as 21st century / Contemporary -- wrong and confident, worse than
+-- having no date.
+--
+-- ---------------------------------------------------------------------------
+-- What it is allowed to conclude
+-- ---------------------------------------------------------------------------
+-- Nothing about the object's own age. It labels a different, true fact (when
+-- the photograph documenting it was taken) instead of overloading `date` with
+-- a claim the record never made. `date`/`century`/`timeframe` stay unset for
+-- these rows, exactly as if no date were present, since none of the object's
+-- own is.
+--
+-- ---------------------------------------------------------------------------
+-- Existing rows
+-- ---------------------------------------------------------------------------
+-- Left NULL until python/scripts/backfill_army_museum_photograph_date.py
+-- moves the existing `arme_photo_*` rows' misfiled `date` value over.
+
+ALTER TABLE items ADD COLUMN IF NOT EXISTS photograph_date TEXT;
+
+-- ---------------------------------------------------------------------------
+-- Verify (optional)
+-- ---------------------------------------------------------------------------
+-- SELECT count(*) FILTER (WHERE photograph_date IS NOT NULL) AS with_photo_date,
+--        count(*) AS total
+-- FROM items WHERE source = 'europeana' AND credit = 'Army Museum';

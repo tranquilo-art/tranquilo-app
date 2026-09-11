@@ -1,0 +1,59 @@
+{
+  "ignoreCommand": "! git log -1 --pretty=oneline | grep -q '\\[deploy\\]'",
+  "buildCommand": "bun run build",
+  "outputDirectory": "dist",
+  "devCommand": "bun run build && bun x vite preview --port $PORT",
+  "rewrites": [
+    {
+      "source": "/v/:slug",
+      "destination": "/api/v/:slug"
+    },
+    {
+      "source": "/s/:id",
+      "destination": "/api/v/s-:id"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/og/:slug.png",
+      "destination": "/api/og/:slug"
+    },
+    {
+      "source": "/img/:source/:id/:tier",
+      "destination": "/api/img/:source/:id/:tier"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron?job=analytics-report&days=30&label=Monthly",
+      "schedule": "7 9 1 * *"
+    },
+    {
+      "path": "/api/cron?job=analytics-report&days=92&label=Quarterly",
+      "schedule": "11 9 1 1,4,7,10 *"
+    },
+    {
+      "path": "/api/cron?job=db-backup",
+      "schedule": "27 7 * * *"
+    },
+    {
+      "path": "/api/cron?job=db-backup&task=reshuffle",
+      "schedule": "41 3 * * *"
+    },
+    {
+      "path": "/api/cron?job=health-check",
+      "schedule": "13 8 * * *"
+    },
+    {
+      "path": "/api/cron?job=vercel-deployment-cleanup&commit=1",
+      "schedule": "19 4 * * *"
+    }
+  ],
+  "functions": {
+    "api/v/[slug].ts": {
+      "includeFiles": "dist/index.html"
+    }
+  }
+}

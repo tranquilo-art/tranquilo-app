@@ -1,0 +1,19 @@
+/* Tranquilo design tokens -- colors, fonts. Loaded before every other
+   stylesheet, which reference these via var(--...).
+
+   --gold/--gold-soft keep their original names (now misleading -- they
+   point at the violet/teal accent pair, not gold) to minimize diff churn. */
+:root{
+  --ink: #0b0b12;          /* base dark background, everywhere */
+  --surface: #16161f;       /* elevated surface: modals, cards */
+  --surface-deep: #1c1c28;  /* deeper surface: inputs, fact-box, form fields */
+  --text: #f1f0f6;          /* primary light text on dark surfaces */
+  --ink-soft: #a5a2b3;       /* secondary/muted text */
+  --hairline: rgba(255,255,255,0.14);
+  --gold: #8b5cf6;           /* primary accent (violet) */
+  --gold-soft: #5eead4;      /* secondary accent (teal) */
+  --accent-deep: #7c3aed;    /* deeper violet, gradients/hover */
+  --serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --wordmark-font: 'Glacial Indifference', 'Work Sans', -apple-system, sans-serif;
+  --sans: 'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}

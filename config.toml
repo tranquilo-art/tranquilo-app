@@ -1,0 +1,104 @@
+# TypeScript-side tuning knobs -- one file for every value, not one per
+# tool (see CONVENTIONS.md's "config vs. content vs. structure" section).
+# Read exactly once, at BUILD time,
+# by scripts/generate-config.mts, which renders it into two generated,
+# gitignored files:
+#
+#   src/data/config.generated.ts  a classic-script global (TRANQUILO_CONFIG),
+#                                  compiled into js/config.generated.js by
+#                                  build-legacy-bridge.sh -- app.ts reads
+#                                  it the same way it reads SHELVES/
+#                                  MUSIC_BUCKETS.
+#   lib/config.generated.ts       a CJS module, required()'d by the /api
+#                                  and lib/ files below -- baked into each
+#                                  Vercel function's bundle at build time
+#                                  (buildCommand runs generate-config
+#                                  before Vercel traces requires), so the
+#                                  deployed function never reads this file
+#                                  or config.toml itself at request time.
+#
+# Both are build/dev-time inputs only, never read live -- the same
+# constraint every other TOML file in this repo already satisfies.
+# `bun run generate-config` regenerates both by hand if needed; `bun run
+# build`/`build:legacy-bridge`/`typecheck` all run it first automatically.
+
+[feed]
+# Matches api/items.ts's DEFAULT_LIMIT exactly, by construction rather than
+# by two people remembering to keep two numbers in sync -- see that file's
+# own comment on why it must, and src/app.ts's FEED_PAGE_SIZE for the
+# client half of the same number. It is also the window declusterOrder()
+# scans for a clean same-artist/same-category swap (src/logic/logic.ts) --
+# a page is the horizon now, not the whole catalogue.
+page_size = 60
+
+# How close to the end of the loaded shells the visitor gets before the
+# next page is requested. Comfortably more than the recycling window's own
+# radius, so the fetch is already in flight by the time those slides are
+# needed.
+prefetch_slides = 20
+
+[collection]
+# The Collect nudge fires on the Nth save, not on a clock -- see
+# src/app.ts's own comment on why a time-based gate was effectively
+# invisible. Tying it to collection size ties the prompt to earned
+# relevance instead.
+upsell_min_saved = 3
+
+[cache]
+# Bumped by hand to force a brand-new /api/items edge-cache key after a
+# direct-to-Postgres write that can't wait out the ordinary TTL -- see
+# api/items.ts's own comment on the Aug 7 2026 incident this exists for.
+bust_version = 1
+
+[img_cache_eviction]
+# Start evicting above this share of the soft cap; stop once back under the
+# low mark. The GAP between them is the point -- evicting to exactly the
+# high mark would put us one write away from evicting again, forever. See
+# lib/img-eviction.ts's own comment.
+high_water = 0.90
+low_water = 0.80
+
+# Per request. Small on purpose: a visitor is waiting, and eviction is not
+# their errand. Sustained pressure is handled by many requests each doing
+# a little, not by one request doing all of it.
+max_evictions_per_call = 3
+
+[img_cache_fetch_guard]
+# A claim is a lease, not a lock -- it must outlive a slow origin fetch but
+# not a dead function. See lib/img-fetch-guard.ts's own comment for why 30s
+# (20s origin timeout plus margin).
+claim_ttl_seconds = 30
+
+[img_visitor_rate_limit]
+# Per-IP token bucket on /api/img and /api/og -- see
+# lib/img-visitor-rate-limit.ts and sql/035_visitor_rate_state.sql. Set to
+# stop a single runaway client, not to throttle real browsing: the feed
+# prefetches prefetch_slides (20) images per page, and a fast scroller can
+# reasonably trigger several page loads in quick succession. 60 tokens
+# refilling at 1/sec (60/min sustained, bursting to 60) comfortably covers
+# that while still bounding one IP well below what an unthrottled script
+# could otherwise do. Unproven against real traffic -- retune from
+# visitor_fetch_state once there is data, same as the admission thresholds.
+capacity = 60
+refill_per_sec = 1
+
+[img_cache_alerts]
+# A handful of shed requests is ordinary noise (one slow origin, one
+# coalesced burst); this is about SUSTAINED shedding, which is what
+# distinguishes a broken cache from a busy one.
+shed_reason_min = 50
+# A source has to be genuinely in demand before an empty token bucket is a
+# problem worth alerting on. Below this it's idle, not starved.
+token_starvation_min_attempts = 20
+# Above the admission threshold by enough that a one-off cannot qualify,
+# and above the ordinary retry noise of a single visitor reloading.
+thrash_min_requests = 4
+# One thrashing key is an oddity; a cluster is a budget problem.
+thrash_min_keys = 10
+
+[source_health]
+# Asymmetric on purpose -- see lib/source-health.ts's own comment. Five
+# consecutive failures degrade a source; a single success clears it,
+# because wrongly leaving a source degraded suppresses a real alert later,
+# while wrongly calling one degraded only costs a spurious one now.
+degraded_after_consecutive_failures = 5

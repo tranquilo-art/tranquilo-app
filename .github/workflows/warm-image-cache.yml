@@ -1,0 +1,124 @@
+name: Warm image cache
+
+# NOT CURRENTLY SCHEDULED -- the `schedule` trigger below is commented
+# out, and nothing else fires this workflow automatically. Kept in the
+# repo, ready to enable, but dormant right now. See "Why this isn't
+# scheduled" for why, and lib/cron/warm-image-cache.ts's header -- also
+# dormant, for the same reason -- for the sibling Vercel Cron version of
+# this same idea.
+#
+# The actual, current tool for this job is the CLI:
+# `node scripts/warm_image_cache.mts --commit` (TRA-335). Run it by hand,
+# occasionally, as a backfill -- not on a standing schedule, here or on
+# Vercel.
+#
+# What this workflow WOULD do if enabled: run
+# scripts/warm_image_cache.mts unchanged on a schedule -- it already
+# writes straight to S3, bypassing the Vercel proxy entirely, so it would
+# spend GitHub Actions minutes and museum-origin requests, never Vercel
+# Fluid CPU or Fast Origin Transfer. Bounded per run (--limit) so a sudden
+# backlog can't turn one sweep into an hours-long run colliding with the
+# next trigger -- it picks up where it left off next time (the script's
+# own header explains why it's resumable). Commons is refused inside the
+# script itself (the standing Wikimedia hold) regardless of what runs
+# here.
+#
+# Requires the same repository secrets the other credentialed workflows
+# use (Settings -> Secrets and variables -> Actions), if it's ever
+# enabled: DATABASE_URL (already present for migrate-postgres.yml/
+# restore-from-backup.yml) plus S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID,
+# S3_SECRET_ACCESS_KEY, IMG_CDN_BASE_URL (add these if they are not
+# already there -- the same values Vercel's own project env vars use).
+#
+# ## Why this isn't scheduled
+#
+# Two separate reasons, at two separate times.
+#
+# Originally: this repo is currently private, with a limited, real
+# monthly Actions-minutes budget already mostly spent by test.yml's
+# suite -- a `schedule` trigger here would have competed for that budget
+# the moment it merged. That constraint lifts once the app repo goes
+# public (days away as of 2026-09-08, not months), and GitHub Actions
+# minutes stop being scarce for public repos.
+#
+# Reconsidered same-day, independent of that: TRA-336's ingest-time
+# caching already retries on its own (fetch_image_bytes()'s 6x backoff),
+# so once TRA-335 clears the current backlog, what either this workflow
+# or lib/cron/warm-image-cache.ts would be catching -- an ingest-time
+# write that failed despite those retries -- is rare enough that "run the
+# CLI occasionally when item_cache_status suggests something slipped
+# through" fits better than a standing schedule, public-repo minutes or
+# not. So: not just parked on a temporary constraint, genuinely not
+# needed as a recurring job right now. Revisit if that changes -- if the
+# trickle this would catch turns out to be bigger than expected.
+
+on:
+  # schedule:
+  #   - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: "Which tier to warm"
+        type: choice
+        options: [display, lightbox]
+        default: display
+      limit:
+        description: "Max items to warm this run"
+        type: number
+        default: 300
+
+# Never two sweeps at once -- each process paces itself against
+# host_fetch_state independently, so overlapping runs would spend a
+# museum's budget faster than either one alone intends to. Queue rather
+# than cancel: a run already in flight should finish, not be cut off
+# mid-item.
+concurrency:
+  group: warm-image-cache
+  cancel-in-progress: false
+
+jobs:
+  warm-display:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || inputs.tier == 'display'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.11"
+      - run: bun install --frozen-lockfile
+      - name: Warm display tier
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+          S3_REGION: ${{ secrets.S3_REGION }}
+          S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+          IMG_CDN_BASE_URL: ${{ secrets.IMG_CDN_BASE_URL }}
+        run: |
+          bun scripts/warm_image_cache.mts --commit --tier display \
+            --limit ${{ github.event_name == 'workflow_dispatch' && inputs.limit || 300 }}
+
+  warm-lightbox:
+    runs-on: ubuntu-latest
+    # Only on a manual run asking for it -- the scheduled sweep sticks to
+    # display, the tier every feed scroll touches. Lightbox opens are far
+    # rarer (see lib/img-admission.ts's own threshold comment) and the
+    # existing lazy path already covers it reasonably; trigger this by
+    # hand when it's worth a dedicated pass.
+    if: github.event_name == 'workflow_dispatch' && inputs.tier == 'lightbox'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.11"
+      - run: bun install --frozen-lockfile
+      - name: Warm lightbox tier
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+          S3_REGION: ${{ secrets.S3_REGION }}
+          S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+          IMG_CDN_BASE_URL: ${{ secrets.IMG_CDN_BASE_URL }}
+        run: |
+          bun scripts/warm_image_cache.mts --commit --tier lightbox --limit ${{ inputs.limit }}

@@ -1,0 +1,919 @@
+openapi: 3.0.3
+info:
+  title: Tranquilo API
+  description: >-
+<<<<<<< Updated upstream
+    Vercel Serverless Functions backing tranquilo.art. Every function under
+    api/ is documented here (public routes and internal Vercel Cron
+    endpoints alike) -- see CONVENTIONS.md for why these stay one file per
+    route rather than a framework. Not machine-verified against the
+    handlers (no contract-testing setup exists yet) -- kept in sync by hand
+=======
+    AWS lambdas backing tranquilo.art. Every function under
+    api/ is documented here (public routes and internal AWS lambda cron
+    endpoints alike) — see CONVENTIONS.md for why these stay one file per
+    route rather than a framework, and README.md's "API" section for the
+    prose version of most of what's below. Not machine-verified against the
+    handlers (no contract-testing setup exists yet) — kept in sync by hand
+>>>>>>> Stashed changes
+    as routes change; treat a mismatch as this file being stale, not the
+    handler.
+  version: "1.0.0"
+  license:
+    name: UNLICENSED
+servers:
+  - url: https://tranquilo.art
+    description: Production
+security: []
+tags:
+  - name: catalogue
+    description: The live art catalogue and its derived facets/search
+  - name: sharing
+    description: Per-artwork/per-storyline share pages and preview images
+  - name: engagement
+    description: Analytics, waitlists, feedback and collection submissions
+  - name: cron
+    description: >-
+<<<<<<< Updated upstream
+      Vercel Cron-triggered maintenance. Not meant to be called directly --
+      every one of these requires the CRON_SECRET bearer token Vercel's own
+      dispatcher sends, documented here for completeness rather than as an
+      invitation to call them by hand.
+=======
+      AWS lambda cron-triggered maintenance. Not meant to be called directly —
+      every one of these requires the CRON_SECRET bearer token.
+>>>>>>> Stashed changes
+
+paths:
+  /api/items:
+    get:
+      tags: [catalogue]
+      summary: Query the catalogue
+      operationId: getItems
+      description: >-
+        One endpoint for every shape of "what's in the catalogue" question:
+        a page of full item rows, the lightweight order manifest, a shuffled
+        feed page, an explicit id lookup, or one of three bounded
+        aggregates (facets/suggest/correction). Exactly one of `shape`,
+        `ids`, or the plain filter+paging parameters applies per request --
+        see the individual parameter descriptions for how they interact.
+        There is no longer an unpaginated "give me everything" response;
+        omitting both `limit`/`cursor` and `shape=manifest` is a 400.
+      parameters:
+        - name: shape
+          in: query
+          description: >-
+            Selects a whole-catalogue aggregate or the paging-exempt order
+            manifest instead of a page of full rows. `manifest` returns
+            every live item's identity/facets (paged only when combined
+            with `order=shuffle`); `facets`/`suggest`/`correction` return
+            answers bounded by distinct-value count, not catalogue size;
+            `storylines`/`storyline`/`shelves`/`music`/`heroes` dispatch to a
+            different table entirely (see below) and take no other
+            catalogue filter.
+          schema:
+            type: string
+            enum: [manifest, facets, suggest, correction, count, storylines, storyline, shelves, music, heroes]
+        - name: ids
+          in: query
+          description: >-
+            Repeated params (`?ids=a&ids=b`), never comma-joined -- some
+            native ids contain a literal comma. Resolves exactly these
+            items regardless of any other filter; short-circuits
+            everything else in this list. Max 500 per request.
+          schema:
+            type: array
+            items: { type: string }
+          style: form
+          explode: true
+        - name: id
+          in: query
+          description: Required with `shape=storyline` -- the storyline id to fetch.
+          schema: { type: string }
+        - name: q
+          in: query
+          description: >-
+            Free-text search (title/artist/medium/tags/bio/date,
+            diacritic-folded substring match) when used as a filter, or the
+            partial query being autocompleted when combined with
+            `shape=suggest`/`shape=correction`.
+          schema: { type: string }
+        - name: category
+          in: query
+          schema: { type: string }
+        - name: timeframe
+          in: query
+          schema: { type: string }
+        - name: palette
+          in: query
+          schema: { type: string }
+        - name: media_type
+          in: query
+          schema: { type: string }
+        - name: region_primary
+          in: query
+          description: Also matches items whose `region_alt` array contains this value.
+          schema: { type: string }
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [met, smithsonian, cleveland, commons, europeana]
+        - name: subject_type
+          in: query
+          schema: { type: string }
+        - name: artist
+          in: query
+          description: Exact match, not substring -- clicking an artist name, not searching one.
+          schema: { type: string }
+        - name: has_storyline
+          in: query
+          description: '`1` to filter to items that belong to at least one storyline.'
+          schema: { type: string, enum: ["1"] }
+        - name: order
+          in: query
+          description: '`shuffle` requests the precomputed globally-random feed order (requires `start` or `cursor`).'
+          schema: { type: string, enum: [shuffle] }
+        - name: start
+          in: query
+          description: 'Shuffle session''s starting offset in [0,1) -- required on the first `order=shuffle` request, ignored once a `cursor` is supplied.'
+          schema: { type: number }
+        - name: limit
+          in: query
+          description: Page size. Default 60, max 200.
+          schema: { type: integer, minimum: 1, maximum: 200, default: 60 }
+        - name: cursor
+          in: query
+          description: >-
+            Opaque continuation token from a previous page's `next_cursor`.
+            Not valid together with `shape=manifest` (the plain,
+            non-shuffled manifest is never paged).
+          schema: { type: string }
+      responses:
+        "200":
+          description: >-
+            Shape depends on the request -- see the four response schemas
+            below (page, manifest array, aggregate, or lookup-with-missing).
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ItemPage"
+                  - $ref: "#/components/schemas/ItemLookupResult"
+                  - type: array
+                    items: { $ref: "#/components/schemas/ManifestItem" }
+                  - $ref: "#/components/schemas/ShuffledManifestPage"
+                  - $ref: "#/components/schemas/FacetsResult"
+                  - $ref: "#/components/schemas/SuggestResult"
+                  - $ref: "#/components/schemas/CorrectionResult"
+                  - $ref: "#/components/schemas/CountResult"
+                  - $ref: "#/components/schemas/StorylineIndexEntry"
+                  - $ref: "#/components/schemas/Storyline"
+                  - type: array
+                    items: { $ref: "#/components/schemas/Shelf" }
+                  - $ref: "#/components/schemas/MusicBucketsResult"
+                  - type: array
+                    items: { $ref: "#/components/schemas/HeroPoolEntry" }
+        "400":
+          description: >-
+            Caller error -- a malformed/too-large `ids` list, a malformed
+            cursor, an out-of-range `start`, an unwhitelisted facet, or
+            omitting both paging and `shape=manifest`.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: '`shape=storyline` with an `id` that doesn''t exist.'
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "500":
+          description: DATABASE_URL not configured, or the query itself failed.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /api/track:
+    post:
+      tags: [engagement]
+      summary: Record an analytics event
+      operationId: trackEvent
+      description: >-
+        Fire-and-forget sink for the client's own trackEvent() calls (see
+        src/app.ts). The client ignores the response either way; this
+        exists so events are durable past Vercel's 1-hour runtime log
+        window.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event_name]
+              properties:
+                event_name: { type: string }
+                props:
+                  type: object
+                  description: Arbitrary JSON-serializable event properties.
+                  additionalProperties: true
+      responses:
+        "200":
+          description: Recorded.
+          content:
+            application/json:
+              schema: { type: object, properties: { ok: { type: boolean } } }
+        "400":
+          description: Missing/invalid `event_name`.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "500":
+          description: DATABASE_URL not configured, or the insert failed.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /api/subscribe:
+    post:
+      tags: [engagement]
+      summary: Add an email to a Resend audience
+      operationId: subscribe
+      description: >-
+        One capture endpoint for every "leave your email" entry point (Pro
+        waitlist, feature-notify, newsletter opt-in), distinguished by
+        `source`. Re-subscribing under a second source merges into a
+        comma-separated `source` property rather than overwriting the
+        first.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, source]
+              properties:
+                email: { type: string, format: email }
+                source:
+                  type: string
+                  enum: [pro_waitlist, feature_notify, newsletter_submit]
+      responses:
+        "200":
+          description: Subscribed (or already subscribed -- this call is idempotent).
+          content:
+            application/json:
+              schema: { type: object, properties: { ok: { type: boolean } } }
+        "400":
+          description: Invalid email or unrecognized `source`.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "500":
+          description: RESEND_API_KEY not configured, or an unexpected error.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "502":
+          description: Resend's API rejected the request.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /api/submit-collection:
+    post:
+      tags: [engagement]
+      summary: Submit a collection, or send feedback
+      operationId: submitCollectionOrFeedback
+      description: >-
+        Two unrelated forms share this one route (pages/submit.html's
+        "submit a collection" form, and the site-wide feedback form) purely
+        because Vercel Hobby caps the project at 12 functions -- see the
+        `kind` discriminator. Both send an email via Resend; neither
+        persists anything server-side.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/CollectionSubmission"
+                - $ref: "#/components/schemas/FeedbackSubmission"
+      responses:
+        "200":
+          description: Email sent.
+          content:
+            application/json:
+              schema: { type: object, properties: { ok: { type: boolean } } }
+        "400":
+          description: A required field is missing, too long, or malformed.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "500":
+          description: RESEND_API_KEY/SUBMIT_NOTIFY_EMAIL not configured, or an unexpected error.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "502":
+          description: Resend's API rejected the request.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /api/webhooks/resend:
+    post:
+      tags: [engagement]
+      summary: Resend delivery-failure webhook
+      operationId: resendWebhook
+      description: >-
+        Registered in Resend's dashboard (RESEND_WEBHOOK_SECRET), not
+        called by this site's own client. Signature-verified via Svix
+        (svix-id/svix-timestamp/svix-signature headers) against the raw
+        request body. On a bounce/delay/complaint, alerts the ops inbox and
+        posts to the same "Analytics Reports" Linear doc the cron jobs
+        below use; every other event type is acknowledged and ignored.
+      parameters:
+        - name: svix-id
+          in: header
+          required: true
+          schema: { type: string }
+        - name: svix-timestamp
+          in: header
+          required: true
+          schema: { type: string }
+        - name: svix-signature
+          in: header
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        description: Raw Resend/Svix event payload -- passed through to Svix's verifier unparsed.
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200":
+          description: Event acknowledged (and, for an alert-worthy type, processed).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  handled:
+                    type: boolean
+                    description: false for a non-alert-worthy event type (delivered/sent/opened/clicked).
+        "401":
+          description: Svix signature verification failed.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "500":
+          description: RESEND_WEBHOOK_SECRET not configured, or alert delivery failed.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /v/{slug}:
+    get:
+      tags: [sharing]
+      summary: Per-artwork or per-storyline share page
+      operationId: getSharePage
+      description: >-
+        Rewritten from `/v/:slug` (vercel.json) to `/api/v/[slug]`. Serves
+        the real app shell (index.html) with this item's/storyline's own
+        `<meta>`/OpenGraph/Twitter Card tags injected in place -- a crawler
+        sees a fully-formed preview, a human gets the real running app at a
+        real, bookmarkable URL. `/s/{id}` (a storyline) rewrites here too,
+        as slug `s-{id}`.
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: '`{source}-{nativeId}` for an artwork (split on the first hyphen only), or `s-{storylineId}` for a storyline.'
+          schema: { type: string }
+      responses:
+        "200":
+          description: HTML page (the app shell with injected meta tags), or a not-found stub if the slug doesn't resolve.
+          content:
+            text/html: { schema: { type: string } }
+
+  /s/{id}:
+    get:
+      tags: [sharing]
+      summary: Storyline share page (alias)
+      operationId: getStorylineSharePageAlias
+      description: Rewrites to `/v/s-{id}` -- see `/v/{slug}`.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: See `/v/{slug}`.
+          content:
+            text/html: { schema: { type: string } }
+
+  /og/{slug}.png:
+    get:
+      tags: [sharing]
+      summary: Generated share-preview image (1200x630)
+      operationId: getSharePreviewImage
+      description: >-
+        Rewritten from `/og/:slug.png` to `/api/og/[slug]`. Renders a PNG
+        card via @vercel/og (Satori) -- the artwork's own image tinted with
+        its accent color, or a title/caption-only card if the source is
+        under a health hold or the image fetch fails. `slug` matching
+        `s-{id}` renders the storyline variant instead.
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: '`{source}-{nativeId}`, or `s-{storylineId}` for a storyline card. The `.png` suffix is stripped by the rewrite.'
+          schema: { type: string }
+      responses:
+        "200":
+          description: PNG image, 1200x630.
+          content:
+            image/png: { schema: { type: string, format: binary } }
+        "500":
+          description: Card generation failed unexpectedly.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /sitemap.xml:
+    get:
+      tags: [sharing]
+      summary: Sitemap of every live artwork and static page
+      operationId: getSitemap
+      description: >-
+        Generated per-request (rewritten from `/sitemap.xml` to
+        `/api/sitemap`) rather than checked in, since the catalogue changes
+        without a deploy. Quarantined/rejected items are never listed.
+      responses:
+        "200":
+          description: Sitemap XML.
+          content:
+            application/xml: { schema: { type: string } }
+        "500":
+          description: DATABASE_URL not configured, or the query failed.
+          content:
+            text/plain: { schema: { type: string } }
+
+  /img/{source}/{id}/{tier}:
+    get:
+      tags: [catalogue]
+      summary: Cached/resized image proxy
+      operationId: getProxiedImage
+      description: >-
+        Rewritten from `/img/:source/:id/:tier` to
+        `/api/img/[source]/[id]/[tier]`. Every feed/lightbox image request
+        for a live item goes through here rather than hotlinking the
+        source institution directly. On a cache hit this 302s straight to
+        the cached Vercel Blob object with no bytes touching the function;
+        on a miss it may fetch, transform (resize + WebP re-encode) and
+        cache the origin image, or -- under admission control, a rate-limit
+        hold, or the storage circuit breaker -- "shed" the request (redirect
+        to origin for `display`, fall back to the cached `display` blob for
+        `lightbox`, or 503).
+      parameters:
+        - name: source
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [met, smithsonian, cleveland, commons, europeana]
+        - name: id
+          in: path
+          required: true
+          description: The item's native id (source-specific format).
+          schema: { type: string }
+        - name: tier
+          in: path
+          required: true
+          schema: { type: string, enum: [display, lightbox] }
+        - name: origin
+          in: query
+          required: true
+          description: >-
+            The real source-CDN URL to fetch/cache, supplied by
+            api/items.ts's own serialization. Must be https and match an
+            allowlisted host for `source` (Europeana's lightbox tier is the
+            one documented exception -- see the handler's own comment).
+          schema: { type: string, format: uri }
+      responses:
+        "302":
+          description: >-
+            Redirect to the cached Blob object, the source origin (a
+            shed `display` request), or a degraded cached `display`
+            fallback (a shed `lightbox` request). See the `X-Tranquilo-Shed`
+            response header for why, when present.
+          headers:
+            Location: { schema: { type: string } }
+            X-Tranquilo-Shed:
+              description: Present only on a shed response -- the reason (e.g. `not-admitted-3`, `origin-429`, `in-flight`).
+              schema: { type: string }
+        "200":
+          description: >-
+            Image bytes served directly (an un-admitted or breaker-tripped
+            write that still had the transformed buffer in memory).
+          content:
+            image/webp: { schema: { type: string, format: binary } }
+        "400":
+          description: Missing/invalid `source`/`id`/`tier`, or a missing/disallowed `origin`.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "502":
+          description: The origin fetch failed and no fallback was available.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: Temporarily unavailable -- no cached fallback exists for a shed lightbox request.
+          headers:
+            Retry-After: { schema: { type: string } }
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /api/cron/health-check:
+    get:
+      tags: [cron]
+      summary: Daily threshold check (Neon size, Blob usage, per-source image health)
+      operationId: cronHealthCheck
+      description: >-
+        Vercel Cron only (see vercel.json's `crons`) -- silent on a healthy
+        run, alerts (email + Linear doc) on a threshold breach. `?op=` also
+        exposes hand-triggered Blob-cache maintenance operations, dry-run
+        by default.
+      security: [{ cronSecret: [] }]
+      parameters:
+        - name: op
+          in: query
+          description: Hand-triggered maintenance instead of the scheduled health check.
+          schema: { type: string, enum: [reconcile-blob, verify-eviction] }
+        - name: commit
+          in: query
+          description: '`1` to actually write; omitted/anything else is a dry run.'
+          schema: { type: string, enum: ["1"] }
+        - name: cap
+          in: query
+          description: 'Override the soft cap (bytes) for `op=verify-eviction`.'
+          schema: { type: integer }
+      responses:
+        "200":
+          description: >-
+            `{}` on a healthy scheduled run, or the `op`'s own result object
+            when `?op=` was supplied.
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          $ref: "#/components/responses/CronUnauthorized"
+        "500":
+          description: Required env vars missing for the requested `op`.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /api/cron/db-backup:
+    get:
+      tags: [cron]
+      summary: Daily `items` table backup to GitHub, or a partial shuffle-key reshuffle
+      operationId: cronDbBackup
+      description: >-
+        Vercel Cron only, two schedule entries hitting this one function
+        (Vercel Hobby's 12-function cap). The plain path exports `items` to
+        the `db-backups` branch; `?task=reshuffle` re-randomizes a fraction
+        of `shuffle_key` and rebuilds the search vocabulary instead.
+      security: [{ cronSecret: [] }]
+      parameters:
+        - name: task
+          in: query
+          schema: { type: string, enum: [reshuffle] }
+      responses:
+        "200":
+          description: Backup written, or the reshuffle's row count.
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          $ref: "#/components/responses/CronUnauthorized"
+        "500":
+          description: DATABASE_URL/GITHUB_BACKUP_TOKEN not configured, or the export/GitHub API call failed.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /api/cron/analytics-report:
+    get:
+      tags: [cron]
+      summary: Monthly/quarterly analytics rollup, posted to Linear
+      operationId: cronAnalyticsReport
+      description: >-
+        Vercel Cron only, two schedule entries (`days=30&label=Monthly`,
+        `days=92&label=Quarterly`) hitting this one function. `?healthcheck=1`
+        is a standing, permanent liveness check for the configured
+        LINEAR_API_KEY -- same auth, boolean-only response.
+      security: [{ cronSecret: [] }]
+      parameters:
+        - name: days
+          in: query
+          schema: { type: integer, default: 30 }
+        - name: label
+          in: query
+          schema: { type: string, default: Report }
+        - name: healthcheck
+          in: query
+          schema: { type: string, enum: ["1"] }
+      responses:
+        "200":
+          description: Report posted, or (for `?healthcheck=1`) `{ ok, reason? }`.
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          $ref: "#/components/responses/CronUnauthorized"
+
+components:
+  securitySchemes:
+    cronSecret:
+      type: http
+      scheme: bearer
+      description: >-
+        Vercel's own dispatcher sends `Authorization: Bearer <CRON_SECRET>`
+        when invoking a configured cron path -- this is what proves a
+        request actually came from Vercel and not a public hit on a
+        guessable URL. Not meant to be presented by any other caller.
+  responses:
+    MethodNotAllowed:
+      description: Wrong HTTP method.
+      headers:
+        Allow: { schema: { type: string } }
+      content:
+        application/json: { schema: { $ref: "#/components/schemas/Error" } }
+    CronUnauthorized:
+      description: Missing or mismatched CRON_SECRET bearer token.
+      content:
+        application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+    Item:
+      type: object
+      description: A full catalogue row, as returned in a paged/lookup response.
+      properties:
+        id: { type: string, description: "native_id" }
+        source: { type: string, enum: [met, smithsonian, cleveland, commons, europeana] }
+        title: { type: string, nullable: true }
+        artist: { type: string, nullable: true }
+        bio: { type: string, nullable: true }
+        attribution_type: { type: string, nullable: true }
+        artist_nationality: { type: string, nullable: true }
+        artist_lifespan: { type: string, nullable: true }
+        culture: { type: string, nullable: true }
+        culture_period: { type: string, nullable: true }
+        date: { type: string, nullable: true }
+        medium: { type: string, nullable: true }
+        credit: { type: string, nullable: true }
+        tags: { type: array, items: { type: string } }
+        img:
+          type: string
+          description: '/img proxy URL for the display tier ("" if the item has no source image).'
+        lightbox_img:
+          type: string
+          description: '/img proxy URL for the lightbox tier.'
+        blur_placeholder: { type: string, nullable: true }
+        url: { type: string, nullable: true, description: Outbound link to the source institution's own page. }
+        license: { type: string, nullable: true }
+        category: { type: string, nullable: true }
+        region_primary: { type: string, nullable: true }
+        region_alt: { type: array, items: { type: string } }
+        timeframe: { type: string, nullable: true }
+        media_type: { type: string, nullable: true }
+        palette: { type: string, nullable: true }
+        subject_type: { type: string, nullable: true }
+        accentColor: { type: string, nullable: true }
+        contains_nudity: { type: boolean }
+        caption_tea: { type: string, nullable: true }
+        caption_basic: { type: string, nullable: true }
+        tea_voice_status: { type: string, nullable: true }
+        tea_voice_eligible: { type: boolean }
+        tea_voice_sources:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties: { text: { type: string }, url: { type: string } }
+        cast: {}
+        cast_context: {}
+        cast_tier: { type: string, nullable: true }
+        storyline_ids: { type: array, items: { type: string } }
+        set_of_work_id: { type: string, nullable: true }
+        twist_category: { type: string, nullable: true }
+        twist_hook: { type: string, nullable: true }
+        twist_story: { type: string, nullable: true }
+        twist_confidence: { type: number, nullable: true }
+        twist_source_url: { type: string, nullable: true }
+        music_mood: { type: string, nullable: true }
+        shuffle_key: { type: number }
+    ManifestItem:
+      type: object
+      description: The lightweight order-manifest shape (`?shape=manifest`) -- identity and facets only, no heavy text/image fields.
+      properties:
+        id: { type: string }
+        source: { type: string }
+        title: { type: string, nullable: true }
+        artist: { type: string, nullable: true }
+        category: { type: string, nullable: true }
+        timeframe: { type: string, nullable: true }
+        palette: { type: string, nullable: true }
+        media_type: { type: string, nullable: true }
+        region_primary: { type: string, nullable: true }
+        region_alt: { type: array, items: { type: string } }
+        subject_type: { type: string, nullable: true }
+        storyline_ids: { type: array, items: { type: string } }
+        set_of_work_id: { type: string, nullable: true }
+        contains_nudity: { type: boolean }
+        twist_category: { type: string, nullable: true }
+        shuffle_key: { type: number }
+    ItemPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Item" } }
+        next_cursor:
+          type: string
+          nullable: true
+          description: Pass back as `?cursor=` to continue; null means this was the last page.
+    ItemLookupResult:
+      type: object
+      description: 'Response to an explicit `?ids=` lookup.'
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Item" } }
+        missing:
+          type: array
+          items: { type: string }
+          description: Requested ids that resolved to nothing (quarantined, rejected, or never existed).
+    ShuffledManifestPage:
+      type: object
+      description: '`?shape=manifest&order=shuffle` -- a page of the manifest in shuffled order.'
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ManifestItem" } }
+        next_cursor:
+          type: string
+          nullable: true
+          description: Null once the session has seen the whole live catalogue exactly once.
+    FacetsResult:
+      type: object
+      description: >-
+        One key per facet pool this query grouped (category/source are
+        pluralized to `categories`/`sources`; artist/region/era/type/color
+        keep their singular facet label -- see api/items.ts's own comment on
+        why a hardcoded two-pool ternary silently swept everything else into
+        `sources`). `total` is always present; every other key is present
+        only when that pool had at least one qualifying value.
+      required: [total]
+      properties:
+        categories:
+          type: array
+          items:
+            type: object
+            properties: { value: { type: string }, count: { type: integer } }
+        sources:
+          type: array
+          items:
+            type: object
+            properties: { value: { type: string }, count: { type: integer } }
+        artist:
+          type: array
+          items:
+            type: object
+            properties: { value: { type: string }, count: { type: integer } }
+        region:
+          type: array
+          items:
+            type: object
+            properties: { value: { type: string }, count: { type: integer } }
+        era:
+          type: array
+          items:
+            type: object
+            properties: { value: { type: string }, count: { type: integer } }
+        type:
+          type: array
+          items:
+            type: object
+            properties: { value: { type: string }, count: { type: integer } }
+        color:
+          type: array
+          items:
+            type: object
+            properties: { value: { type: string }, count: { type: integer } }
+        total: { type: integer }
+    SuggestResult:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: object
+            properties:
+              value: { type: string }
+              type: { type: string }
+              itemCount: { type: integer }
+    CorrectionResult:
+      type: object
+      properties:
+        candidates: { type: array, items: { type: string } }
+    CountResult:
+      type: object
+      properties:
+        total: { type: integer }
+    StorylineIndexEntry:
+      type: object
+      description: 'One entry of `?shape=storylines`''s array response.'
+      properties:
+        id: { type: string }
+        cover_item_id: { type: string }
+        title: { type: string }
+    Storyline:
+      type: object
+      description: 'Full record from `?shape=storyline&id=...`.'
+      properties:
+        id: { type: string }
+        title: { type: string }
+        intro_caption: { type: string }
+        cover_item_id: { type: string }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id: { type: string }
+              chapter_caption: { type: string, nullable: true }
+    Shelf:
+      type: object
+      description: 'One entry of `?shape=shelves`''s array response, in Discover display order.'
+      required: [id, title, type]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        type: { type: string, enum: [hero, rule] }
+        itemIds:
+          type: array
+          description: 'Present only when `type` is `hero`. Mixed native-id shapes -- numeric ids and Commons filename strings both appear.'
+          items:
+            oneOf: [{ type: integer }, { type: string }]
+        filter:
+          type: object
+          description: 'Present only when `type` is `rule` -- matched against `item[key] === value` for every key.'
+          additionalProperties: true
+        minItems:
+          type: integer
+          description: 'Present only when `type` is `rule` -- the shelf renders only once its filter currently qualifies at least this many live items.'
+    MusicBucket:
+      type: object
+      properties:
+        label: { type: string }
+        category:
+          type: string
+          nullable: true
+          description: 'Null for a bucket with no current category mapping (e.g. "asian-art").'
+        track: { type: string, nullable: true, format: uri }
+        credit: { type: string, nullable: true }
+        creditUrl: { type: string, nullable: true, format: uri }
+        license: { type: string, nullable: true }
+    MusicBucketsResult:
+      type: object
+      description: '`?shape=music`''s response -- every bucket, keyed by its own stable bucket key (not an array).'
+      additionalProperties:
+        $ref: "#/components/schemas/MusicBucket"
+    HeroPoolEntry:
+      type: object
+      description: >-
+        One entry of `?shape=heroes`''s array response -- the hand-curated
+        first-impression pool a first-time visitor's feed opens with (see
+        src/app.ts's own header comment on hero rotation). Identifies an
+        item rather than embedding it; the client resolves its final
+        session pick to full item data via `?ids=`.
+      required: [source, native_id, media_type]
+      properties:
+        source: { type: string, enum: [met, smithsonian, cleveland, commons, europeana] }
+        native_id: { type: string }
+        media_type:
+          type: string
+          description: 'Read live from the joined item''s own `media_type` -- used client-side to decluster the pool so no two consecutive picks share a medium.'
+    CollectionSubmission:
+      type: object
+      required: [collectionName, submitterName, submitterEmail, collectionLink, licenseType, licenseVerificationLink, description]
+      properties:
+        kind: { type: string, enum: [""], description: Omit entirely -- an absent `kind` means "collection". }
+        collectionName: { type: string }
+        submitterName: { type: string }
+        submitterEmail: { type: string, format: email }
+        collectionLink: { type: string, format: uri }
+        licenseType: { type: string }
+        licenseOther: { type: string, description: Required when licenseType is "Other". }
+        licenseVerificationLink: { type: string, format: uri }
+        description: { type: string }
+        estimatedSize: { type: string }
+        newsletterOptIn: { type: boolean }
+    FeedbackSubmission:
+      type: object
+      required: [kind, message]
+      properties:
+        kind: { type: string, enum: [feedback] }
+        message: { type: string, maxLength: 4000 }
+        feedbackType: { type: string, enum: [Bug, "Feature idea", Content, "Something else"] }
+        context: { type: string, maxLength: 300 }
+        email: { type: string, format: email, maxLength: 200, description: Optional -- anonymous feedback is allowed. }

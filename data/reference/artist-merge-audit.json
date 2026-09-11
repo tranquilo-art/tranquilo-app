@@ -1,0 +1,1458 @@
+{
+  "applied_at": "2026-09-01T21:34:19.740Z",
+  "source": "Getty ULAN ulan_rel_0126 (ODC-BY 1.0)",
+  "rows": [
+    {
+      "source": "europeana",
+      "native_id": "/285/gam4660",
+      "from": "RENOIR Pierre-Auguste",
+      "to": "Pierre-Auguste Renoir"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2021012/_9594F5CF8EED753718472668C7050032",
+      "from": "Daumier, Honoré",
+      "to": "Honoré Daumier"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2021012/_A5446E73842281D58C23926F1195BC74",
+      "from": "Gauguin, Paul",
+      "to": "Paul Gauguin"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/285/gam4668",
+      "from": "COURBET Gustave",
+      "to": "Gustave Courbet"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_1865",
+      "from": "Courbet, Gustave",
+      "to": "Gustave Courbet"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2021009/_31B67AF3DCDCD614393972A1D9857209",
+      "from": "Rubens, Peter Paul",
+      "to": "Peter Paul Rubens"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_104",
+      "from": "Dyck, Anthony van",
+      "to": "Anthony van Dyck"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_4595",
+      "from": "Hollar, Wenceslaus",
+      "to": "Wenceslaus Hollar"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_2133",
+      "from": "Goyen, Jan van",
+      "to": "Jan van Goyen"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_3946",
+      "from": "Goyen, Jan van",
+      "to": "Jan van Goyen"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/9200274/BibliographicResource_3000058489967",
+      "from": "Raeburn, Henry, Sir (b.1756, d.1823)",
+      "to": "Sir Henry Raeburn"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/9200274/BibliographicResource_3000058489978",
+      "from": "Raeburn, Henry, Sir (b.1756, d.1823)",
+      "to": "Sir Henry Raeburn"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/RP_P_OB_3017",
+      "from": "Altdorfer, Albrecht",
+      "to": "Albrecht Altdorfer"
+    },
+    {
+      "source": "met",
+      "native_id": "437824",
+      "from": "Titian (Tiziano Vecellio)",
+      "to": "Titian"
+    },
+    {
+      "source": "met",
+      "native_id": "437825",
+      "from": "Titian (Tiziano Vecellio)",
+      "to": "Titian"
+    },
+    {
+      "source": "met",
+      "native_id": "437823",
+      "from": "Titian (Tiziano Vecellio)",
+      "to": "Titian"
+    },
+    {
+      "source": "met",
+      "native_id": "437826",
+      "from": "Titian (Tiziano Vecellio)",
+      "to": "Titian"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2021012/_2A6810066B0D4A4738C533440C789326",
+      "from": "Zorn, Anders",
+      "to": "Anders Zorn"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_348",
+      "from": "Ruisdael, Jacob Isaacksz. van",
+      "to": "Jacob van Ruisdael"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_351",
+      "from": "Ruisdael, Jacob Isaacksz. van",
+      "to": "Jacob van Ruisdael"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_3498",
+      "from": "Ruisdael, Jacob Isaacksz. van",
+      "to": "Jacob van Ruisdael"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_C_210",
+      "from": "Ruisdael, Jacob Isaacksz. van",
+      "to": "Jacob van Ruisdael"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/9200579/pjc85jtd",
+      "from": "Francis. Frith",
+      "to": "Francis Frith"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_3257",
+      "from": "Pater, Jean Baptiste François",
+      "to": "Jean-Baptiste Joseph Pater"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_165",
+      "from": "Cleve, Joos van",
+      "to": "Joos van Cleve"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_4505",
+      "from": "Maes, Nicolaes",
+      "to": "Nicolaes Maes"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2021012/_3B856B64B712612F959D146B8D832DCF",
+      "from": "Maes, Nicolaes",
+      "to": "Nicolaes Maes"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_4889",
+      "from": "Maes, Nicolaes",
+      "to": "Nicolaes Maes"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_1575",
+      "from": "Bol, Ferdinand",
+      "to": "Ferdinand Bol"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_2736",
+      "from": "Bol, Ferdinand",
+      "to": "Ferdinand Bol"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_43",
+      "from": "Bol, Ferdinand",
+      "to": "Ferdinand Bol"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_714",
+      "from": "Bol, Ferdinand",
+      "to": "Ferdinand Bol"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_181",
+      "from": "Hooch, Pieter de",
+      "to": "Pieter de Hooch"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_2924",
+      "from": "Jongkind, Johan Barthold",
+      "to": "Johan Barthold Jongkind"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_2279",
+      "from": "Mauve, Anton",
+      "to": "Anton Mauve"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_2432",
+      "from": "Mauve, Anton",
+      "to": "Anton Mauve"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/285/gam4779",
+      "from": "DECAMPS Gabriel Alexandre",
+      "to": "Alexandre-Gabriel Decamps"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2021012/_F77A07EBAB0CDBD52C1A6623EEC0FEE7",
+      "from": "Decamps, Alexandre-Gabriel",
+      "to": "Alexandre-Gabriel Decamps"
+    },
+    {
+      "source": "met",
+      "native_id": "438389",
+      "from": "Anne Louis Girodet-Trioson",
+      "to": "Anne-Louis Girodet de Roucy-Trioson"
+    },
+    {
+      "source": "met",
+      "native_id": "438032",
+      "from": "Anne Louis Girodet-Trioson",
+      "to": "Anne-Louis Girodet de Roucy-Trioson"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/862/_170896142181000",
+      "from": "Eero Järnefelt",
+      "to": "Järnefelt, Eero"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2021012/_DA61D0C35C7BB74E4CEA04D0B3A1BF50",
+      "from": "Sauvage, Piat Joseph",
+      "to": "Piat Joseph Sauvage"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2021012/_03A08B93D995576E148A73E473D3A7A8",
+      "from": "Ensor, James",
+      "to": "James Ensor"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_3417",
+      "from": "Ricci, Sebastiano",
+      "to": "Sebastiano Ricci"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_C_1357",
+      "from": "Ricci, Sebastiano",
+      "to": "Sebastiano Ricci"
+    },
+    {
+      "source": "met",
+      "native_id": "437085",
+      "from": "Michiel Jansz. van Mierevelt",
+      "to": "Mierevelt, Michiel Jansz van"
+    },
+    {
+      "source": "met",
+      "native_id": "437087",
+      "from": "Michiel Jansz. van Mierevelt",
+      "to": "Mierevelt, Michiel Jansz van"
+    },
+    {
+      "source": "met",
+      "native_id": "440726",
+      "from": "Adolph Menzel",
+      "to": "Adolph von Menzel"
+    },
+    {
+      "source": "met",
+      "native_id": "460057",
+      "from": "Adolph Menzel",
+      "to": "Adolph von Menzel"
+    },
+    {
+      "source": "met",
+      "native_id": "460059",
+      "from": "Adolph Menzel",
+      "to": "Adolph von Menzel"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2021012/_1436EB074893595D780E9D800F6AD32A",
+      "from": "Hall, Peter Adolf",
+      "to": "Peter Adolf Hall"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2021012/_9D5B6D55A3BB98D6B4A265EE5614F495",
+      "from": "Hall, Peter Adolf",
+      "to": "Peter Adolf Hall"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2021012/_5CE0B80848CD232F2549A92AA92DC10A",
+      "from": "Hall, Peter Adolf",
+      "to": "Peter Adolf Hall"
+    },
+    {
+      "source": "met",
+      "native_id": "437872",
+      "from": "Velázquez",
+      "to": "Velázquez (Diego Rodríguez de Silva y Velázquez)"
+    },
+    {
+      "source": "met",
+      "native_id": "437875",
+      "from": "Velázquez",
+      "to": "Velázquez (Diego Rodríguez de Silva y Velázquez)"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "141549",
+      "from": "Diego Velázquez",
+      "to": "Velázquez (Diego Rodríguez de Silva y Velázquez)"
+    },
+    {
+      "source": "met",
+      "native_id": "460864",
+      "from": "Moderno (Galeazzo Mondella)",
+      "to": "Moderno"
+    },
+    {
+      "source": "met",
+      "native_id": "460866",
+      "from": "Moderno (Galeazzo Mondella)",
+      "to": "Moderno"
+    },
+    {
+      "source": "met",
+      "native_id": "460981",
+      "from": "Moderno (Galeazzo Mondella)",
+      "to": "Moderno"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "166522",
+      "from": "Jean-Antoine Watteau",
+      "to": "Antoine Watteau"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "110060",
+      "from": "Jean-Antoine Watteau",
+      "to": "Antoine Watteau"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2021012/_08089E5B19A2FDCCE615AD136DABC648",
+      "from": "Watteau, Antoine",
+      "to": "Antoine Watteau"
+    },
+    {
+      "source": "met",
+      "native_id": "459095",
+      "from": "Henri-Edmond Cross (Henri-Edmond Delacroix)",
+      "to": "Henri-Edmond Cross"
+    },
+    {
+      "source": "met",
+      "native_id": "459728",
+      "from": "Henri-Edmond Cross (Henri-Edmond Delacroix)",
+      "to": "Henri-Edmond Cross"
+    },
+    {
+      "source": "met",
+      "native_id": "459730",
+      "from": "Henri-Edmond Cross (Henri-Edmond Delacroix)",
+      "to": "Henri-Edmond Cross"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/9200579/kv25msfg",
+      "from": "Francisco de Zurbaran",
+      "to": "Francisco de Zurbarán"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_3263",
+      "from": "Bernard, Émile",
+      "to": "Émile Bernard"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_1233",
+      "from": "Lairesse, Gerard de",
+      "to": "Gerard de Lairesse"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_4176",
+      "from": "Lairesse, Gerard de",
+      "to": "Gerard de Lairesse"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_2497",
+      "from": "Swanevelt, Herman van",
+      "to": "Herman van Swanevelt"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_4713",
+      "from": "Swanevelt, Herman van",
+      "to": "Herman van Swanevelt"
+    },
+    {
+      "source": "met",
+      "native_id": "436187",
+      "from": "Edouard Detaille",
+      "to": "Édouard Detaille"
+    },
+    {
+      "source": "met",
+      "native_id": "436189",
+      "from": "Edouard Detaille",
+      "to": "Édouard Detaille"
+    },
+    {
+      "source": "met",
+      "native_id": "436188",
+      "from": "Edouard Detaille",
+      "to": "Édouard Detaille"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "136509",
+      "from": "Abraham van Beyeren",
+      "to": "Beyeren, Abraham Hendricksz. van"
+    },
+    {
+      "source": "met",
+      "native_id": "435663",
+      "from": "Abraham van Beyeren",
+      "to": "Beyeren, Abraham Hendricksz. van"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/07101/O_3756",
+      "from": "Beyeren, Abraham van",
+      "to": "Beyeren, Abraham Hendricksz. van"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/RP_P_1885_A_9756",
+      "from": "Velde, Esaias van de",
+      "to": "Esaias van de Velde"
+    },
+    {
+      "source": "met",
+      "native_id": "437218",
+      "from": "Caspar Netscher",
+      "to": "Netscher, Caspar"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "116654",
+      "from": "Benozzo Gozzoli",
+      "to": "Benozzo Gozzoli (Benozzo di Lese di Sandro)"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2021012/_D0AF2AD7F51C670588DAD8C66F296F97",
+      "from": "Plimer, Andrew",
+      "to": "Andrew Plimer"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "125951",
+      "from": "Jean-Marc Nattier",
+      "to": "Jean Marc Nattier"
+    },
+    {
+      "source": "met",
+      "native_id": "436974",
+      "from": "Jacob Maris",
+      "to": "Maris, Jacob"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_3277",
+      "from": "Mengs, Anton Raphael",
+      "to": "Anton Raphael Mengs"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "95286",
+      "from": "Jan Anthonisz. van Ravesteyn",
+      "to": "Ravesteyn, Jan Antonisz van"
+    },
+    {
+      "source": "met",
+      "native_id": "438603",
+      "from": "baron Antoine Jean Gros",
+      "to": "Antoine-Jean Gros"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2024903/photography_ProvidedCHO_KU_Leuven_9985585150101488",
+      "from": "Rogier Van der Weyden",
+      "to": "Rogier van der Weyden"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_727",
+      "from": "Maratti, Carlo",
+      "to": "Carlo Maratti"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "129218",
+      "from": "Lippo Memmi",
+      "to": "Lippo Memmi (Filippo di Memmo)"
+    },
+    {
+      "source": "met",
+      "native_id": "459496",
+      "from": "Luzio Luzzi (also known as Luzio Romano, Luzio da Todi)",
+      "to": "Luzio Romano"
+    },
+    {
+      "source": "met",
+      "native_id": "459297",
+      "from": "Jan Fijt",
+      "to": "Jan Fyt"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/410/S_KPS_object_M3964",
+      "from": "Bloemaert, Abraham",
+      "to": "Abraham Bloemaert"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_2363",
+      "from": "Roghman, Roelant",
+      "to": "Roelant Roghman"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_4218",
+      "from": "Roghman, Roelant",
+      "to": "Roelant Roghman"
+    },
+    {
+      "source": "met",
+      "native_id": "437455",
+      "from": "Jusepe de Ribera (called Lo Spagnoletto)",
+      "to": "Jusepe de Ribera"
+    },
+    {
+      "source": "met",
+      "native_id": "441971",
+      "from": "Jusepe de Ribera (called Lo Spagnoletto)",
+      "to": "Jusepe de Ribera"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_2616",
+      "from": "Israëls, Jozef",
+      "to": "Jozef Israëls"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_2597",
+      "from": "Israëls, Jozef",
+      "to": "Jozef Israëls"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_218",
+      "from": "Flinck, Govert",
+      "to": "Govert Flinck"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "148959",
+      "from": "Govaert Flinck",
+      "to": "Govert Flinck"
+    },
+    {
+      "source": "met",
+      "native_id": "435731",
+      "from": "Botticelli",
+      "to": "Botticelli (Alessandro di Mariano Filipepi)"
+    },
+    {
+      "source": "met",
+      "native_id": "435730",
+      "from": "Botticelli",
+      "to": "Botticelli (Alessandro di Mariano Filipepi)"
+    },
+    {
+      "source": "met",
+      "native_id": "436538",
+      "from": "Jan Gossart (called Mabuse)",
+      "to": "Jan Gossaert"
+    },
+    {
+      "source": "met",
+      "native_id": "436539",
+      "from": "Jan Gossart (called Mabuse)",
+      "to": "Jan Gossaert"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "146138",
+      "from": "Pisanello",
+      "to": "Pisanello (Antonio Pisano)"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "147717",
+      "from": "Pisanello",
+      "to": "Pisanello (Antonio Pisano)"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_3382",
+      "from": "Botticini, Francesco",
+      "to": "Francesco Botticini (Francesco di Giovanni)"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "97149",
+      "from": "Francesco Botticini",
+      "to": "Francesco Botticini (Francesco di Giovanni)"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_996",
+      "from": "Solimena, Francesco",
+      "to": "Francesco Solimena"
+    },
+    {
+      "source": "met",
+      "native_id": "437953",
+      "from": "Philips Wouwerman",
+      "to": "Wouwerman, Philips"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_C_192",
+      "from": "Neer, Aert van der",
+      "to": "Aert van der Neer"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_1403",
+      "from": "Liss, Johann",
+      "to": "Johann Liss"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2064116/Museu_ProvidedCHO_Nationalmuseum__Sweden_17862",
+      "from": "Charles-Joseph Natoire",
+      "to": "Charles Joseph Natoire"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_3410",
+      "from": "Moroni, Giambattista",
+      "to": "Giovanni Battista Moroni"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_89",
+      "from": "Dou, Gerard",
+      "to": "Gerrit Dou"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_3972",
+      "from": "Keyser, Thomas de",
+      "to": "Thomas de Keyser"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_1777",
+      "from": "Vlieger, Simon de",
+      "to": "Simon de Vlieger"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_3407",
+      "from": "Magnasco, Alessandro",
+      "to": "Alessandro Magnasco"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_4987",
+      "from": "Mondriaan, Piet",
+      "to": "Piet Mondrian"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/410/S_KPS_object_M2256",
+      "from": "Metsu, Gabriel",
+      "to": "Gabriël Metsu"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "123310",
+      "from": "Jan Both",
+      "to": "Both, Jan"
+    },
+    {
+      "source": "met",
+      "native_id": "436848",
+      "from": "Jean Antoine Laurent",
+      "to": "Jean-Antoine Laurent"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_199",
+      "from": "Kalf, Willem",
+      "to": "Willem Kalf"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "150759",
+      "from": "Michael Sweerts",
+      "to": "Michiel Sweerts"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_1957",
+      "from": "Sweerts, Michael",
+      "to": "Michiel Sweerts"
+    },
+    {
+      "source": "met",
+      "native_id": "436890",
+      "from": "Johannes Lingelbach",
+      "to": "Lingelbach, Johannes"
+    },
+    {
+      "source": "met",
+      "native_id": "436889",
+      "from": "Johannes Lingelbach",
+      "to": "Lingelbach, Johannes"
+    },
+    {
+      "source": "met",
+      "native_id": "436637",
+      "from": "Jan Davidsz de Heem",
+      "to": "Heem, Jan Davidsz. de"
+    },
+    {
+      "source": "met",
+      "native_id": "436636",
+      "from": "Jan Davidsz de Heem",
+      "to": "Heem, Jan Davidsz. de"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "160180",
+      "from": "Sodoma",
+      "to": "Sodoma (Giovanni Antonio Bazzi)"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "97147",
+      "from": "Sodoma",
+      "to": "Sodoma (Giovanni Antonio Bazzi)"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "107226",
+      "from": "Aegidius Sadeler",
+      "to": "Aegidius Sadeler II"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/RP_P_1964_2379",
+      "from": "Sadeler, Aegidius",
+      "to": "Aegidius Sadeler II"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/285/gam4137",
+      "from": "PASINI Alberto",
+      "to": "Alberto Pasini"
+    },
+    {
+      "source": "met",
+      "native_id": "437081",
+      "from": "Michele da Verona (Michele di Zenone)",
+      "to": "Michele da Verona"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "145124",
+      "from": "Gaspard Dughet",
+      "to": "Dughet, Gaspard"
+    },
+    {
+      "source": "met",
+      "native_id": "459431",
+      "from": "Girolamo Romanino",
+      "to": "Romanino"
+    },
+    {
+      "source": "met",
+      "native_id": "438376",
+      "from": "Willem Claesz Heda",
+      "to": "Heda, Willem Claesz."
+    },
+    {
+      "source": "cleveland",
+      "native_id": "122339",
+      "from": "Giovanni Battista Cima da Conegliano",
+      "to": "Cima da Conegliano (Giovanni Battista Cima)"
+    },
+    {
+      "source": "met",
+      "native_id": "461008",
+      "from": "Housebook Master",
+      "to": "Master of the House-Book"
+    },
+    {
+      "source": "met",
+      "native_id": "370472",
+      "from": "Adriaen van de Venne",
+      "to": "Venne, Adriaen Pietersz. van de"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_3992",
+      "from": "Carracci, Ludovico",
+      "to": "Ludovico Carracci"
+    },
+    {
+      "source": "met",
+      "native_id": "435726",
+      "from": "Domenico Bossi",
+      "to": "Bossi, Giovanni Domenico"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2021012/_48C5495FD1AA58E847A2690D7B159E39",
+      "from": "Roslin, Alexander",
+      "to": "Alexander Roslin"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_3537",
+      "from": "Breitner, George Hendrik",
+      "to": "George Hendrik Breitner"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_3035",
+      "from": "Lotto, Lorenzo",
+      "to": "Lorenzo Lotto"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "302194",
+      "from": "Pieter Cornelisz van Slingelandt",
+      "to": "Pieter van Slingelandt"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "150088",
+      "from": "Jehan-Georges Vibert",
+      "to": "Jean-Georges Vibert"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/07101/O_247",
+      "from": "Huchtenburgh, Jan van",
+      "to": "Huchtenburg, Jan van"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2064116/Museu_ProvidedCHO_Nationalmuseum__Sweden_39567",
+      "from": "Johan Gustaf Sandberg",
+      "to": "Sandberg, Johan Gustaf"
+    },
+    {
+      "source": "met",
+      "native_id": "440985",
+      "from": "Ugolino da Siena",
+      "to": "Ugolino da Siena (Ugolino di Nerio)"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_4043",
+      "from": "Cappelle, Jan van de",
+      "to": "Jan van de Cappelle"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "150118",
+      "from": "Théodore Caruelle d' Aligny",
+      "to": "Théodore Caruelle d'Aligny"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_3420",
+      "from": "Rosselli, Cosimo",
+      "to": "Cosimo Rosselli"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_C_165",
+      "from": "Koekkoek, Barend Cornelis",
+      "to": "Barend Cornelis Koekkoek"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "148758",
+      "from": "Caravaggio",
+      "to": "Caravaggio (Michelangelo Merisi)"
+    },
+    {
+      "source": "met",
+      "native_id": "437760",
+      "from": "Jacob van Strij",
+      "to": "Strij, Jacob van"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "148990",
+      "from": "Spinello Aretino",
+      "to": "Spinello Aretino (Spinello di Luca Spinelli)"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/91616/arme_object_AM065302",
+      "from": "Duck, Jacob",
+      "to": "Jacob Duck"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_1417",
+      "from": "Weenix, Jan Baptist",
+      "to": "Jan Baptist Weenix"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "125251",
+      "from": "Girolamo da Carpi",
+      "to": "Girolamo da Carpi (Girolamo Sellari)"
+    },
+    {
+      "source": "met",
+      "native_id": "437282",
+      "from": "Nicolaes Eliasz Pickenoy",
+      "to": "Pickenoy, Nicolaes Eliasz."
+    },
+    {
+      "source": "europeana",
+      "native_id": "/91643/SMVK_OM_objekt_116397",
+      "from": "Ippitsusai Buncho",
+      "to": "Ippitsusai Bunchō"
+    },
+    {
+      "source": "met",
+      "native_id": "56025",
+      "from": "Katsukawa Shun'ei",
+      "to": "Katsukawa Shun'ei 勝川春英"
+    },
+    {
+      "source": "met",
+      "native_id": "437610",
+      "from": "Andrea del Sarto (Andrea d'Agnolo)",
+      "to": "Andrea del Sarto"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_1918",
+      "from": "Hondius, Abraham Daniëlsz.",
+      "to": "Abraham Hondius"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "123412",
+      "from": "Jean-Urbain Guérin",
+      "to": "Jean Urbain Guérin"
+    },
+    {
+      "source": "met",
+      "native_id": "459066",
+      "from": "Netherlandish (Antwerp?)",
+      "to": "Netherlandish"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "144302",
+      "from": "Giovanni Battista Gaulli",
+      "to": "Giovanni Battista Gaulli (Il Baciccio)"
+    },
+    {
+      "source": "met",
+      "native_id": "437673",
+      "from": "Luca Signorelli",
+      "to": "Luca Signorelli (Luca d'Egidio di Luca di Ventura)"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "169673",
+      "from": "Jan Wijnants",
+      "to": "Wijnants, Jan"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "329340",
+      "from": "Cornelis van Poelenburch",
+      "to": "Poelenburch, Cornelis van"
+    },
+    {
+      "source": "met",
+      "native_id": "461148",
+      "from": "Italian (Manifattura di Signa, Florence?)",
+      "to": "Italian"
+    },
+    {
+      "source": "met",
+      "native_id": "437886",
+      "from": "Joseph Vernet",
+      "to": "Claude-Joseph Vernet"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "142285",
+      "from": "Adriaen van de Velde",
+      "to": "Velde, Adriaen van de"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/9200579/vqsbf6u9",
+      "from": "Joost Cornelis Droochsloot",
+      "to": "Droochsloot, Joost Cornelisz."
+    },
+    {
+      "source": "met",
+      "native_id": "875634",
+      "from": "Rachel Ruysch",
+      "to": "Ruysch, Rachel"
+    },
+    {
+      "source": "met",
+      "native_id": "436638",
+      "from": "Maarten van Heemskerck",
+      "to": "Heemskerck, Maarten van"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "153603",
+      "from": "Maerten van Heemskerck",
+      "to": "Heemskerck, Maarten van"
+    },
+    {
+      "source": "met",
+      "native_id": "436671",
+      "from": "Melchior d' Hondecoeter",
+      "to": "Hondecoeter, Melchior d'"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "153368",
+      "from": "Melchior de Hondecoeter",
+      "to": "Hondecoeter, Melchior d'"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2064116/Museu_ProvidedCHO_Nationalmuseum__Sweden_20656",
+      "from": "Ernst Josephson",
+      "to": "Josephson, Ernst"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "159238",
+      "from": "Matthew Darly",
+      "to": "Matthias Darly"
+    },
+    {
+      "source": "met",
+      "native_id": "437156",
+      "from": "Moretto da Brescia",
+      "to": "Moretto da Brescia (Alessandro Bonvicino)"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "156808",
+      "from": "Kano Tan’yū",
+      "to": "Kano Tan'yū"
+    },
+    {
+      "source": "met",
+      "native_id": "437945",
+      "from": "Willem Wissing",
+      "to": "Wissing, Willem"
+    },
+    {
+      "source": "met",
+      "native_id": "364097",
+      "from": "Georg Philipp Rugendas",
+      "to": "Georg Philipp I Rugendas"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "128355",
+      "from": "Jacopo Sansovino",
+      "to": "Jacopo Sansovino (Jacopo Tatti)"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_C_57",
+      "from": "Master of Alkmaar",
+      "to": "Master of the Acts of Mercy"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "150693",
+      "from": "Giovanni Segantini",
+      "to": "Segantini, Giovanni"
+    },
+    {
+      "source": "met",
+      "native_id": "459122",
+      "from": "Paul-Désiré Trouillebert",
+      "to": "Paul Désiré Trouillebert"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/15508/https___id_kulturpool_at_43437737_6c08_4f92_931f_1295f419f80c_cho",
+      "from": "Antoine-François Callet",
+      "to": "Antoine François Callet"
+    },
+    {
+      "source": "met",
+      "native_id": "437646",
+      "from": "Sebastiano del Piombo",
+      "to": "Sebastiano del Piombo (Sebastiano Luciani)"
+    },
+    {
+      "source": "met",
+      "native_id": "437154",
+      "from": "Paulus Moreelse",
+      "to": "Moreelse, Paulus"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "156584",
+      "from": "Alexandre-Evariste Fragonard",
+      "to": "Alexandre Evariste Fragonard"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "141476",
+      "from": "Jacques André Joseph Aved",
+      "to": "Aved, Jacques-André-Joseph"
+    },
+    {
+      "source": "met",
+      "native_id": "437323",
+      "from": "Frans Post",
+      "to": "Post, Frans Jansz"
+    },
+    {
+      "source": "met",
+      "native_id": "437768",
+      "from": "Lambert Sustris",
+      "to": "Sustris, Lambert"
+    },
+    {
+      "source": "met",
+      "native_id": "399420",
+      "from": "Karel Dujardin",
+      "to": "Dujardin, Karel"
+    },
+    {
+      "source": "met",
+      "native_id": "771723",
+      "from": "Gérard Edelinck",
+      "to": "Edelinck, Gérard"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2024903/photography_ProvidedCHO_KU_Leuven_9991113700101488",
+      "from": "Gérard Edelinck",
+      "to": "Edelinck, Gérard"
+    },
+    {
+      "source": "met",
+      "native_id": "651672",
+      "from": "Pehr Hörberg",
+      "to": "Hörberg, Pehr"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "137202",
+      "from": "Mei Qing",
+      "to": "Mei Qing (1623-1697)"
+    },
+    {
+      "source": "met",
+      "native_id": "436971",
+      "from": "Emile van Marcke",
+      "to": "Émile van Marcke"
+    },
+    {
+      "source": "met",
+      "native_id": "460033",
+      "from": "Henry-Bonaventure Monnier",
+      "to": "Henry Bonaventure Monnier"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "84731",
+      "from": "Ker Xavier Roussel",
+      "to": "Roussel, Ker Xavier"
+    },
+    {
+      "source": "met",
+      "native_id": "437757",
+      "from": "Matthias Stom",
+      "to": "Stom, Matthias"
+    },
+    {
+      "source": "met",
+      "native_id": "435602",
+      "from": "Donato de' Bardi",
+      "to": "Bardi (Künstler_in)"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_2402",
+      "from": "Levecq, Jacobus",
+      "to": "Leveck, Jacobus"
+    },
+    {
+      "source": "met",
+      "native_id": "459186",
+      "from": "Antonio Pollaiuolo",
+      "to": "Antonio del Pollaiuolo"
+    },
+    {
+      "source": "met",
+      "native_id": "437633",
+      "from": "Godfried Schalcken",
+      "to": "Schalcken, Godfried"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "152440",
+      "from": "Kawanabe Kyōsai",
+      "to": "Kawanabe Kyōsai 河鍋暁斎"
+    },
+    {
+      "source": "met",
+      "native_id": "436630",
+      "from": "Adriaen Hanneman",
+      "to": "Hanneman, Adriaen"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "150719",
+      "from": "Johann Heinrich Schönfeld",
+      "to": "Schönfeld, Johann Heinrich"
+    },
+    {
+      "source": "met",
+      "native_id": "437089",
+      "from": "Arnold Boonen",
+      "to": "Boonen, Arnold"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "79482",
+      "from": "Charles-Melchior Descourtis",
+      "to": "Charles Melchior Descourtis"
+    },
+    {
+      "source": "met",
+      "native_id": "436077",
+      "from": "Michael Dahl",
+      "to": "Dahl, Michael"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_C_1657",
+      "from": "Hemessen, Jan van",
+      "to": "Jan Sanders van Hemessen"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "117030",
+      "from": "Joseph Paelinck",
+      "to": "Paelinck, Joseph"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "117024",
+      "from": "Eugène Joseph Verboeckhoven",
+      "to": "Verboeckhoven, Eugène Joseph"
+    },
+    {
+      "source": "met",
+      "native_id": "438510",
+      "from": "Edmond-François Aman-Jean",
+      "to": "Edmond François Aman-Jean"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "156315",
+      "from": "David Wilkie",
+      "to": "Sir David Wilkie"
+    },
+    {
+      "source": "met",
+      "native_id": "459286",
+      "from": "Bartholomeus Spranger",
+      "to": "Bartholomaeus Spranger"
+    },
+    {
+      "source": "met",
+      "native_id": "436867",
+      "from": "Wilhelm Leibl",
+      "to": "Wilhelm Maria Hubertus Leibl"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2064116/Museu_ProvidedCHO_Nationalmuseum__Sweden_18965",
+      "from": "Carl Larsson",
+      "to": "Larsson, Carl"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "118679",
+      "from": "Jacopo Bassano",
+      "to": "Bassano, Jacopo"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/90402/SK_A_2164",
+      "from": "Barendsz., Dirck",
+      "to": "Dirck Barendsz (Schöpfer_in der Vorlage)"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "137086",
+      "from": "Jacopo Palma il Giovane",
+      "to": "Jacopo Palma the Younger"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "123415",
+      "from": "Jeremias Majer",
+      "to": "Jeremiah Meyer"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "444535",
+      "from": "Frédéric Bazille",
+      "to": "Jean-Frédéric Bazille"
+    },
+    {
+      "source": "met",
+      "native_id": "812517",
+      "from": "Célestin Nanteuil",
+      "to": "Célestin François Nanteuil"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "145135",
+      "from": "Nicolas de Largillière",
+      "to": "Largillière, Nicolas de"
+    },
+    {
+      "source": "commons",
+      "native_id": "File:Wang Shimin-After Wang Wei's Snow Over Rivers and Mountains.jpg",
+      "from": "Wang Shimin",
+      "to": "Wang Shimin (1592-1680)"
+    },
+    {
+      "source": "met",
+      "native_id": "437171",
+      "from": "Emanuel Murant",
+      "to": "Murant, Emanuel"
+    },
+    {
+      "source": "met",
+      "native_id": "437893",
+      "from": "Johannes Verspronck",
+      "to": "Verspronck, Jan Cornelisz."
+    },
+    {
+      "source": "met",
+      "native_id": "496203",
+      "from": "Paul Ranson",
+      "to": "Paul Elie Ranson"
+    },
+    {
+      "source": "met",
+      "native_id": "437168",
+      "from": "Jan Mostaert",
+      "to": "Mostaert, Jan Jansz"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "675346",
+      "from": "Hendrick Avercamp",
+      "to": "Avercamp, Hendrick"
+    },
+    {
+      "source": "europeana",
+      "native_id": "/2064116/Museu_ProvidedCHO_Nationalmuseum__Sweden_22284",
+      "from": "David Klöcker Ehrenstrahl",
+      "to": "Ehrenstrahl, David Klöcker"
+    },
+    {
+      "source": "met",
+      "native_id": "438949",
+      "from": "Constantin Hansen",
+      "to": "Hansen, Constantin"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "123402",
+      "from": "Lucas van Uden",
+      "to": "Uden, Lucas van"
+    },
+    {
+      "source": "cleveland",
+      "native_id": "117747",
+      "from": "Jan Toorop",
+      "to": "Toorop, Jan"
+    }
+  ]
+}

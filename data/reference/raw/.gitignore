@@ -1,0 +1,14 @@
+# Raw vocabulary dumps are NOT committed.
+#
+# ulan_rel_0126.zip is 190 MB compressed and expands to multiples of that.
+# Git stores every version of a binary forever, so committing one is easy and
+# unpleasant to undo -- every clone from then on pays for it.
+#
+# What IS committed is the DERIVED SUBSET in the parent directory: the artists
+# actually in our catalogue, extracted from this dump. That is small, diffable,
+# and the only part we use.
+#
+# Re-downloadable from http://ulandownloads.getty.edu/ -- the snapshot date is
+# recorded in ../README.md so a rebuild uses the same input.
+*
+!.gitignore

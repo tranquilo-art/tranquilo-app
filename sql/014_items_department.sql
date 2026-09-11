@@ -1,0 +1,71 @@
+-- The holding department, kept as its own fact.
+--
+-- Run once by hand in Neon's web SQL editor, same convention as
+-- sql/008_items_place_of_origin.sql. Safe to re-run.
+--
+-- ---------------------------------------------------------------------------
+-- What went wrong without it
+-- ---------------------------------------------------------------------------
+-- A Met pull of European Sculpture and Decorative Arts quarantined 58
+-- of 75 items (77%) on schema.region_unresolved, and the run-level guard
+-- aborted the batch. The records look like:
+--
+--     met:102519  title='Apron'  medium='Linen'
+--                 date='16th century-17th century'  artist='Unknown'
+--
+-- No culture, no place_of_origin, no nationality in bio. classify_region()
+-- had nothing to work from and was right to resolve nothing.
+--
+-- The evidence was in the record and we discarded it. The department is called
+-- *European* Sculpture and Decorative Arts; the Met returns `department` on
+-- every object; met.py read it for the Arms and Armor category hint and threw
+-- it away. Whole departments of unattributed decorative objects were therefore
+-- un-ingestible.
+--
+-- ---------------------------------------------------------------------------
+-- Why a stored column rather than a transient key
+-- ---------------------------------------------------------------------------
+-- `_category_hint` is transient, so a recheck classifies WORSE than
+-- the original ingestion -- the evidence is gone by the time the rules run
+-- again. Department would reproduce that exactly: an item passes on ingestion
+-- and quarantines on its next recheck, which reads as the rules having got
+-- stricter rather than as data having been dropped.
+--
+-- ---------------------------------------------------------------------------
+-- What it is allowed to conclude
+-- ---------------------------------------------------------------------------
+-- classify_region() consults it LAST, only once place_of_origin and the
+-- artist's nationality have both failed, and only for departments whose name
+-- asserts exactly one of our regions (core.MET_DEPARTMENT_REGION_MAP):
+--
+--     European Sculpture and Decorative Arts -> Europe
+--     European Paintings                     -> Europe
+--     American Decorative Arts               -> Americas
+--     Egyptian Art                           -> Africa
+--     Ancient West Asian Art                 -> West Asia & Middle East
+--
+-- Asian Art (four buckets), Islamic Art (three), Greek and Roman Art (the
+-- classical Mediterranean spans Europe, Africa and West Asia) and every
+-- medium-organised department stay unresolved on purpose. A wrong region is
+-- worse than an empty one: it is a claim we cannot support and it is invisible
+-- once written.
+--
+-- The derivation trace records how="department", so a region reached this way
+-- is distinguishable from one reached via the object's own place -- which is
+-- needed to label the UI honestly.
+--
+-- ---------------------------------------------------------------------------
+-- Existing rows
+-- ---------------------------------------------------------------------------
+-- Left NULL. Department is only known at fetch time, so back-populating means
+-- re-fetching, and no backfill runs without a process that avoids rate
+-- limiting first. Nothing already live changes as a result of this column.
+
+ALTER TABLE items ADD COLUMN IF NOT EXISTS department TEXT;
+
+-- ---------------------------------------------------------------------------
+-- Verify (optional)
+-- ---------------------------------------------------------------------------
+-- SELECT department, count(*) FILTER (WHERE region_primary IS NOT NULL) AS with_region,
+--        count(*) AS total
+-- FROM items WHERE source = 'met' AND department <> '' GROUP BY 1 ORDER BY 3 DESC;

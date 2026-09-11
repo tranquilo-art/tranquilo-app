@@ -1,0 +1,66 @@
+name: Bump cache-bust version
+
+# Manually triggered only -- see config.toml's [cache].bust_version comment
+# and src/app.ts's own CACHE_BUST_VERSION note for the full incident this
+# exists for (Aug 7 2026): the ingestion pipeline writes straight to
+# Postgres, entirely outside any Vercel deploy, so a code deploy alone does
+# not retroactively invalidate an already-cached /api/items response at
+# Vercel's edge. Bumping this query-string version is the one guaranteed
+# way to force a brand-new cache key from pure code, with no Vercel
+# dashboard access needed.
+#
+# Deliberately workflow_dispatch only, not run automatically after every
+# ingestion. Bumping this pushes a commit and (via Vercel's own GitHub
+# integration, independent of this repo's GitHub Actions) triggers a full
+# production deploy -- that is a real, visible action against the live
+# site, so it stays a human's deliberate call from the Actions tab rather
+# than something a cron or the ingestion job silently sets off.
+#
+# Run against whichever branch actually needs the fresh cache key (pick it
+# from the "Use workflow from" dropdown when dispatching) -- normally the
+# branch Vercel deploys to production from.
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why this cache bust is needed (recorded in the commit message)"
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Bump config.toml's [cache].bust_version
+        id: bump
+        run: |
+          current=$(grep -oP '(?<=^bust_version = )\d+' config.toml || true)
+          if [ -z "$current" ]; then
+            echo "::error::could not find a 'bust_version = <int>' line in config.toml"
+            exit 1
+          fi
+          next=$((current + 1))
+          sed -i "s/^bust_version = ${current}\$/bust_version = ${next}/" config.toml
+          echo "next=${next}" >> "$GITHUB_OUTPUT"
+          echo "::notice::bust_version ${current} -> ${next}"
+
+      - name: Commit and push
+        env:
+          REASON: ${{ inputs.reason }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add config.toml
+          if [ -n "$REASON" ]; then
+            msg="Bump cache bust_version to ${{ steps.bump.outputs.next }} -- ${REASON}"
+          else
+            msg="Bump cache bust_version to ${{ steps.bump.outputs.next }}"
+          fi
+          git commit -m "$msg"
+          git push

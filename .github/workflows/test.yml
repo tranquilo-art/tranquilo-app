@@ -1,0 +1,105 @@
+# bun replaces npm as the package manager/runtime. Test jobs no
+# longer need actions/setup-node -- oven-sh/setup-bun installs its own
+# pinned Node-compatible runtime.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.11"
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      # Comment-quality gate: a bare @ts-ignore/@ts-expect-error
+      # silences a real type error with no record of why it's safe to
+      # silence -- the next person to touch that line has no way to tell a
+      # deliberate, checked suppression from someone giving up on an error.
+      # biome's own `biome-ignore` comments already require a `: reason`
+      # at parse time, so this only needs to cover TypeScript's two
+      # directives, which don't. Zero occurrences exist today -- this is a
+      # preventive gate, not a fix for something currently wrong.
+      - name: No unexplained @ts-ignore/@ts-expect-error
+        run: |
+          if grep -rEn '@ts-(ignore|expect-error)[[:space:]]*$' \
+               --include='*.ts' --include='*.mts' api/ lib/ src/ tests/ scripts/; then
+            echo "::error::@ts-ignore/@ts-expect-error must explain why (e.g. '@ts-expect-error -- reason'), not stand alone."
+            exit 1
+          fi
+      - run: bun run typecheck
+      # `dist/` is gitignored -- this is the exact `vite build` Vercel's own
+      # buildCommand runs at deploy time (see vercel.json). Running it here
+      # is still worth doing: a broken src/ file that only fails at this
+      # step, not at `bun run typecheck`, would otherwise reach `bun run
+      # test`/test-e2e with a stale or missing `dist/` and fail there
+      # confusingly instead.
+      - run: bun run build
+      - run: bun run test
+
+  # Separate job from test-js because it needs a browser
+  # binary, and because a browser download failing should read as "e2e is
+  # broken", not "the unit tests are broken".
+  #
+  # Fully offline: /api/items comes from tests/fixtures/e2e-items.json and
+  # /img/** is stubbed, so this never touches Neon, Commons, the Met,
+  # Cleveland or Smithsonian -- deliberate, given we are holding off Commons
+  # entirely and moderating every other source. A test suite that hammers the
+  # institutions on every push is not acceptable regardless of whether it
+  # passes.
+  #
+  # Sharded 4 ways via Playwright's own --shard=<i>/<n>, so the
+  # ~277-test suite runs as 4 parallel jobs instead of one serial one. This
+  # is still the FULL suite, split for wall-clock only -- fail-fast: false
+  # so one shard failing doesn't cancel the others and hide what else broke.
+  # See scripts/select_e2e_specs.mts / `bun run test:e2e:<group>` for the
+  # targeted local/PR-iteration subset this does NOT replace; this job (all
+  # 4 legs, via the test-e2e-required gate below) is what actually has to
+  # pass before a merge.
+  test-e2e:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.11"
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run build
+      - run: bunx playwright test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+      - uses: actions/upload-artifact@v5
+        if: failure()
+        with:
+          name: playwright-report-${{ matrix.shard }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  # A single, stable check name for branch protection to require, regardless
+  # of how many shards test-e2e is split into -- a matrix job shows up as one
+  # differently-named check per leg (test-e2e (1), test-e2e (2), ...), which
+  # is awkward to pin in a required-checks list and has to be re-picked every
+  # time the shard count changes. This job is the actual merge gate: it only
+  # succeeds once every shard has.
+  test-e2e-required:
+    runs-on: ubuntu-latest
+    needs: test-e2e
+    if: always()
+    steps:
+      - run: |
+          if [ "${{ needs.test-e2e.result }}" != "success" ]; then
+            echo "One or more test-e2e shards did not pass." >&2
+            exit 1
+          fi

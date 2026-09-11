@@ -1,0 +1,322 @@
+{
+ "measured_at": "2026-08-26",
+ "scope": "reusability=open, qf=TYPE:IMAGE, media=true",
+ "total_records_in_scope": 20799198,
+ "note": "Volume is NOT desirability. The five largest providers are natural-history specimen collections and account for ~9.4M of the 20.8M records in scope.",
+ "providers_by_volume": [
+  {
+   "name": "Naturalis Biodiversity Center",
+   "records": 4158051
+  },
+  {
+   "name": "The Trustees of the Natural History Museum, London",
+   "records": 2455501
+  },
+  {
+   "name": "Meise Botanic Garden",
+   "records": 1382790
+  },
+  {
+   "name": "Royal Botanic Garden Edinburgh",
+   "records": 858720
+  },
+  {
+   "name": "Royal Botanic Gardens Kew",
+   "records": 573922
+  },
+  {
+   "name": "Cultural Heritage Agency of the Netherlands",
+   "records": 526228
+  },
+  {
+   "name": "Natural History Museum in Paris",
+   "records": 481540
+  },
+  {
+   "name": "The Portable Antiquities Scheme",
+   "records": 428195
+  },
+  {
+   "name": "Finnish Heritage Agency",
+   "records": 368218
+  },
+  {
+   "name": "Rijksmuseum",
+   "records": 339594
+  },
+  {
+   "name": "Swedish National Heritage Board",
+   "records": 304112
+  },
+  {
+   "name": "National Archives of the Netherlands",
+   "records": 283475
+  },
+  {
+   "name": "State Archives of Baden-Württemberg",
+   "records": 275935
+  },
+  {
+   "name": "Berlin-Dahlem Botanical Garden and Botanical Museum",
+   "records": 252955
+  },
+  {
+   "name": "Upplands Museum",
+   "records": 194239
+  },
+  {
+   "name": "National Library of Israel",
+   "records": 191862
+  },
+  {
+   "name": "Museum of Ethnography",
+   "records": 187655
+  },
+  {
+   "name": "The Norwegian Museum of Cultural History",
+   "records": 169656
+  },
+  {
+   "name": "The Utrecht Archives",
+   "records": 154443
+  },
+  {
+   "name": "Natural History Museum, Vienna",
+   "records": 152461
+  },
+  {
+   "name": "Swedish National Museum of Science and Technology",
+   "records": 150802
+  },
+  {
+   "name": "Swedish Railway Museum",
+   "records": 145088
+  },
+  {
+   "name": "Naval Museum",
+   "records": 143296
+  },
+  {
+   "name": "National Museum of Antiquities",
+   "records": 141529
+  },
+  {
+   "name": "Deutsche Fotothek",
+   "records": 140000
+  },
+  {
+   "name": "The Albertina Museum",
+   "records": 136993
+  },
+  {
+   "name": "Museum of Gothenburg",
+   "records": 132080
+  },
+  {
+   "name": "Malmö Museum",
+   "records": 130289
+  },
+  {
+   "name": "Army Museum",
+   "records": 114461
+  },
+  {
+   "name": "Bohuslän Museum",
+   "records": 113368
+  },
+  {
+   "name": "Museum of World Culture",
+   "records": 111385
+  },
+  {
+   "name": "Hellenic Literary and Historical Archive - Cultural Foundation of the National Bank Of Greece",
+   "records": 110939
+  },
+  {
+   "name": "Nordic Museum Foundation",
+   "records": 110028
+  },
+  {
+   "name": "Sörmland Museum",
+   "records": 107157
+  },
+  {
+   "name": "Helsinki City Museum",
+   "records": 103945
+  },
+  {
+   "name": "National Maritime Museum",
+   "records": 103302
+  },
+  {
+   "name": "Vänersborgs museum",
+   "records": 103247
+  },
+  {
+   "name": "Department of Life Sciences, University of Trieste",
+   "records": 101316
+  },
+  {
+   "name": "Herbarium GJO of the Landesmuseum Joanneum",
+   "records": 95942
+  },
+  {
+   "name": "Herbarium WU, Institute of Botany",
+   "records": 95058
+  },
+  {
+   "name": "Association De Hollandsche Molen",
+   "records": 94187
+  },
+  {
+   "name": "Biology Centre Linz",
+   "records": 91679
+  },
+  {
+   "name": "Museum of Architecture at Berlin Institute of Technology",
+   "records": 91295
+  },
+  {
+   "name": "Lusto - The Finnish Forest Museum",
+   "records": 87390
+  },
+  {
+   "name": "Wellcome Collection",
+   "records": 85280
+  },
+  {
+   "name": "Örebro County Museum",
+   "records": 81333
+  },
+  {
+   "name": "Gooi en Vechtstreek Archive",
+   "records": 79443
+  },
+  {
+   "name": "Domkirkeodden",
+   "records": 79208
+  },
+  {
+   "name": "The British Library",
+   "records": 70877
+  },
+  {
+   "name": "Vorarlberg State Library",
+   "records": 69243
+  },
+  {
+   "name": "Netherlands Institute for Military History",
+   "records": 68648
+  },
+  {
+   "name": "Skelleftea museum",
+   "records": 66360
+  },
+  {
+   "name": "Institute for Tropical Scientific Research",
+   "records": 65561
+  },
+  {
+   "name": "Estonian National Museum",
+   "records": 65323
+  },
+  {
+   "name": "Swedish Centre for Architecture and Design",
+   "records": 64452
+  },
+  {
+   "name": "Brandenburg Main State Archive",
+   "records": 63700
+  },
+  {
+   "name": "Västergötlands Museum",
+   "records": 54003
+  },
+  {
+   "name": "Estonian Sports and Olympic Museum",
+   "records": 53809
+  },
+  {
+   "name": "Municipal Archives of Weert",
+   "records": 52653
+  },
+  {
+   "name": "Image and Sound Archive of Menorca",
+   "records": 52640
+  }
+ ],
+ "metadata_quality_sample": {
+  "Rijksmuseum": {
+   "total": 339594,
+   "sampled": 40,
+   "creator_pct": 85,
+   "date_pct": 32,
+   "medium_pct": 100,
+   "en_title_pct": 10,
+   "place_pct": 30
+  },
+  "The Albertina Museum": {
+   "total": 136993,
+   "sampled": 40,
+   "creator_pct": 100,
+   "date_pct": 40,
+   "medium_pct": 42,
+   "en_title_pct": 0,
+   "place_pct": 0
+  },
+  "Wellcome Collection": {
+   "total": 85280,
+   "sampled": 40,
+   "creator_pct": 45,
+   "date_pct": 10,
+   "medium_pct": 20,
+   "en_title_pct": 0,
+   "place_pct": 0
+  },
+  "The British Library": {
+   "total": 70877,
+   "sampled": 40,
+   "creator_pct": 0,
+   "date_pct": 62,
+   "medium_pct": 70,
+   "en_title_pct": 100,
+   "place_pct": 10
+  },
+  "Deutsche Fotothek": {
+   "total": 140000,
+   "sampled": 40,
+   "creator_pct": 0,
+   "date_pct": 0,
+   "medium_pct": 92,
+   "en_title_pct": 75,
+   "place_pct": 27
+  },
+  "National Museum of Antiquities": {
+   "total": 141529,
+   "sampled": 40,
+   "creator_pct": 2,
+   "date_pct": 0,
+   "medium_pct": 27,
+   "en_title_pct": 0,
+   "place_pct": 92
+  },
+  "Museum of World Culture": {
+   "total": 111385,
+   "sampled": 40,
+   "creator_pct": 30,
+   "date_pct": 12,
+   "medium_pct": 80,
+   "en_title_pct": 27,
+   "place_pct": 75
+  },
+  "Nordic Museum Foundation": {
+   "total": 110028,
+   "sampled": 40,
+   "creator_pct": 70,
+   "date_pct": 2,
+   "medium_pct": 30,
+   "en_title_pct": 0,
+   "place_pct": 22
+  }
+ }
+}

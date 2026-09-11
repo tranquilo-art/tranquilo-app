@@ -1,0 +1,147 @@
+-- Feed ordering moves server-side, on a PRECOMPUTED shuffle key.
+--
+-- Run once by hand in Neon's SQL editor, same convention as
+-- sql/005_items_search.sql and sql/006_items_region_alt.sql. Safe to re-run.
+--
+-- ## Why a stored column instead of a seeded hash
+--
+-- The obvious server-side shuffle is `ORDER BY hash(native_id || seed)` with
+-- the cursor keyed on the hash. It cannot be indexed, because the seed varies
+-- per session -- so every distinct page position pays a full sort of the
+-- filtered set, and the cost is per PAGE, not per session. The first visitor
+-- to reach page 50 sorts the whole catalogue to return 60 rows.
+--
+-- A stored key inverts that: the order is materialised once, the index is
+-- ordinary, and paging is `WHERE shuffle_key > $cursor ORDER BY shuffle_key
+-- LIMIT n` -- an index range scan, O(log N + n) at any depth and any
+-- catalogue size. This closes a gap in a $45/month Postgres budget that
+-- did not account for a per-request sort at all.
+--
+-- Variety comes from two places instead of the seed: a per-session START
+-- OFFSET into the order (a random point in the key space, paging forward and
+-- wrapping), and periodic re-randomisation of the column itself. That yields
+-- more distinct experiences than a fixed set of precomputed orders would, for
+-- one column rather than K.
+--
+-- ## Why double precision, and why native_id rides along in the index
+--
+-- random() returns a double in [0,1). Collisions are vanishingly unlikely at
+-- 2^53 distinct values, but "vanishingly unlikely" is exactly the class of
+-- assumption that produced the cursor bug documented at length in
+-- api/items.js -- where created_at looked distinguishing and turned out to
+-- have 44 distinct values across 950 rows, so a `>` comparison on it silently
+-- returned the same page forever.
+--
+-- So the cursor is the row-value tuple (shuffle_key, native_id), never
+-- shuffle_key alone, and the index carries native_id as its second column so
+-- that comparison stays an index range scan rather than a filter. A tie then
+-- costs nothing; without the tiebreak a tie would skip a row or repeat one.
+--
+-- Worth knowing about that second column: native_id is NOT unique on its own.
+-- The primary key is the composite `{source}:{native_id}`, and four live items
+-- currently share a native_id across two sources -- met:107208 and
+-- cleveland:107208, plus 112835, 122338 and 437876. Checked:
+-- 4,502 live rows, 4,498 distinct native_ids, 4,502 distinct primary keys.
+--
+-- The pair is still unique in practice because shuffle_key itself is (4,663
+-- distinct values over 4,663 rows), and a collision needs two identical
+-- doubles -- around 2e-6 at the 200k target -- AND for that specific pair to
+-- be one of the native_id twins. Measured rather than assumed: zero
+-- (shuffle_key, native_id) tuples match more than one live row.
+--
+-- Using the primary key as the tiebreak instead would make that structural
+-- rather than probabilistic. It was considered and not done: it buys nothing
+-- against a risk this size, and (created_at, native_id) -- which the existing
+-- pagination already uses, and which was ALSO verified unique here -- would
+-- have to change with it to be worth anything.
+-- ONE statement, not ADD COLUMN + UPDATE. This is load-bearing, and it was
+-- measured rather than reasoned about.
+--
+-- random() is VOLATILE, so Postgres cannot treat this as a metadata-only
+-- default: it rewrites the table, evaluating the default once per row. A
+-- rewrite produces a fresh, compact heap. The obvious three-step version
+-- (ADD COLUMN, then UPDATE ... SET shuffle_key = random(), then SET NOT NULL)
+-- instead leaves one dead tuple per row -- measured on this catalogue at
+-- 9,064 kB -> 16 MB, near-100% bloat, reclaimable only by a later VACUUM.
+--
+-- That is not merely untidy. Until it is vacuumed, the planner costs the
+-- sequential scan against a table twice its real size and picks it over the
+-- index -- which is exactly the outcome the acceptance criterion below calls a
+-- failure, arrived at through the migration rather than the design. The
+-- rewrite finishes at 8,656 kB, SMALLER than the 9,064 kB it started at, and
+-- the planner picks the index immediately.
+--
+-- Also gets NOT NULL and the DEFAULT in the same statement, so ingestion never
+-- has to know this column exists and no batch can introduce rows the feed
+-- silently skips. IF NOT EXISTS keeps the file re-runnable; a second run is a
+-- no-op and does NOT reshuffle a catalogue that is already ordered. The
+-- periodic job is the only thing allowed to do that, deliberately.
+ALTER TABLE items
+  ADD COLUMN IF NOT EXISTS shuffle_key DOUBLE PRECISION NOT NULL DEFAULT random();
+
+-- ===========================================================================
+-- Indexes
+-- ===========================================================================
+-- Every index here is partial on the same live-items predicate the three API
+-- handlers share (lib/items-sql.js). That is not an optimisation -- a
+-- non-partial index would not be usable by a query carrying the predicate
+-- without a recheck, and the whole acceptance criterion is that paging is an
+-- index range scan.
+
+-- The "All" feed tail.
+CREATE INDEX IF NOT EXISTS items_shuffle_idx
+  ON items (shuffle_key, native_id)
+  WHERE review_status NOT IN ('quarantined', 'rejected');
+
+-- The chip modes. category leads because it is an equality filter and
+-- shuffle_key is the range -- the reverse order cannot serve the seek.
+CREATE INDEX IF NOT EXISTS items_category_shuffle_idx
+  ON items (category, shuffle_key, native_id)
+  WHERE review_status NOT IN ('quarantined', 'rejected');
+
+-- Statistics, immediately. The planner has just been handed a column it has
+-- never seen on a table it has just rewritten; until it is analysed, its
+-- estimates for shuffle_key are defaults and the plan below is not meaningful.
+ANALYZE items;
+
+-- ===========================================================================
+-- Verify
+-- ===========================================================================
+-- Measured on the live catalogue (4,502 live / 4,663 total, avg row 1,792
+-- bytes) inside a rolled-back transaction:
+--
+--   this design, page 1        Index Scan, no Sort    62 buffers    0.148 ms
+--   this design, deep page     Index Scan, no Sort    63 buffers    0.160 ms
+--   rejected hash sort @ 200k  Seq Scan + Sort     1,856 buffers  299-308 ms
+--
+-- Buffer count is flat in catalogue size, which is the property being bought:
+-- verified holding at 4,502 / 10,000 / 20,000 / 27,600 / 50,000 rows against a
+-- table padded to the same row width, always Index Scan and never a Sort.
+--
+-- The acceptance criterion is EXPLAIN, not assumption. Expect an
+-- "Index Scan using items_shuffle_idx" and NO Sort node -- a Seq Scan here
+-- means the index is not being used and the entire point of the column is
+-- lost:
+--
+--   EXPLAIN ANALYZE
+--   SELECT * FROM items
+--    WHERE review_status NOT IN ('quarantined', 'rejected')
+--      AND (shuffle_key, native_id) > (0.5, '')
+--    ORDER BY shuffle_key, native_id
+--    LIMIT 60;
+--
+-- Same for a chip, which must pick items_category_shuffle_idx:
+--
+--   EXPLAIN ANALYZE
+--   SELECT * FROM items
+--    WHERE review_status NOT IN ('quarantined', 'rejected')
+--      AND category = 'Photography'
+--      AND (shuffle_key, native_id) > (0.5, '')
+--    ORDER BY shuffle_key, native_id
+--    LIMIT 60;
+--
+-- Distribution is uniform and every live row has a key:
+--   SELECT count(*) FILTER (WHERE shuffle_key IS NULL) AS unkeyed,
+--          round(avg(shuffle_key)::numeric, 3) AS mean,   -- expect ~0.500
+--          count(*) - count(DISTINCT shuffle_key) AS collisions
+--     FROM items;

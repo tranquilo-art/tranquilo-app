@@ -1,0 +1,143 @@
+{
+  "_readme": [
+    "Single source of truth for every controlled vocabulary in the catalogue.",
+    "",
+    "Read by tests/data-schema.test.js here. The ingestion pipeline (its own",
+    "branch/repo now) keeps its own copy of vocab.py -- a taxonomy change",
+    "needs editing both, the same hand-syncing this file was originally",
+    "built to avoid when the lists lived in three copies -- core.py,",
+    "data-schema.test.js, and the README's prose -- with nothing keeping",
+    "them in sync.",
+    "",
+    "Two groups, deliberately flat rather than nested so neither consumer",
+    "needs a path walk:",
+    "  * taxonomy facets (categories..subject_types) -- derived at ingestion",
+    "    by core.classify_item(), asserted on every item by both suites.",
+    "  * content-workflow enums (tea_voice_..onward) -- hand-curated editorial",
+    "    state, currently asserted only by the JS suite. Listed here anyway so",
+    "    there is one place to look, not two.",
+    "",
+    "Ordering is preserved from the original definitions. Membership checks",
+    "don't care, but a stable order keeps diffs reviewable.",
+    "",
+    "twist_categories_deferred is policy, not data integrity: 'looted' and",
+    "'repatriation_dispute' are the real spec's values but are deliberately",
+    "PAUSED (not removed) pending careful thought on tone for genuinely",
+    "sensitive political/cultural subject matter. A test enforces the pause."
+  ],
+  "required_fields": [
+    "id",
+    "title",
+    "artist",
+    "category",
+    "img",
+    "url"
+  ],
+  "categories": [
+    "Paintings & Portraits",
+    "Sculpture & Objects",
+    "Works on Paper",
+    "Arms & Armor",
+    "Photography"
+  ],
+  "regions": [
+    "Europe",
+    "East Asia",
+    "South Asia",
+    "Southeast Asia",
+    "West Asia & Middle East",
+    "Africa",
+    "Americas",
+    "Oceania"
+  ],
+  "timeframes": [
+    "Ancient & Classical",
+    "Medieval",
+    "Renaissance",
+    "Baroque & Enlightenment",
+    "19th Century",
+    "Modern & Contemporary"
+  ],
+  "media_types": [
+    "Painting",
+    "Print/Drawing",
+    "Photograph",
+    "Ceramic",
+    "Metalwork",
+    "Stone Sculpture",
+    "Textile",
+    "Glass",
+    "Decorative Object"
+  ],
+  "palettes": [
+    "Red",
+    "Orange",
+    "Gold/Yellow",
+    "Green",
+    "Teal",
+    "Blue",
+    "Purple",
+    "Pink",
+    "Neutral"
+  ],
+  "subject_types": [
+    "portrait",
+    "religious",
+    "landscape",
+    "genre_scene",
+    "still_life",
+    "other"
+  ],
+  "unknown_artist_prefixes": [
+    "unknown",
+    "anonymous",
+    "unidentified",
+    "unattributed",
+    "not known",
+    "no artist",
+    "unknow",
+    "goryeo-dynasty artist"
+  ],
+  "tea_voice_statuses": [
+    "not_started",
+    "in_progress",
+    "implemented",
+    "basic_tier"
+  ],
+  "twist_required_fields": [
+    "twist_category",
+    "twist_hook",
+    "twist_story",
+    "twist_confidence",
+    "twist_source_url"
+  ],
+  "twist_categories": [
+    "looted",
+    "repatriation_dispute",
+    "misattributed",
+    "forgery_dispute",
+    "rediscovered",
+    "restoration_mishap",
+    "hidden_work",
+    "scandal",
+    "other"
+  ],
+  "twist_categories_deferred": [
+    "looted",
+    "repatriation_dispute"
+  ],
+  "twist_confidences": [
+    "verified",
+    "disputed",
+    "anecdotal"
+  ],
+  "cast_tiers": [
+    "full",
+    "partial",
+    "none"
+  ],
+  "cast_attribution_confidences": [
+    "normal",
+    "hedged"
+  ]
+}

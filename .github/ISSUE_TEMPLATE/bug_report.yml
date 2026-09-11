@@ -1,0 +1,26 @@
+name: Bug report
+description: Something in the app or the pipeline is broken
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL, if this is about the live site
+      placeholder: https://tranquilo.art/...
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: If it's not obvious from the above.
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else
+      description: Browser/OS, a screenshot, a stack trace -- whatever's relevant.

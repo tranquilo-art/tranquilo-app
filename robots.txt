@@ -1,0 +1,157 @@
+# Every artwork has a real crawlable URL at /v/{slug}. Nothing
+# on the site links to one -- the feed is a scroll container built in
+# JavaScript, so a crawler that does not execute JS sees a single page -- which
+# makes the sitemap the only route by which these are discovered.
+User-agent: *
+Allow: /
+
+# Internal endpoints. Not secret, just not content: crawling them spends crawl
+# budget on JSON and image bytes that will never be a search result.
+Disallow: /api/
+Disallow: /img/
+Disallow: /og/
+
+
+# =====================================================================
+# Reserving OUR WRITING from AI model training.
+#
+# WHAT IS AND IS NOT RESERVED
+#
+# Reserved: the writing. Tea Voice captions, storyline text, the marketing
+# pages. That is ours.
+#
+# NOT reserved: the artwork. It is public domain or openly licensed, it is not
+# ours to reserve, and we want it spread as widely as possible. That is the
+# point of the project. The images live behind /img/, already disallowed above
+# for every crawler on crawl-budget grounds, and their canonical copies sit at
+# the museums that hold them.
+#
+# WHY HERE RATHER THAN IN THE TERMS
+#
+# A "don't train on our writing" clause was drafted for the ToS and cut:
+# it binds only someone who agreed to it, which a scraper never did.
+# Under the EU copyright directive the text-and-data-mining exception applies
+# UNLESS rights are reserved in machine-readable form -- so this file is the
+# version with actual legal weight. Brazil has no equivalent yet (PL 2338/2023
+# passed the Senate in Dec 2024, still pending in the Chamber), but its IP
+# provisions contemplate opt-out mechanisms.
+#
+# Copyright in the writing exists regardless of this file. This is about the
+# crawlers that honour the signal, which is most of the ones that matter and
+# will never be all of them.
+#
+# WHY THERE ARE NO "Allow" GROUPS BELOW, WHICH LOOKS LIKE AN OMISSION
+#
+# A named user-agent group REPLACES the `*` group for that agent -- it does not
+# add to it. So writing
+#
+#     User-agent: Googlebot
+#     Allow: /
+#
+# would silently un-block /api/, /img/ and /og/ for Googlebot, which is the
+# opposite of what anyone adding that line would intend. Search engines and
+# query-time agents are therefore left to inherit the `*` group above, which
+# already allows them everything we want crawled.
+#
+# DELIBERATELY NOT BLOCKED, and each for a reason:
+#
+#   Googlebot, Bingbot, DuckDuckBot, Applebot   ordinary search. We want to be
+#                                               findable; the sitemap exists
+#                                               precisely to help them.
+#   OAI-SearchBot, Claude-SearchBot             AI search indexing. These make
+#                                               us appear in answers WITH a
+#                                               citation and a link.
+#   ChatGPT-User, Claude-User, Perplexity-User  fetched because a human asked a
+#                                               question. That is a reader, not
+#                                               a training run.
+#
+# The distinction the vendors themselves draw is training vs. retrieval, and
+# retrieval behaves like referral traffic. Verified against OpenAI's
+# and Anthropic's own crawler documentation: blocking GPTBot does NOT remove us
+# from ChatGPT search results -- that is OAI-SearchBot's job, and it is allowed
+# above.
+#
+# MAINTENANCE
+#
+# This list is a snapshot and will go stale. New crawlers appear, tokens get
+# renamed, and a blocklist is only ever as current as the day it was written.
+# Worth a re-read whenever the ToS is revisited.
+# =====================================================================
+
+# --- Model training crawlers ---
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+User-agent: Meta-ExternalFetcher
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: cohere-ai
+Disallow: /
+
+User-agent: cohere-training-data-crawler
+Disallow: /
+
+User-agent: Diffbot
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: AI2Bot
+Disallow: /
+
+User-agent: Omgilibot
+Disallow: /
+
+User-agent: Omgili
+Disallow: /
+
+User-agent: ImagesiftBot
+Disallow: /
+
+User-agent: Timpibot
+Disallow: /
+
+User-agent: YouBot
+Disallow: /
+
+User-agent: PanguBot
+Disallow: /
+
+# --- Training opt-out directives, NOT crawlers ---
+#
+# Neither of these is a bot that fetches anything. They are tokens their owners
+# read as "do not use this site for AI training", while their actual crawlers
+# -- Googlebot and Applebot -- keep indexing us for search exactly as before.
+#
+# So these lines cost NOTHING in search visibility, and deleting them as
+# apparent duplicates of the search crawlers above would quietly opt us back
+# into training. They are not duplicates.
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+Sitemap: https://tranquilo.art/sitemap.xml

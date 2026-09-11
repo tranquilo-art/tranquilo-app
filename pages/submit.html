@@ -1,0 +1,117 @@
+<extends src="_base.html">
+<block name="head" type="append">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Submit a Collection — Tranquilo</title>
+<meta name="description" content="Submit an openly licensed art collection for consideration on Tranquilo.">
+</block>
+
+<block name="main">
+  <main class="mkt-main narrow">
+
+    <section class="mkt-section">
+      <div class="mkt-eyebrow">Submit a Collection</div>
+      <h1 class="mkt-h1">Submit an open collection for consideration</h1>
+
+      <div class="mkt-callout">
+        <div class="icon-chip" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        </div>
+        <p>We only accept openly licensed collections &mdash; CC0, CC-BY, public domain, or equivalent. No rights-restricted or unlicensed material.</p>
+      </div>
+    </section>
+
+    <section class="mkt-section" id="formSection">
+      <form class="mkt-form" id="submitForm" novalidate>
+
+        <div class="field" data-field="collectionName">
+          <label for="collectionName">Collection name *</label>
+          <input type="text" id="collectionName" name="collectionName" placeholder="e.g., Highsmith Street Photography">
+          <div class="error-msg">Please enter the collection's name.</div>
+        </div>
+
+        <div class="field" data-field="submitterName">
+          <label for="submitterName">Your name *</label>
+          <input type="text" id="submitterName" name="submitterName" placeholder="Full name">
+          <div class="error-msg">Please enter your name.</div>
+        </div>
+
+        <div class="field" data-field="submitterEmail">
+          <label for="submitterEmail">Your email *</label>
+          <input type="email" id="submitterEmail" name="submitterEmail" placeholder="you@example.com">
+          <div class="error-msg">Please enter a valid email address.</div>
+        </div>
+
+        <div class="field" data-field="collectionLink">
+          <label for="collectionLink">Collection link *</label>
+          <input type="url" id="collectionLink" name="collectionLink" placeholder="https://">
+          <div class="field-hint">Site, repo, or API where the collection lives.</div>
+          <div class="error-msg">Please enter a valid link, starting with http:// or https://</div>
+        </div>
+
+        <div class="field" data-field="licenseType">
+          <label for="licenseType">License type *</label>
+          <select id="licenseType" name="licenseType">
+            <option value="">Select a license&hellip;</option>
+            <option value="CC0">CC0</option>
+            <option value="CC-BY">CC-BY</option>
+            <option value="CC-BY-SA">CC-BY-SA</option>
+            <option value="Public Domain">Public Domain</option>
+            <option value="Other">Other open license</option>
+          </select>
+          <div class="error-msg">Please select a license type.</div>
+        </div>
+
+        <div class="field" id="licenseOtherField" data-field="licenseOther" style="display:none;">
+          <label for="licenseOther">Describe the license *</label>
+          <input type="text" id="licenseOther" name="licenseOther" placeholder="Name the open license used">
+          <div class="error-msg">Please describe the license.</div>
+        </div>
+
+        <div class="field" data-field="licenseVerificationLink">
+          <label for="licenseVerificationLink">License verification link *</label>
+          <input type="url" id="licenseVerificationLink" name="licenseVerificationLink" placeholder="Where this license is documented">
+          <div class="error-msg">Please enter a valid link, starting with http:// or https://</div>
+        </div>
+
+        <div class="field" data-field="description">
+          <label for="description">Short description *</label>
+          <textarea id="description" name="description" placeholder="What's in this collection?"></textarea>
+          <div class="error-msg">Please add a short description.</div>
+        </div>
+
+        <div class="field" data-field="estimatedSize">
+          <label for="estimatedSize">Estimated size (number of works)</label>
+          <input type="number" id="estimatedSize" name="estimatedSize" min="1" placeholder="Optional">
+        </div>
+
+        <div class="field-check" data-field="confirm">
+          <input type="checkbox" id="confirmLicense" name="confirmLicense">
+          <label for="confirmLicense">I confirm this collection is openly licensed and I have the right to submit it.</label>
+        </div>
+        <div class="error-msg" id="confirmError" style="display:none; margin-top:-12px;">Please confirm the license statement before submitting.</div>
+
+        <div class="field-check" data-field="newsletterOptIn">
+          <input type="checkbox" id="newsletterOptIn" name="newsletterOptIn">
+          <label for="newsletterOptIn">Also send me occasional updates about Tranquilo &mdash; new sources, features, and what's next. No spam, unsubscribe any time.</label>
+        </div>
+
+        <button type="submit" class="btn-primary block" id="submitBtn">Submit for review</button>
+        <p class="submit-error-msg" id="submitErrorMsg"></p>
+
+        <p class="form-note">We review every submission and will follow up with a decision. We can't promise a specific timeline, but we'll keep you posted.</p>
+      </form>
+    </section>
+
+    <section class="form-success" id="formSuccess">
+      <div class="icon-chip" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <h2 class="mkt-h2">Submission received</h2>
+      <p style="font-family:var(--sans); font-weight:300; font-size:0.92rem; line-height:1.6; color:var(--ink-soft); max-width:380px; margin:0 auto;">Thanks &mdash; we'll review this and follow up. We can't promise a specific timeline, but we'll keep you posted.</p>
+    </section>
+
+  </main>
+</block>
+
+<block name="script"><script type="module" src="../src/pages/submit.ts"></script></block>
+</extends>

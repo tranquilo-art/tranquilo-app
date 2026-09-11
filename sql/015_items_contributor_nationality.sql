@@ -1,0 +1,63 @@
+-- The nationalities a source records for an object's named
+-- contributors, kept as their own fact.
+--
+-- Run once by hand in Neon's web SQL editor, same convention as
+-- sql/008_items_place_of_origin.sql and sql/014_items_department.sql. Safe to re-run.
+--
+-- ---------------------------------------------------------------------------
+-- What the API withholds
+-- ---------------------------------------------------------------------------
+-- met:412660 is an anonymous 1664 etching. The Open Access API returns 57 keys
+-- and not one carries a nationality: artistDisplayName is "Anonymous",
+-- artistNationality is "", and `constituents` lists names and IDs with no bio.
+-- So it quarantined on region_unresolved with nothing to look up.
+--
+-- The Met's own page shows three named collaborators -- two Italian, one
+-- French -- and MetObjects.csv carries them as
+-- `Artist Nationality = "|Italian|Italian|French"`.
+--
+-- Measured across the whole CSV: 239,580 of 248,472 public-domain
+-- objects (96.4%) carry at least one region signal. Only 8,892 have none.
+--
+-- ---------------------------------------------------------------------------
+-- Why this is not `bio`, and not `artist_nationality`
+-- ---------------------------------------------------------------------------
+-- The shortcut -- fill empty `bio` from the CSV's Artist Display Bio -- writes
+-- a falsehood. The first non-empty bio for 412660 belongs to Giulio Parigi, so
+-- the row would read "Anonymous, Italian, 1571-1635 Florence" and assert a
+-- lifespan for an anonymous maker who has none. attribution.py would then
+-- derive artist_nationality and artist_lifespan from it in good faith.
+--
+-- `artist_nationality` is also unavailable: attribution.py initialises it to ""
+-- on every normalise pass and derives it from `bio`, so anything written there
+-- by an adapter is wiped.
+--
+-- What the record actually supports is narrower and true: the named
+-- contributors were Italian and French. That places the OBJECT in Europe while
+-- claiming nothing about the anonymous artist. Only a separate column can say
+-- the narrower thing.
+--
+-- ---------------------------------------------------------------------------
+-- How it is read
+-- ---------------------------------------------------------------------------
+-- classify_region() consults it after the artist's own bio and before the
+-- department fallback -- weaker than a statement about this object's maker,
+-- stronger than one about an entire department.
+--
+-- Every named contributor must agree on a region. "Italian|French" is two
+-- countries and one region; "Italian|Japanese" resolves nothing rather than
+-- taking whichever came first. Empty segments are skipped, since the leading
+-- "|" is the anonymous primary artist.
+--
+-- Stored rather than looked up per classification: a transient signal makes
+-- a later recheck classify worse than the original run, so the item passes
+-- once and quarantines the next time.
+
+ALTER TABLE items ADD COLUMN IF NOT EXISTS contributor_nationality TEXT;
+
+-- ---------------------------------------------------------------------------
+-- Verify (optional)
+-- ---------------------------------------------------------------------------
+-- SELECT count(*) FILTER (WHERE coalesce(contributor_nationality,'') <> '') AS with_value,
+--        count(*) AS total
+-- FROM items WHERE source = 'met';
