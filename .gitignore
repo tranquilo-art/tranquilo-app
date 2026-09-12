@@ -1,7 +1,4 @@
 node_modules/
-__pycache__/
-*.pyc
-.venv/
 temp/
 .mcp.json
 .env
