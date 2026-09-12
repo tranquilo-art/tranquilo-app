@@ -13,20 +13,20 @@ the Free Software Foundation, either version 3 of the License, or
 [![Vitest coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/loveycakes/artscroll/main/badges/coverage.json)](https://github.com/loveycakes/artscroll/actions/workflows/test.yml)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE)
 
-A calm, ad-free, infinite-scroll feed of public-domain art — no algorithm chasing engagement, no accounts required, nothing to buy to just look. Built as a proof of concept to test one question: is a slower, curated way of browsing museum collections actually engaging?
+A calm, ad-free, infinite-scroll feed of public-domain art.
 
 **Live:** [tranquilo.art](https://tranquilo.art)
 
 ## What it does
 
 - **A scrolling feed** of public-domain artwork pulled from five open-access museum and archive APIs, with category and facet filtering (region, era, medium, color).
-- **Search** with typo correction and a small concept map, so "renaissance" or "couples" surfaces relevant pieces even when the word itself doesn't appear in an item's metadata.
+- **Search** with typo correction and a small concept map.
 - **Discover**, a shelf-based browsing layer for hand-curated and rule-based collections that cut across categories.
 - **Storylines**, short guided sequences connecting works by shared artist, subject, or documented history.
-- **Meet the Cast** and **Plot Twist**, two lightweight editorial layers that surface a work's real, verified backstory where one exists — never inferred from the image itself.
-- **Share links** with rich previews (title, artist, generated preview image) for iMessage, Slack, and social platforms.
+- **Plot Twist** and **Sets**, two lightweight editorial layers that surface a work's verified backstory where one exists
+- **Share links** with rich previews (title, artist, generated preview image) 
 - **Collect** (bookmark) and export your collection as CSV — free, local-only, no account needed.
-- **Ambient music**, crossfading by category, built entirely from CC0/public-domain recordings.
+- **Ambient music**, crossfading by category, built from CC0/public-domain recordings.
 
 ## Tech stack
 
@@ -92,7 +92,7 @@ That allowlist accepts CC0, Public Domain Mark, and CC BY of any version, and ex
 
 ## Status
 
-Tranquilo is an early-stage, self-funded proof of concept, not a finished product — there are no user accounts or cross-device sync, and the free "collect" feature is local-storage only by design.
+Tranquilo is an early-stage project — there are no user accounts or cross-device sync, and the free "collect" feature is local-storage only by design.
 
 ## Contributing
 
