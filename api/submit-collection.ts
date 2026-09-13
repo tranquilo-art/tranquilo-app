@@ -4,6 +4,7 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { escapeHtml } from "../lib/html-escape.ts";
+import { isValidEmail } from "../lib/is-valid-email.ts";
 import { reportError } from "../lib/sentry.ts";
 
 const REQUIRED_FIELDS = [
@@ -15,10 +16,6 @@ const REQUIRED_FIELDS = [
   "licenseVerificationLink",
   "description",
 ];
-
-function isValidEmail(value: any): boolean {
-  return typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
 
 // Shared by both forms: build the email, send it, map Resend's failure onto a
 // response. Everything above the call is per-form.
