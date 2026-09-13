@@ -31,7 +31,7 @@ function rowToShelf(row: any): any {
 // no lazy half, since a shelf definition is already as small as the thing
 // it would be split into.
 async function getShelves(sql: any): Promise<any[]> {
-  const rows = await sql("SELECT * FROM shelves ORDER BY position ASC");
+  const rows = await sql`SELECT * FROM shelves ORDER BY position ASC`;
   return rows.map(rowToShelf);
 }
 

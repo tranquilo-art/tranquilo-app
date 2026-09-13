@@ -11,6 +11,7 @@ function fakeSql(results: any) {
     return next === undefined ? [] : next;
   };
   fn.calls = [];
+  fn.query = fn;
   return fn;
 }
 

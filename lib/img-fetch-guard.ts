@@ -33,7 +33,7 @@ async function claimFetch(
   if (!sql) return false;
   const ttl = ttlSeconds || CLAIM_TTL_SECONDS;
   try {
-    const rows = await sql(
+    const rows = await sql.query(
       "INSERT INTO img_fetch_claims (cache_key, claimed_at, expires_at) " +
         "VALUES ($1, now(), now() + ($2 || ' seconds')::interval) " +
         "ON CONFLICT (cache_key) DO UPDATE " +
@@ -53,7 +53,7 @@ async function claimFetch(
 async function releaseFetch(sql: any, cacheKey: string): Promise<void> {
   if (!sql) return;
   try {
-    await sql("DELETE FROM img_fetch_claims WHERE cache_key = $1", [cacheKey]);
+    await sql.query("DELETE FROM img_fetch_claims WHERE cache_key = $1", [cacheKey]);
   } catch (_err) {
     // The claim expires on its own.
   }
@@ -68,7 +68,7 @@ async function releaseFetch(sql: any, cacheKey: string): Promise<void> {
 async function acquireFetchToken(sql: any, source: string): Promise<any> {
   if (!sql) return { allowed: false, reason: "no-db", tokens: 0 };
   try {
-    const rows = await sql(
+    const rows = await sql.query(
       "UPDATE source_fetch_state SET " +
         "  tokens = LEAST(capacity, tokens + EXTRACT(EPOCH FROM (now() - last_refill)) * refill_per_sec) - 1, " +
         "  last_refill = now(), " +
@@ -85,7 +85,7 @@ async function acquireFetchToken(sql: any, source: string): Promise<any> {
 
     // Denied -- distinguish cooldown from exhaustion; an unknown source
     // means a config gap, not a busy one.
-    const state = await sql(
+    const state = await sql.query(
       "SELECT blocked_until, tokens, hold_reason FROM source_fetch_state WHERE source = $1",
       [source],
     );
@@ -153,7 +153,7 @@ async function acquireHostToken(
   try {
     // Create-if-absent and spend in one statement, so two concurrent
     // misses can't both see a fresh full bucket.
-    const rows = await sql(
+    const rows = await sql.query(
       "INSERT INTO host_fetch_state (host, source, tokens, last_refill, updated_at) " +
         "VALUES ($1, $2, DEFAULT, now(), now()) " +
         "ON CONFLICT (host) DO UPDATE SET " +
@@ -173,7 +173,7 @@ async function acquireHostToken(
     if (rows.length)
       return { allowed: true, reason: "ok", tokens: Number(rows[0].tokens) };
 
-    const state = await sql(
+    const state = await sql.query(
       "SELECT blocked_until, tokens FROM host_fetch_state WHERE host = $1",
       [host],
     );
@@ -212,7 +212,7 @@ async function blockHost(
 ): Promise<void> {
   if (!sql || !host) return;
   try {
-    await sql(
+    await sql.query(
       "INSERT INTO host_fetch_state (host, source, blocked_until, consecutive_failures, last_status) " +
         "VALUES ($1, $2, now() + ($3 || ' seconds')::interval, 1, 429) " +
         "ON CONFLICT (host) DO UPDATE SET " +
@@ -234,7 +234,7 @@ async function recordHostOutcome(
 ): Promise<void> {
   if (!sql || !host) return;
   try {
-    await sql(
+    await sql.query(
       "UPDATE host_fetch_state SET " +
         "  consecutive_failures = CASE WHEN $3 THEN 0 ELSE consecutive_failures + 1 END, " +
         "  last_status = $2, " +
@@ -255,7 +255,7 @@ async function blockSource(
 ): Promise<void> {
   if (!sql) return;
   try {
-    await sql(
+    await sql.query(
       "UPDATE source_fetch_state SET blocked_until = now() + ($2 || ' seconds')::interval, " +
         "  consecutive_failures = consecutive_failures + 1, last_status = 429, updated_at = now() " +
         "WHERE source = $1",
@@ -275,7 +275,7 @@ async function recordOriginOutcome(
 ): Promise<void> {
   if (!sql) return;
   try {
-    await sql(
+    await sql.query(
       "UPDATE source_fetch_state SET " +
         "  consecutive_failures = CASE WHEN $3 THEN 0 ELSE consecutive_failures + 1 END, " +
         "  last_status = $2, " +
@@ -359,7 +359,7 @@ async function bumpShedReason(
 ): Promise<void> {
   if (!sql) return;
   try {
-    await sql(
+    await sql.query(
       "INSERT INTO img_shed_stats (day, source, tier, reason, n) " +
         "VALUES (CURRENT_DATE, $1, $2, $3, 1) " +
         "ON CONFLICT (day, source, tier, reason) DO UPDATE " +
@@ -380,7 +380,7 @@ async function bumpStat(
   if (!sql) return;
   if (STAT_FIELDS.indexOf(field) === -1) return; // never interpolate an unvetted name
   try {
-    await sql(
+    await sql.query(
       `INSERT INTO img_cache_stats (day, source, tier, ${field}) ` +
         `VALUES (CURRENT_DATE, $1, $2, 1) ` +
         `ON CONFLICT (day, source, tier) DO UPDATE ` +

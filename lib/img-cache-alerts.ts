@@ -34,7 +34,7 @@
 async function checkTokenBuckets(sql: any): Promise<string[]> {
   if (!sql) return [];
   try {
-    const rows = await sql(
+    const rows = await sql.query(
       "SELECT s.source, s.tokens, s.refill_per_sec, " +
         "       COALESCE(a.attempts, 0) AS attempts " +
         "  FROM source_fetch_state s " +
@@ -69,7 +69,7 @@ async function checkTokenBuckets(sql: any): Promise<string[]> {
 async function checkEvictionThrash(sql: any): Promise<string[]> {
   if (!sql) return [];
   try {
-    const rows = await sql(
+    const rows = await sql.query(
       "SELECT count(*)::int AS n FROM img_cache_entries " +
         " WHERE bytes IS NULL AND requests >= $1",
       [THRASH_MIN_REQUESTS],
@@ -97,7 +97,7 @@ async function checkRateLimits(sql: any): Promise<string[]> {
   try {
     // The last COMPLETE day, not a rolling window -- img_cache_stats
     // is day-granular, so a rolling window would report each 429 twice.
-    const rows = await sql(
+    const rows = await sql.query(
       "SELECT source, SUM(origin_429)::int AS n FROM img_cache_stats " +
         " WHERE day = CURRENT_DATE - 1 GROUP BY source HAVING SUM(origin_429) > 0",
     );
@@ -122,7 +122,7 @@ async function checkRateLimits(sql: any): Promise<string[]> {
 async function checkShedReasons(sql: any): Promise<string[]> {
   if (!sql) return [];
   try {
-    const rows = await sql(
+    const rows = await sql.query(
       "SELECT source, reason, SUM(n)::int AS n FROM img_shed_stats " +
         " WHERE day = CURRENT_DATE - 1 " +
         "   AND reason NOT IN ('not-admitted', 'in-flight') " +
@@ -166,7 +166,7 @@ async function checkBlobSuspended(
   if (!sql) return [];
   let rows: any[];
   try {
-    rows = await sql(
+    rows = await sql.query(
       "SELECT simple_ops_suspended_since FROM blob_usage_tracker WHERE id = 1",
     );
   } catch (_err) {
@@ -203,7 +203,7 @@ async function checkBlobSuspended(
   if (isSuspended === wasSuspended) return []; // no change; stay quiet
 
   try {
-    await sql(
+    await sql.query(
       "UPDATE blob_usage_tracker SET simple_ops_suspended_since = $1 WHERE id = 1",
       [isSuspended ? new Date().toISOString() : null],
     );

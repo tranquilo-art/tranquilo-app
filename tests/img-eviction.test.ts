@@ -23,7 +23,7 @@ function harness({
     entries: entries.map((e) => ({ ...e })),
     deleted: [],
   };
-  const sql = async (text: string, params?: any[]) => {
+  const sql: any = async (text: string, params?: any[]) => {
     if (/SELECT total_bytes FROM blob_usage_tracker/i.test(text)) {
       return [{ total_bytes: state.used }];
     }
@@ -65,6 +65,7 @@ function harness({
     }
     return [];
   };
+  sql.query = sql;
   const del = async (key: string) => {
     state.deleted.push(key);
   };

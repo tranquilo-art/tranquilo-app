@@ -11,7 +11,7 @@ import { LIVE_ITEMS_PREDICATE } from "./items-sql.ts";
 // hero_items. Filtered by LIVE_ITEMS_PREDICATE, so a hero whose item has
 // since been quarantined or rejected silently drops out of the pool.
 async function getHeroPool(sql: any): Promise<any[]> {
-  const rows = await sql(
+  const rows = await sql.query(
     `SELECT h.source, h.native_id, i.media_type FROM hero_items h ` +
       `JOIN items i ON i.source = h.source AND i.native_id = h.native_id ` +
       `WHERE ${LIVE_ITEMS_PREDICATE} ORDER BY h.position ASC`,

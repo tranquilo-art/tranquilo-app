@@ -65,7 +65,7 @@ async function noteRequest(
   if (!sql) return { admit: false, requests: 0, reason: "no-db" };
   const threshold = thresholdFor(tier);
   try {
-    const rows = await sql(
+    const rows = await sql.query(
       "INSERT INTO img_cache_entries (cache_key, source, tier, native_id, requests, first_seen, last_seen) " +
         "VALUES ($1, $2, $3, $4, 1, now(), now()) " +
         "ON CONFLICT (cache_key) DO UPDATE " +
@@ -139,7 +139,7 @@ async function markStored(
 ): Promise<void> {
   if (!sql) return;
   try {
-    await sql(
+    await sql.query(
       "UPDATE img_cache_entries SET bytes = $2, admitted_at = now(), last_seen = now() " +
         "WHERE cache_key = $1",
       [cacheKey, bytes],
@@ -158,7 +158,7 @@ async function markStored(
 async function touch(sql: any, cacheKey: string): Promise<void> {
   if (!sql) return;
   try {
-    await sql(
+    await sql.query(
       "UPDATE img_cache_entries SET last_seen = now(), requests = requests + 1 " +
         "WHERE cache_key = $1",
       [cacheKey],

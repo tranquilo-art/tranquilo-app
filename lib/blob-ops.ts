@@ -57,7 +57,7 @@ function makeCountedBlobOps(deps: BlobOpsDeps) {
 // Aggregated upsert, one row per (day, op). Mirrors bumpStat's shape.
 async function recordBlobOp(sql: any, op: string): Promise<void> {
   if (!sql) return;
-  await sql(
+  await sql.query(
     "INSERT INTO blob_ops_stats (day, op, n) VALUES (CURRENT_DATE, $1, 1) " +
       "ON CONFLICT (day, op) DO UPDATE SET n = blob_ops_stats.n + 1",
     [op],
@@ -70,7 +70,7 @@ async function recordBlobOp(sql: any, op: string): Promise<void> {
 async function monthToDateOps(sql: any): Promise<number | null> {
   if (!sql) return null;
   try {
-    const rows = await sql(
+    const rows = await sql.query(
       "SELECT COALESCE(SUM(n), 0)::bigint AS total FROM blob_ops_stats " +
         "WHERE day >= date_trunc('month', CURRENT_DATE)",
     );
