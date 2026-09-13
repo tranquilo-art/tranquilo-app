@@ -27,7 +27,7 @@ function insertItem(
   };
   const cols = Object.keys(row);
   const placeholders = cols.map((_, i) => `$${i + 1}`).join(", ");
-  return sql(
+  return sql.query(
     `INSERT INTO items (${cols.join(", ")}) VALUES (${placeholders})`,
     cols.map((c) => row[c]),
   );

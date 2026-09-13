@@ -231,7 +231,7 @@ describe("the storage circuit breaker", () => {
   it("never lets concurrent writers cross the cap", async () => {
     // 10 writers, 300 bytes each, 1000-byte cap: exactly 3 may win.
     const out = await Promise.all(
-      Array.from({ length: 10 }, () => sql(RESERVE, [300, 1000])),
+      Array.from({ length: 10 }, () => sql.query(RESERVE, [300, 1000])),
     );
     expect(out.filter((rows) => rows.length)).toHaveLength(3);
     const [row] = await sql.query(

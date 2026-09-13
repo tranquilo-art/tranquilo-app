@@ -60,7 +60,7 @@ describe("normalizeShedReason -- the key must be bounded", () => {
 
 describe("bumpShedReason -- aggregate on write", () => {
   const rows = () =>
-    sql("SELECT reason, n FROM img_shed_stats ORDER BY reason");
+    sql.query("SELECT reason, n FROM img_shed_stats ORDER BY reason");
 
   it("aggregates repeated sheds into one row", async () => {
     for (let i = 0; i < 12; i++) {
@@ -134,7 +134,7 @@ describe("the invariant against the old counter", () => {
 
 describe("the alert this unlocks", () => {
   const shed = (source: string, reason: string, n: number, daysAgo: number) =>
-    sql(
+    sql.query(
       "INSERT INTO img_shed_stats (day, source, tier, reason, n) " +
         "VALUES (CURRENT_DATE - ($4)::int, $1, 'display', $2, $3) " +
         "ON CONFLICT (day, source, tier, reason) DO UPDATE SET n = img_shed_stats.n + $3",
