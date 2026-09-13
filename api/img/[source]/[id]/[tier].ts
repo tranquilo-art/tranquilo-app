@@ -131,6 +131,12 @@ const ALLOWED_ORIGIN_HOSTS: Record<string, string[]> = {
   // anything not already a web-ready JPEG (e.g. TIFF scans).
   commons: ["upload.wikimedia.org", "thumb.wikimedia.org"],
   europeana: ["api.europeana.eu"],
+  // npm.py's IIIF image service host, confirmed against real ingested
+  // rows' img/full_img values -- this was missing entirely, so every
+  // npm request 400'd here as "disallowed origin" before ever reaching
+  // the S3 cache-hit lookup below, regardless of whether the object was
+  // already cached.
+  npm: ["iiifod.npm.gov.tw"],
 };
 
 type ImgSource = keyof typeof ALLOWED_ORIGIN_HOSTS;
@@ -463,11 +469,14 @@ export default async function handler(req: any, res: any) {
     });
     return;
   }
-  if (!originUrl || !isAllowedOrigin(source, tier, originUrl)) {
-    res.statusCode = 400;
-    res.json({ error: "Missing or disallowed origin URL" });
-    return;
-  }
+  // Deliberately NOT validated here. `origin` is only ever needed to fetch
+  // the source ourselves on a cache miss (see isAllowedOrigin() below,
+  // checked right before the miss path begins) -- every display-tier item
+  // is cached on ingestion, so a hit is the overwhelmingly common case and
+  // must never depend on this source being in the allowlist. It used to be
+  // checked here unconditionally, which meant one missing allowlist entry
+  // (npm's) 400'd every one of that source's requests even though the
+  // objects were already sitting in S3, correctly cached.
 
   // Per visitor IP, checked before even a cache-hit lookup -- see
   // lib/img-visitor-rate-limit.ts for why this is a hand-rolled token
@@ -627,7 +636,14 @@ export default async function handler(req: any, res: any) {
     }
 
     // ---- Cache miss. Everything below decides whether WE fetch the
-    // origin, or the visitor does.
+    // origin, or the visitor does -- the first point anything here
+    // actually needs `origin`, so this is the first point it's validated.
+    if (!originUrl || !isAllowedOrigin(source, tier, originUrl)) {
+      res.statusCode = 400;
+      res.json({ error: "Missing or disallowed origin URL" });
+      return;
+    }
+
     sqlClient = getSql();
     await guard.bumpStat(sqlClient, source, tier, "misses");
 
