@@ -124,7 +124,7 @@ async function heldSourceSet(
   });
   if (!sql) return closed;
   try {
-    const rows = await sql(
+    const rows = await sql.query(
       "SELECT source, hold_reason FROM source_fetch_state WHERE hold_reason IS NOT NULL",
     );
     const held: Record<string, string> = {};
@@ -139,7 +139,7 @@ async function heldSourceSet(
 async function loadSourceHealth(sql: any): Promise<SourceVerdict[]> {
   if (!sql) return [];
   try {
-    const rows = await sql(
+    const rows = await sql.query(
       "SELECT source, consecutive_failures, last_status, last_ok_at, " +
         "       hold_reason, blocked_until FROM source_fetch_state ORDER BY source",
     );
@@ -161,7 +161,7 @@ async function loadSourceHealth(sql: any): Promise<SourceVerdict[]> {
 async function recordProbeSuccess(sql: any, source: string): Promise<void> {
   if (!sql) return;
   try {
-    await sql(
+    await sql.query(
       "UPDATE source_fetch_state SET consecutive_failures = 0, last_ok_at = now(), " +
         "  last_status = 200, updated_at = now() WHERE source = $1",
       [source],

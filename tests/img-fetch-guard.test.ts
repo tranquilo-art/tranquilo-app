@@ -20,6 +20,7 @@ function fakeSql(results: any) {
     return next === undefined ? [] : next;
   };
   fn.calls = [];
+  fn.query = fn;
   return fn;
 }
 
@@ -241,9 +242,17 @@ describe("the per-host gate", () => {
   // (how one server responds now). Europeana is 26 institutions behind one
   // source key, so a source-level budget could let one institution's 429
   // pause all 26.
-  const sqlOk = (rows: any) => async () => rows;
-  const sqlThrows = () => async () => {
-    throw new Error("db down");
+  const sqlOk = (rows: any) => {
+    const fn: any = async () => rows;
+    fn.query = fn;
+    return fn;
+  };
+  const sqlThrows = () => {
+    const fn: any = async () => {
+      throw new Error("db down");
+    };
+    fn.query = fn;
+    return fn;
   };
 
   it("spends a token and allows the fetch", async () => {
@@ -258,8 +267,9 @@ describe("the per-host gate", () => {
   it("refuses while the host is cooling", async () => {
     const soon = new Date(Date.now() + 60_000).toISOString();
     let call = 0;
-    const sql = async () =>
+    const sql: any = async () =>
       ++call === 1 ? [] : [{ blocked_until: soon, tokens: 0 }];
+    sql.query = sql;
     const r = await guard.acquireHostToken(sql, "bvpb.mcu.es", "europeana");
     expect(r.allowed).toBe(false);
     expect(r.reason).toBe("host-cooldown");
@@ -268,8 +278,9 @@ describe("the per-host gate", () => {
   it("distinguishes an exhausted budget from a cooldown", async () => {
     // One is us being busy, the other is the server telling us to stop.
     let call = 0;
-    const sql = async () =>
+    const sql: any = async () =>
       ++call === 1 ? [] : [{ blocked_until: null, tokens: 0.4 }];
+    sql.query = sql;
     const r = await guard.acquireHostToken(sql, "purl.pt", "europeana");
     expect(r.reason).toBe("host-no-tokens");
   });
@@ -294,10 +305,11 @@ describe("the per-host gate", () => {
     // Seeding would mean hand-maintaining a list of 26 institutions -- an
     // unlisted host would be either unlimited or unfetchable.
     let statement = "";
-    const sql = async (q: string) => {
+    const sql: any = async (q: string) => {
       statement = q;
       return [{ tokens: 5 }];
     };
+    sql.query = sql;
     await guard.acquireHostToken(sql, "new-museum.example", "europeana");
     expect(statement).toMatch(/INSERT INTO host_fetch_state/);
     expect(statement).toMatch(/ON CONFLICT \(host\) DO UPDATE/);
@@ -306,10 +318,11 @@ describe("the per-host gate", () => {
   it("blockHost never touches source_fetch_state", async () => {
     // A transient host cooldown must not affect the standing policy hold.
     let statement = "";
-    const sql = async (q: string) => {
+    const sql: any = async (q: string) => {
       statement = q;
       return [];
     };
+    sql.query = sql;
     await guard.blockHost(sql, "bvpb.mcu.es", 300, "europeana");
     expect(statement).toMatch(/host_fetch_state/);
     expect(statement).not.toMatch(/source_fetch_state/);
@@ -318,10 +331,11 @@ describe("the per-host gate", () => {
 
   it("a success clears the host's failure streak", async () => {
     let statement = "";
-    const sql = async (q: string) => {
+    const sql: any = async (q: string) => {
       statement = q;
       return [];
     };
+    sql.query = sql;
     await guard.recordHostOutcome(sql, "media.jhn.ngo", 200, true);
     expect(statement).toMatch(/consecutive_failures = CASE WHEN \$3 THEN 0/);
   });

@@ -96,7 +96,7 @@ function touchAndResolveSql(): string {
 async function touchAndResolve(sql: any, cacheKey: any): Promise<any> {
   if (!sql) return null;
   try {
-    const rows = await sql(touchAndResolveSql(), [cacheKey]);
+    const rows = await sql.query(touchAndResolveSql(), [cacheKey]);
     return rows?.[0] || null;
   } catch (_err) {
     // A bookkeeping failure must never fail an image. Returning null falls the
@@ -129,7 +129,7 @@ async function recordObject(
 ): Promise<boolean> {
   if (!sql) return false;
   try {
-    await sql(recordObjectSql(), [cacheKey, objectKey, contentHash, bytes]);
+    await sql.query(recordObjectSql(), [cacheKey, objectKey, contentHash, bytes]);
     return true;
   } catch (_err) {
     // The object IS in S3; only our note failed. The next request finds no

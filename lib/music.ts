@@ -10,7 +10,7 @@
 // hand-written duplicate of that 1:1 relationship used to drift -- the
 // caller derives it with one reduce instead.
 async function getMusicBuckets(sql: any): Promise<Record<string, any>> {
-  const rows = await sql("SELECT * FROM music_buckets");
+  const rows = await sql`SELECT * FROM music_buckets`;
   const buckets: Record<string, any> = {};
   rows.forEach((row: any) => {
     buckets[row.key] = {

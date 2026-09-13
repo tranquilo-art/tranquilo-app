@@ -36,7 +36,7 @@ function rowToSetOfWork(row: any): any {
 // lib/storylines.ts's getStoryline()).
 async function getSetOfWork(sql: any, id?: string | null): Promise<any> {
   if (!id) return null;
-  const rows = await sql("SELECT * FROM set_of_works WHERE id = $1", [id]);
+  const rows = await sql.query("SELECT * FROM set_of_works WHERE id = $1", [id]);
   return rows[0] ? rowToSetOfWork(rows[0]) : null;
 }
 
@@ -44,7 +44,7 @@ async function getSetOfWork(sql: any, id?: string | null): Promise<any> {
 // its position label -- id + items[].id, not each member's
 // distinguishing_trait, which the chip never renders.
 async function getSetOfWorksIndex(sql: any): Promise<any[]> {
-  const rows = await sql("SELECT id, items FROM set_of_works");
+  const rows = await sql`SELECT id, items FROM set_of_works`;
   return rows.map((row: any) => ({
     id: row.id,
     items: parseItemsField(row.items).map((member: any) => ({ id: member.id })),

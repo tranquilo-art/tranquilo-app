@@ -38,7 +38,7 @@ async function acquireVisitorToken(sql: any, ip: string): Promise<any> {
   if (!sql || !ip)
     return { allowed: true, reason: "no-db-or-ip", tokens: null };
   try {
-    const rows = await sql(ACQUIRE_SQL, [ip]);
+    const rows = await sql.query(ACQUIRE_SQL, [ip]);
     if (rows.length)
       return { allowed: true, reason: "ok", tokens: Number(rows[0].tokens) };
     return { allowed: false, reason: "rate-limited", tokens: 0 };

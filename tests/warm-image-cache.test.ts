@@ -184,6 +184,7 @@ describe("warmBatch -- the one loop every caller shares", () => {
       return next === undefined ? [] : next;
     };
     fn.calls = [];
+    fn.query = fn;
     return fn;
   }
 

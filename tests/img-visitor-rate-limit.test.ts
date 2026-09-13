@@ -13,6 +13,7 @@ function fakeSql(results: any) {
     return next === undefined ? [] : next;
   };
   fn.calls = [];
+  fn.query = fn;
   return fn;
 }
 
@@ -50,10 +51,11 @@ describe("acquireVisitorToken", () => {
 
   it("creates the row on first sight rather than needing a seed", async () => {
     let statement = "";
-    const sql = async (q: string) => {
+    const sql: any = async (q: string) => {
       statement = q;
       return [{ tokens: 60 }];
     };
+    sql.query = sql;
     await rateLimit.acquireVisitorToken(sql, "203.0.113.7");
     expect(statement).toMatch(/INSERT INTO visitor_fetch_state/);
     expect(statement).toMatch(/ON CONFLICT \(ip\) DO UPDATE/);

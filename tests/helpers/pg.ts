@@ -39,13 +39,35 @@ function ddl(...files: string[]) {
 
 /**
  * A `sql` function shaped like @neondatabase/serverless's, so modules under
- * test cannot tell the difference: sql(text, params) resolving to rows.
+ * test cannot tell the difference. Supports every calling convention in use
+ * across lib/ and the test suite: a tagged template (sql`SELECT ${value}`),
+ * sql.query(text, params), and a plain sql(text, params) call -- the last of
+ * these is no longer valid against the real driver (see lib/ call sites
+ * fixed alongside this file) but test scaffolding still uses it directly,
+ * so the mock stays lenient there rather than being a faithful restriction.
  */
 async function makeSql(files: string[]) {
   const db = new PGlite();
   await db.exec(ddl(...files));
-  const sql: any = async (text: string, params?: any[]) =>
+  const run = async (text: string, params?: any[]) =>
     (await db.query(text, params || [])).rows;
+  const sql: any = async (first: any, ...rest: any[]) => {
+    if (Array.isArray(first) && "raw" in first) {
+      const strings = first as TemplateStringsArray;
+      let text = "";
+      const params: any[] = [];
+      strings.forEach((s, i) => {
+        text += s;
+        if (i < rest.length) {
+          params.push(rest[i]);
+          text += `$${params.length}`;
+        }
+      });
+      return run(text, params);
+    }
+    return run(first, rest[0]);
+  };
+  sql.query = run;
   sql.$db = db;
   sql.$close = () => db.close();
   return sql;

@@ -146,9 +146,13 @@ describe("healthAlerts", () => {
 });
 
 describe("heldSourceSet -- one definition of 'are we allowed to touch this'", () => {
-  const fakeSql = (result: any) => async () => {
-    if (result instanceof Error) throw result;
-    return result;
+  const fakeSql = (result: any) => {
+    const fn: any = async () => {
+      if (result instanceof Error) throw result;
+      return result;
+    };
+    fn.query = fn;
+    return fn;
   };
 
   it("returns the held sources with their reasons", async () => {

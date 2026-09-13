@@ -145,6 +145,7 @@ function latencyClient(imgBySource: Record<string, string | null>) {
     }
     return [];
   };
+  fn.query = fn;
   return fn;
 }
 

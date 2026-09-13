@@ -62,7 +62,7 @@ function rowToStoryline(row: any): any {
 // not on every page load.
 async function getStoryline(sql: any, id?: string | null): Promise<any> {
   if (!id) return null;
-  const rows = await sql("SELECT * FROM storylines WHERE id = $1", [id]);
+  const rows = await sql.query("SELECT * FROM storylines WHERE id = $1", [id]);
   return rows[0] ? rowToStoryline(rows[0]) : null;
 }
 
@@ -71,7 +71,7 @@ async function getStoryline(sql: any, id?: string | null): Promise<any> {
 // omitting title/intro_caption/source_note/chapter_caption -- the reason
 // this is split out from getStoryline() at all.
 async function getStorylineIndex(sql: any): Promise<any[]> {
-  const rows = await sql("SELECT id, cover_item_id, items FROM storylines");
+  const rows = await sql`SELECT id, cover_item_id, items FROM storylines`;
   return rows.map((row: any) => ({
     id: row.id,
     cover_item_id: row.cover_item_id,

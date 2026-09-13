@@ -64,7 +64,7 @@ function isEnabled(): boolean {
 async function previewEvictions(sql: any, count: number): Promise<any[]> {
   if (!sql) return [];
   try {
-    return await sql(
+    return await sql.query(
       `SELECT e.cache_key, e.bytes, e.last_seen, e.requests FROM img_cache_entries e ` +
         `LEFT JOIN img_fetch_claims c ` +
         `  ON c.cache_key = e.cache_key AND c.expires_at > now() ` +
@@ -100,7 +100,7 @@ async function evictIfNeeded(
 
   let used: number;
   try {
-    const rows = await sql(
+    const rows = await sql.query(
       "SELECT total_bytes FROM blob_usage_tracker WHERE id = 1",
     );
     if (!rows.length)
@@ -157,7 +157,7 @@ async function evictIfNeeded(
       // means someone is fetching that key now, and deleting it
       // underneath them would leave the tracker crediting bytes that
       // are no longer there.
-      const picked = await sql(
+      const picked = await sql.query(
         `SELECT e.cache_key, e.bytes FROM img_cache_entries e ` +
           `LEFT JOIN img_fetch_claims c ` +
           `  ON c.cache_key = e.cache_key AND c.expires_at > now() ` +
@@ -183,7 +183,7 @@ async function evictIfNeeded(
       // Push to the back of the queue so one undeletable object can't
       // block eviction forever by always being coldest.
       try {
-        await sql(
+        await sql.query(
           "UPDATE img_cache_entries SET last_seen = now() WHERE cache_key = $1",
           [victim.cache_key],
         );
@@ -197,12 +197,12 @@ async function evictIfNeeded(
     // history, so a re-popular image is re-admitted on its history
     // rather than starting over.
     try {
-      await sql(
+      await sql.query(
         "UPDATE blob_usage_tracker SET total_bytes = GREATEST(0, total_bytes - $1) " +
           "WHERE id = 1",
         [bytes],
       );
-      await sql(
+      await sql.query(
         "UPDATE img_cache_entries SET bytes = NULL, admitted_at = NULL " +
           "WHERE cache_key = $1",
         [victim.cache_key],

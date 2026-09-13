@@ -23,6 +23,7 @@ function clientReturning(rows: any) {
     return rows;
   };
   fn.calls = calls;
+  fn.query = fn;
   return fn;
 }
 
@@ -123,6 +124,7 @@ function reachabilityClient(imgBySource: Record<string, string | null>) {
     return [];
   };
   fn.calls = calls;
+  fn.query = fn;
   return fn;
 }
 
