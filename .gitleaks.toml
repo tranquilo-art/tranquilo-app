@@ -8,8 +8,4 @@ useDefault = true
 [allowlist]
 description = "Known non-secret, intentionally-public identifiers"
 regexes = [
-  # Cloudflare Web Analytics beacon token (src/analytics/cloudflareBeacon.ts)
-  '''7e81d611e67440d3ab668bdfb15ba2b9''',
-  # PostHog project token placeholder (src/analytics/posthogDraft.ts) --
-  '''phc_REPLACE_ME''',
 ]

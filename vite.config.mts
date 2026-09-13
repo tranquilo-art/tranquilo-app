@@ -38,6 +38,7 @@ export default defineConfig({
         support: resolve(import.meta.dirname, "pages/support.html"),
         terms: resolve(import.meta.dirname, "pages/terms.html"),
         thankYou: resolve(import.meta.dirname, "pages/thank-you.html"),
+        volunteer: resolve(import.meta.dirname, "pages/volunteer.html"),
       },
     },
   },

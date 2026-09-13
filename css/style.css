@@ -1305,6 +1305,28 @@ html,body{
   margin:0;
 }
 
+.role-item{
+  border-top:1px solid var(--hairline);
+  padding:36px 0;
+}
+.role-item:first-child{ border-top:none; padding-top:0; }
+.role-item:last-child{ padding-bottom:0; }
+.role-item .mkt-h2{ margin-bottom:4px; }
+.role-tag{
+  font-family:var(--sans);
+  font-weight:400;
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  margin:0 0 16px;
+}
+.role-label{
+  font-family:var(--sans);
+  font-weight:600;
+  font-size:0.86rem;
+  color:var(--text);
+  margin:20px 0 8px;
+}
+
 .mkt-footer{
   border-top:1px solid var(--hairline);
   padding:32px 24px 48px;
