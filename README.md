@@ -5,8 +5,6 @@ it under the terms of the GNU Affero General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-
-
 # Tranquilo
 
 [![Tests](https://github.com/loveycakes/artscroll/actions/workflows/test.yml/badge.svg)](https://github.com/loveycakes/artscroll/actions/workflows/test.yml)
@@ -24,7 +22,7 @@ A calm, ad-free, infinite-scroll feed of public-domain art.
 - **Discover**, a shelf-based browsing layer for hand-curated and rule-based collections that cut across categories.
 - **Storylines**, short guided sequences connecting works by shared artist, subject, or documented history.
 - **Plot Twist** and **Sets**, two lightweight editorial layers that surface a work's verified backstory where one exists
-- **Share links** with rich previews (title, artist, generated preview image) 
+- **Share links** with rich previews (title, artist, generated preview image)
 - **Collect** (bookmark) and export your collection as CSV — free, local-only, no account needed.
 - **Ambient music**, crossfading by category, built from CC0/public-domain recordings.
 
