@@ -80,10 +80,10 @@ test("it ANDs with a category rather than replacing it", async ({ page }) => {
 
   const category = taggedInFixture()[0].category;
   const chip = page.locator("#chips button", { hasText: category }).first();
-  await chip.click();
+  await actAndSettle(page, () => chip.click());
   const inCategory = await feed.locator(".slide").count();
 
-  await page.locator(STORYLINE_CHIP).click();
+  await actAndSettle(page, () => page.locator(STORYLINE_CHIP).click());
   const both = await feed.locator(".slide").count();
 
   expect(both).toBeGreaterThan(0);
