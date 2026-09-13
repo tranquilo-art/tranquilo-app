@@ -267,7 +267,7 @@ export class TranquiloStorylineMode extends HTMLElement {
     const frameImg = frame.querySelector("img") as HTMLImageElement;
     frameImg.addEventListener("click", () => {
       if (frame.classList.contains("nudity-gated")) return;
-      host.openLightbox(item.img, item.title || "", item);
+      host.openLightbox(item.img, item.title || "Untitled", item);
     });
     return page;
   }

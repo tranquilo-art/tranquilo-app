@@ -400,7 +400,7 @@ export function createSlideBuilder(
       }
       // Opens on the display image, already loaded, so the lightbox
       // paints instantly; the host upgrades to lightbox tier in the background.
-      host.openLightbox(item.img, item.title || "", item);
+      host.openLightbox(item.img, item.title || "Untitled", item);
     });
 
     const caption = document.createElement("div");

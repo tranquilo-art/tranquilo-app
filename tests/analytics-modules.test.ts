@@ -42,6 +42,7 @@ afterEach(() => {
 describe("initPosthog", () => {
   it("returns null without throwing when no token is configured", async () => {
     stubProductionSite();
+    vi.stubEnv("VITE_POSTHOG_TOKEN", "");
     const { default: instance, initPosthog } = await import(
       "../src/analytics/posthogDraft"
     );
@@ -84,6 +85,7 @@ describe("initPosthog", () => {
 describe("initCloudflareAnalytics", () => {
   it("injects nothing without throwing when no token is configured", async () => {
     stubProductionSite();
+    vi.stubEnv("VITE_CLOUDFLARE_BEACON_TOKEN", "");
     const appendChild = vi.fn();
     vi.stubGlobal("document", {
       createElement: vi.fn(),
