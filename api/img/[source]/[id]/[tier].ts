@@ -169,8 +169,13 @@ async function blobDelete(cacheKey: any) {
 
 function pathnameFor(source: any, id: any, tier: any) {
   // Blob pathnames reject "//" -- Europeana's own ids can contain
-  // literal slashes, so collapse any slash in id first.
-  const safeId = id.replace(/\//g, "_");
+  // literal slashes, so collapse any slash in id first. Also collapses
+  // ":" now that npm.py's ids do too ("U:15646") -- lib/img-object-key.ts's
+  // idSegment()/prefixFor() already sanitize on the same
+  // [^A-Za-z0-9._-]+ set for the content-addressed key; this legacy
+  // pathname had never needed to, since no source before npm had a
+  // character here beyond "/".
+  const safeId = id.replace(/[^A-Za-z0-9._-]+/g, "-");
   return `img-cache/${source}/${safeId}/${tier}`;
 }
 

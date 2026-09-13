@@ -36,6 +36,7 @@ export interface ITranquiloDetailModalHost {
   hydrateItems(items: Item[]): Promise<void>;
   shareItem(item: Item): void;
   sourceLinkLabel(item: Item): string;
+  sourceLinkPreposition(item: Item): string;
   setArtistFilter(artist: string): void;
   openStorylineMode(storylineId: string): void;
   openSetOfWorksMode(setOfWorkId: string): void;

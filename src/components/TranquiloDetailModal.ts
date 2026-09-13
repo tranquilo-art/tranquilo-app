@@ -630,7 +630,7 @@ export class TranquiloDetailModal extends HTMLElement {
         licenseRow(item)
         // sourceLinkLabel() rather than an inline lookup, so this and the
         // lightbox's link can't drift into naming the institution two ways.
-      }<div style="margin-top:14px;"><a class="source-link" href="${item.url}" target="_blank" rel="noopener"><span class="link-text">View on ${escapeHtml(host.sourceLinkLabel(item))}</span><span class="link-arrow" aria-hidden="true">&rarr;</span></a></div>` +
+      }<div style="margin-top:14px;"><a class="source-link" href="${item.url}" target="_blank" rel="noopener"><span class="link-text">View ${escapeHtml(host.sourceLinkPreposition(item))} ${escapeHtml(host.sourceLinkLabel(item))}</span><span class="link-arrow" aria-hidden="true">&rarr;</span></a></div>` +
       `</div>`
     );
   }

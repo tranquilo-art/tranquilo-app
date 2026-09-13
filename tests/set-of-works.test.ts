@@ -14,7 +14,7 @@ import { makeSql } from "./helpers/pg.ts";
 let sql: any;
 beforeAll(async () => {
   sql = await makeSql(["034_set_of_works.sql"]);
-  await sql(
+  await sql.query(
     "INSERT INTO set_of_works (id, title, items) VALUES ($1, $2, $3::jsonb)",
     [
       "set-thinker",

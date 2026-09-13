@@ -52,7 +52,7 @@ describe("token bucket exhaustion", () => {
   });
 
   it("reports a source whose bucket is empty while it is being asked for", async () => {
-    await sql("UPDATE source_fetch_state SET tokens = 0 WHERE source = 'met'");
+    await sql.query("UPDATE source_fetch_state SET tokens = 0 WHERE source = 'met'");
     await stat("met", "display", { misses: 40, shed: 40 });
     const out = await alerts.checkTokenBuckets(sql);
     expect(out).toHaveLength(1);
@@ -61,13 +61,13 @@ describe("token bucket exhaustion", () => {
 
   it("does NOT report an empty bucket nobody is asking for", async () => {
     // An idle source sitting at zero is nobody requesting it, not a problem.
-    await sql("UPDATE source_fetch_state SET tokens = 0 WHERE source = 'met'");
+    await sql.query("UPDATE source_fetch_state SET tokens = 0 WHERE source = 'met'");
     expect(await alerts.checkTokenBuckets(sql)).toEqual([]);
   });
 
   it("does NOT report a held source", async () => {
     // commons has zero effective budget by design while the hold stands.
-    await sql(
+    await sql.query(
       "UPDATE source_fetch_state SET tokens = 0 WHERE source = 'commons'",
     );
     await stat("commons", "display", { misses: 40, shed: 40 });
@@ -75,7 +75,7 @@ describe("token bucket exhaustion", () => {
   });
 
   it("does NOT report a source inside a Retry-After cooldown", async () => {
-    await sql(
+    await sql.query(
       "UPDATE source_fetch_state SET tokens = 0, " +
         "blocked_until = now() + interval '5 minutes' WHERE source = 'met'",
     );
@@ -160,7 +160,7 @@ describe("blob suspension flag", () => {
     const out = await alerts.checkBlobSuspended(sql, suspendedPut, del);
     expect(out).toHaveLength(1);
     expect(out[0]).toMatch(/SUSPENDED/);
-    const row = await sql(
+    const row = await sql.query(
       "SELECT simple_ops_suspended_since FROM blob_usage_tracker WHERE id = 1",
     );
     expect(row[0].simple_ops_suspended_since).not.toBeNull();
@@ -177,7 +177,7 @@ describe("blob suspension flag", () => {
     const out = await alerts.checkBlobSuspended(sql, okPut, del); // recovers
     expect(out).toHaveLength(1);
     expect(out[0]).toMatch(/AVAILABLE/);
-    const row = await sql(
+    const row = await sql.query(
       "SELECT simple_ops_suspended_since FROM blob_usage_tracker WHERE id = 1",
     );
     expect(row[0].simple_ops_suspended_since).toBeNull();
@@ -191,7 +191,7 @@ describe("blob suspension flag", () => {
     expect(out).toHaveLength(1);
     expect(out[0]).toMatch(/unexpected error/);
     // And it must not have recorded a (wrong) suspension transition.
-    const row = await sql(
+    const row = await sql.query(
       "SELECT simple_ops_suspended_since FROM blob_usage_tracker WHERE id = 1",
     );
     expect(row[0].simple_ops_suspended_since).toBeNull();

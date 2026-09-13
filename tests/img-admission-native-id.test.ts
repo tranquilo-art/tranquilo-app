@@ -27,7 +27,7 @@ afterEach(async () => {
 });
 
 async function rowFor(cacheKey: any) {
-  const rows = await sql(
+  const rows = await sql.query(
     "SELECT * FROM img_cache_entries WHERE cache_key = $1",
     [cacheKey],
   );
@@ -74,7 +74,7 @@ describe("noteRequest records native_id", () => {
       "display",
       id,
     );
-    const bad = await sql(
+    const bad = await sql.query(
       `SELECT count(*)::int AS n FROM img_cache_entries
         WHERE cache_key <> source || ':' || native_id || ':' || tier`,
     );
@@ -97,7 +97,7 @@ describe("repeat requests", () => {
   it("backfills a row that predates the column", async () => {
     // The next request for a pre-migration row is a free chance to fill
     // its NULL rather than leaving it for a migration to sweep later.
-    await sql(
+    await sql.query(
       `INSERT INTO img_cache_entries (cache_key, source, tier, requests, first_seen, last_seen)
        VALUES ('met:3:display', 'met', 'display', 1, now(), now())`,
     );

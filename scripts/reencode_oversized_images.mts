@@ -184,7 +184,7 @@ async function runCli() {
 
         // Only after the new object is definitely there -- if this fails the
         // row still points at the old object, which is correct and still serves.
-        await sql(store.recordObjectSql(), [
+        await sql.query(store.recordObjectSql(), [
           r.cache_key,
           key,
           hash,
