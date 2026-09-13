@@ -12,8 +12,6 @@ on:
 jobs:
   test-js:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
@@ -45,25 +43,12 @@ jobs:
       # confusingly instead.
       - run: bun run build
       - run: bun run test:coverage
-      # Regenerates the README's coverage badge from this run's numbers and
-      # commits it back, push-to-main only -- a PR from a fork has no push
-      # access, and updating the badge on every PR commit would be noise
-      # for a number that only matters once merged.
-      - name: Update coverage badge
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          bun run coverage:badge
-          if ! git diff --quiet -- badges/coverage.json; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add badges/coverage.json
-            git commit -m "chore(coverage) update badge [skip ci]"
-            # actions/checkout leaves HEAD detached at the triggering commit,
-            # not on a local branch, so a bare `git push` has no upstream to
-            # infer -- pushing HEAD explicitly to the ref that triggered
-            # this run is what lands the commit back on main.
-            git push origin HEAD:${{ github.ref_name }}
-          fi
+      # The badge used to be auto-committed back to main from here, but
+      # branch protection now requires every change to land through a pull
+      # request with verified signatures -- a plain `git push` from CI can
+      # never satisfy that, so the badge is refreshed manually instead:
+      # `bun run coverage:badge`, then commit `badges/coverage.json` like
+      # any other change.
 
   # Separate job from test-js because it needs a browser
   # binary, and because a browser download failing should read as "e2e is
