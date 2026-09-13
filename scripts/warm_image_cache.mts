@@ -294,7 +294,12 @@ export async function warmBatch(opts: {
          VALUES ($1,$2,$3,$4,1,now(),now()) ON CONFLICT (cache_key) DO NOTHING`,
         [cacheKey, row.source, tier, row.native_id],
       );
-      await sql.query(store.recordObjectSql(), [cacheKey, key, hash, body.length]);
+      await sql.query(store.recordObjectSql(), [
+        cacheKey,
+        key,
+        hash,
+        body.length,
+      ]);
 
       done++;
       breaker.succeed();

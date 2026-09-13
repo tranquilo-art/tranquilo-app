@@ -53,7 +53,9 @@ async function claimFetch(
 async function releaseFetch(sql: any, cacheKey: string): Promise<void> {
   if (!sql) return;
   try {
-    await sql.query("DELETE FROM img_fetch_claims WHERE cache_key = $1", [cacheKey]);
+    await sql.query("DELETE FROM img_fetch_claims WHERE cache_key = $1", [
+      cacheKey,
+    ]);
   } catch (_err) {
     // The claim expires on its own.
   }

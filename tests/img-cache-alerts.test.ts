@@ -52,7 +52,9 @@ describe("token bucket exhaustion", () => {
   });
 
   it("reports a source whose bucket is empty while it is being asked for", async () => {
-    await sql.query("UPDATE source_fetch_state SET tokens = 0 WHERE source = 'met'");
+    await sql.query(
+      "UPDATE source_fetch_state SET tokens = 0 WHERE source = 'met'",
+    );
     await stat("met", "display", { misses: 40, shed: 40 });
     const out = await alerts.checkTokenBuckets(sql);
     expect(out).toHaveLength(1);
@@ -61,7 +63,9 @@ describe("token bucket exhaustion", () => {
 
   it("does NOT report an empty bucket nobody is asking for", async () => {
     // An idle source sitting at zero is nobody requesting it, not a problem.
-    await sql.query("UPDATE source_fetch_state SET tokens = 0 WHERE source = 'met'");
+    await sql.query(
+      "UPDATE source_fetch_state SET tokens = 0 WHERE source = 'met'",
+    );
     expect(await alerts.checkTokenBuckets(sql)).toEqual([]);
   });
 

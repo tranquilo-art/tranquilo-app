@@ -125,7 +125,9 @@ describe("the invariant against the old counter", () => {
     );
     expect(Number(pre.n)).toBe(Number(old.shed));
 
-    const [all] = await sql.query("SELECT SUM(n)::int AS n FROM img_shed_stats");
+    const [all] = await sql.query(
+      "SELECT SUM(n)::int AS n FROM img_shed_stats",
+    );
     expect(Number(all.n)).toBeGreaterThan(Number(old.shed)); // the complete picture is larger
   });
 });

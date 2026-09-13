@@ -36,7 +36,9 @@ function rowToSetOfWork(row: any): any {
 // lib/storylines.ts's getStoryline()).
 async function getSetOfWork(sql: any, id?: string | null): Promise<any> {
   if (!id) return null;
-  const rows = await sql.query("SELECT * FROM set_of_works WHERE id = $1", [id]);
+  const rows = await sql.query("SELECT * FROM set_of_works WHERE id = $1", [
+    id,
+  ]);
   return rows[0] ? rowToSetOfWork(rows[0]) : null;
 }
 
