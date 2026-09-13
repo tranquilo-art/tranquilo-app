@@ -14,7 +14,7 @@ We maintain a strict minimal-dependency philosophy to ensure fast builds, small 
 ├───────────────────────┬────────────────────────────────┤
 │ Browser UI            │ Vanilla Web Components (TS)    │
 │ Frontend Bundler      │ Vite → dist/                   │
-│ Hosting & Serverless  │ Vercel                 │
+│ Hosting & Serverless  │ Vercel                         │
 │ Package Mgr & Runtime │ Bun (pinned to v1.3.11 in CI)  │
 │ Database & Driver     │ Neon Postgres (@neondatabase/serverless) │
 │ Code Quality          │ Biome (TS) + Vitest/Playwright │
