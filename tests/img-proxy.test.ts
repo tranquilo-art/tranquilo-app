@@ -79,6 +79,20 @@ describe("isAllowedOrigin", () => {
     ).toBe(true);
   });
 
+  it("allows npm's IIIF image host", () => {
+    // Missing entirely at launch -- every npm request 400'd here as
+    // "disallowed origin" before ever reaching the S3 cache-hit lookup,
+    // regardless of whether the object was already cached. Confirmed
+    // against real ingested rows' img/full_img values.
+    expect(
+      proxy.isAllowedOrigin(
+        "npm",
+        "display",
+        "https://iiifod.npm.gov.tw/iiif/2/K1F%2FK1F001541N000000000PAA/full/,1200/0/default.jpg",
+      ),
+    ).toBe(true);
+  });
+
   it("rejects a host outside the allowlist for a real source", () => {
     expect(
       proxy.isAllowedOrigin("commons", "display", "https://example.com/x.jpg"),
