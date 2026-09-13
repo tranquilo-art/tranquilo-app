@@ -83,7 +83,7 @@ describe("single-flight (1b)", () => {
 
 describe("token bucket (1c)", () => {
   const setTokens = (source: string, tokens: number, refill: number) =>
-    sql(
+    sql.query(
       "UPDATE source_fetch_state SET tokens = $2, refill_per_sec = $3, " +
         "last_refill = now() WHERE source = $1",
       [source, tokens, refill],

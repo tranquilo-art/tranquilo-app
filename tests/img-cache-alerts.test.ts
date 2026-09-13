@@ -32,7 +32,7 @@ afterEach(async () => {
 });
 
 const stat = (source: string, tier: string, cols: any) =>
-  sql(
+  sql.query(
     "INSERT INTO img_cache_stats (day, source, tier, hits, misses, shed, origin_429) " +
       "VALUES (CURRENT_DATE - ($7)::int, $1, $2, $3, $4, $5, $6)",
     [
@@ -90,7 +90,7 @@ describe("token bucket exhaustion", () => {
 
 describe("eviction thrash", () => {
   const entry = (key: string, requests: number, bytes: number | null) =>
-    sql(
+    sql.query(
       "INSERT INTO img_cache_entries (cache_key, source, tier, requests, bytes, first_seen, last_seen) " +
         "VALUES ($1, 'met', 'display', $2, $3, now(), now())",
       [key, requests, bytes],
