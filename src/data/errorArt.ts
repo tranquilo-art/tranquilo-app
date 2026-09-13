@@ -10,16 +10,17 @@
 // from the `items` table for these ten (source, native_id) pairs -- same
 // fields TranquiloDetailModal.ts shows, so the attribution here matches
 // what a visitor would see on the real piece.
-import met548504 from "../../assets/error-art/met-548504.jpg";
-import met323944 from "../../assets/error-art/met-323944.jpg";
-import met544864 from "../../assets/error-art/met-544864.jpg";
+
+import cleveland142738 from "../../assets/error-art/cleveland-142738.jpg";
 import cleveland142745 from "../../assets/error-art/cleveland-142745.webp";
+import cleveland147576 from "../../assets/error-art/cleveland-147576.jpg";
 import cleveland155432 from "../../assets/error-art/cleveland-155432.jpg";
 import met42179 from "../../assets/error-art/met-42179.webp";
-import cleveland142738 from "../../assets/error-art/cleveland-142738.jpg";
-import cleveland147576 from "../../assets/error-art/cleveland-147576.jpg";
 import met196439 from "../../assets/error-art/met-196439.jpg";
+import met323944 from "../../assets/error-art/met-323944.jpg";
 import met436528 from "../../assets/error-art/met-436528.jpg";
+import met544864 from "../../assets/error-art/met-544864.jpg";
+import met548504 from "../../assets/error-art/met-548504.jpg";
 
 export interface ErrorArtItem {
   source: string;
@@ -139,8 +140,7 @@ export const ERROR_ART: ErrorArtItem[] = [
     artist: "Edgar Degas",
     date: "1922 (cast)",
     medium: "Tinted bronze, cotton, silk, wood",
-    credit:
-      "H. O. Havemeyer Collection, Bequest of Mrs. H. O. Havemeyer, 1929",
+    credit: "H. O. Havemeyer Collection, Bequest of Mrs. H. O. Havemeyer, 1929",
     license: "cc0",
     url: "https://www.metmuseum.org/art/collection/search/196439",
   },
