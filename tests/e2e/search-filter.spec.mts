@@ -93,12 +93,16 @@ test("Search: tapping outside the panel closes it without disturbing the filter"
   page,
 }) => {
   // SearchController's document-level outside-click listener
-  // (handleOutsideSearchClick) is the one dismissal path #searchClose
-  // above doesn't exercise.
+  // (handleOutsideSearchClick) is only attached while the panel is open --
+  // a completed search already closes it (see "closing the panel keeps
+  // the search applied" above) -- so this reopens the panel on an
+  // already-active search, same as that test, before tapping outside.
   const feed = await gotoFeed(page);
   await search(page, "portrait");
   await expect.poll(() => feed.locator(".slide").count()).toBeGreaterThan(0);
   const narrowed = await feed.locator(".slide").count();
+
+  await page.locator("#searchToggle").click();
   await expect(page.locator("#searchBar")).toBeVisible();
 
   await page.mouse.click(10, 10);

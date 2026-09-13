@@ -105,7 +105,10 @@ test.describe("the report button", () => {
     await openDetail(page);
     await page.locator(".btn-report").first().click();
     await expect(page.locator(".report-menu").first()).toBeVisible();
-    await page.locator(".art-title").first().click();
+    // Unscoped ".art-title" also matches the feed slide's caption title
+    // behind the open modal (#feed renders before #detailModal in
+    // index.html), so it has to be scoped to the modal's own heading.
+    await page.locator("#detailModal .art-title").first().click();
     await expect(page.locator(".report-menu").first()).toBeHidden();
   });
 

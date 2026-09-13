@@ -289,7 +289,7 @@ async function buildReportMarkdown(client: any, days: any, label: any) {
     [interval],
   );
 
-  const mostShared = await client.query (
+  const mostShared = await client.query(
     "SELECT i.title, i.artist, i.source, count(*) AS shares FROM analytics_events ae " +
       "JOIN items i ON i.source = ae.props->>'source' AND i.native_id = ae.props->>'id' " +
       "WHERE ae.event_name = 'share_click' AND ae.created_at >= now() - $1::interval " +
