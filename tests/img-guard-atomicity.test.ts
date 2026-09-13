@@ -63,7 +63,7 @@ describe("single-flight (1b)", () => {
     // A lease, not a lock -- a function that died mid-fetch must not
     // block that image forever.
     await guard.claimFetch(sql, KEY);
-    await sql(
+    await sql.query(
       "UPDATE img_fetch_claims SET expires_at = now() - interval '1 second'",
     );
     expect(await guard.claimFetch(sql, KEY)).toBe(true);
@@ -71,7 +71,7 @@ describe("single-flight (1b)", () => {
 
   it("still admits exactly one when several race for an expired claim", async () => {
     await guard.claimFetch(sql, KEY);
-    await sql(
+    await sql.query(
       "UPDATE img_fetch_claims SET expires_at = now() - interval '1 second'",
     );
     const again = await Promise.all(
@@ -103,7 +103,7 @@ describe("token bucket (1c)", () => {
     await Promise.all(
       Array.from({ length: 15 }, () => guard.acquireFetchToken(sql, "met")),
     );
-    const [row] = await sql(
+    const [row] = await sql.query(
       "SELECT tokens FROM source_fetch_state WHERE source = 'met'",
     );
     expect(Number(row.tokens)).toBeGreaterThanOrEqual(0);
@@ -118,7 +118,7 @@ describe("token bucket (1c)", () => {
   it("refills over elapsed time, with no scheduled job", async () => {
     await setTokens("met", 0, 10);
     expect((await guard.acquireFetchToken(sql, "met")).allowed).toBe(false);
-    await sql(
+    await sql.query(
       "UPDATE source_fetch_state SET last_refill = now() - interval '1 second' " +
         "WHERE source = 'met'",
     );
@@ -127,12 +127,12 @@ describe("token bucket (1c)", () => {
 
   it("never refills past capacity", async () => {
     await setTokens("met", 0, 10);
-    await sql(
+    await sql.query(
       "UPDATE source_fetch_state SET last_refill = now() - interval '1 hour' " +
         "WHERE source = 'met'",
     );
     const r = await guard.acquireFetchToken(sql, "met");
-    const [row] = await sql(
+    const [row] = await sql.query(
       "SELECT capacity FROM source_fetch_state WHERE source = 'met'",
     );
     expect(r.tokens).toBeLessThanOrEqual(Number(row.capacity));
@@ -141,7 +141,7 @@ describe("token bucket (1c)", () => {
 
 describe("Retry-After cooldown (1d)", () => {
   it("denies despite a completely full bucket", async () => {
-    await sql(
+    await sql.query(
       "UPDATE source_fetch_state SET tokens = 100, refill_per_sec = 0 " +
         "WHERE source = 'met'",
     );
@@ -152,7 +152,7 @@ describe("Retry-After cooldown (1d)", () => {
   });
 
   it("allows again once the window has passed", async () => {
-    await sql(
+    await sql.query(
       "UPDATE source_fetch_state SET tokens = 100, refill_per_sec = 0, " +
         "blocked_until = now() - interval '1 second' WHERE source = 'met'",
     );
@@ -169,7 +169,7 @@ describe("counters aggregate rather than accumulating rows (1a/A2)", () => {
         guard.bumpStat(sql, "met", "display", "hits"),
       ),
     );
-    const rows = await sql(
+    const rows = await sql.query(
       "SELECT hits FROM img_cache_stats WHERE day = CURRENT_DATE " +
         "AND source = 'met' AND tier = 'display'",
     );
@@ -181,7 +181,7 @@ describe("counters aggregate rather than accumulating rows (1a/A2)", () => {
 describe("standing holds are data, not code", () => {
   it("refuses commons however full its bucket is", async () => {
     // The standing rate-limit hold must outrank a full bucket.
-    await sql(
+    await sql.query(
       "UPDATE source_fetch_state SET tokens = 100, refill_per_sec = 10 " +
         "WHERE source = 'commons'",
     );
@@ -207,7 +207,7 @@ describe("admission control (3a)", () => {
         admission.noteRequest(sql, key, "met", "display"),
       ),
     );
-    const [row] = await sql(
+    const [row] = await sql.query(
       "SELECT requests FROM img_cache_entries WHERE cache_key = $1",
       [key],
     );
@@ -222,7 +222,7 @@ describe("the storage circuit breaker", () => {
   const RESERVE = proxy.RESERVE_USAGE_SQL;
 
   beforeEach(async () => {
-    await sql(
+    await sql.query(
       "INSERT INTO blob_usage_tracker (id, total_bytes) VALUES (1, 0) " +
         "ON CONFLICT (id) DO UPDATE SET total_bytes = 0",
     );
@@ -234,19 +234,19 @@ describe("the storage circuit breaker", () => {
       Array.from({ length: 10 }, () => sql(RESERVE, [300, 1000])),
     );
     expect(out.filter((rows) => rows.length)).toHaveLength(3);
-    const [row] = await sql(
+    const [row] = await sql.query(
       "SELECT total_bytes FROM blob_usage_tracker WHERE id = 1",
     );
     expect(Number(row.total_bytes)).toBeLessThanOrEqual(1000);
   });
 
   it("admits a write that lands exactly on the cap", async () => {
-    expect(await sql(RESERVE, [1000, 1000])).toHaveLength(1);
+    expect(await sql.query(RESERVE, [1000, 1000])).toHaveLength(1);
   });
 
   it("refuses one byte over, and writes nothing", async () => {
-    expect(await sql(RESERVE, [1001, 1000])).toHaveLength(0);
-    const [row] = await sql(
+    expect(await sql.query(RESERVE, [1001, 1000])).toHaveLength(0);
+    const [row] = await sql.query(
       "SELECT total_bytes FROM blob_usage_tracker WHERE id = 1",
     );
     expect(Number(row.total_bytes)).toBe(0);

@@ -40,7 +40,7 @@ beforeEach(async () => {
     "009_blob_usage_tracker_schema.sql",
   ]);
   deleted = [];
-  await sql(
+  await sql.query(
     "INSERT INTO blob_usage_tracker (id, total_bytes) VALUES (1, $1) " +
       "ON CONFLICT (id) DO UPDATE SET total_bytes = $1",
     [OVER],
@@ -106,7 +106,7 @@ describe("what pinning already does, which must not regress", () => {
     const evict = await withPinned(null);
     const id = evict.PINNED_IDS[0];
     await entry(`met:${id}:display`, 400, 99999);
-    await sql(
+    await sql.query(
       "INSERT INTO img_cache_entries (cache_key, source, tier, bytes, requests, last_seen) " +
         "VALUES ($1, 'met', 'lightbox', 400, 3, now() - interval '99999 seconds')",
       [`met:${id}:lightbox`],

@@ -116,16 +116,18 @@ describe("the invariant against the old counter", () => {
     await guard.bumpShedReason(sql, "met", "display", "origin-429"); // no shed bump
     await guard.bumpStat(sql, "met", "display", "origin_429");
 
-    const [old] = await sql(
+    const [old] = await sql.query(
       "SELECT shed FROM img_cache_stats WHERE source='met'",
     );
-    const [pre] = await sql(
+    const [pre] = await sql.query(
       "SELECT COALESCE(SUM(n), 0)::int AS n FROM img_shed_stats " +
         "WHERE reason NOT IN ('origin-429', 'origin-error')",
     );
     expect(Number(pre.n)).toBe(Number(old.shed));
 
-    const [all] = await sql("SELECT SUM(n)::int AS n FROM img_shed_stats");
+    const [all] = await sql.query(
+      "SELECT SUM(n)::int AS n FROM img_shed_stats",
+    );
     expect(Number(all.n)).toBeGreaterThan(Number(old.shed)); // the complete picture is larger
   });
 });

@@ -162,9 +162,9 @@ export async function warmBatch(opts: {
   const sleep =
     opts.sleepMs || ((ms: number) => new Promise((r) => setTimeout(r, ms)));
 
-  const cold = await sql(coldItemsSql(), [tier, opts.sources]);
+  const cold = await sql.query(coldItemsSql(), [tier, opts.sources]);
 
-  const hosts = await sql(
+  const hosts = await sql.query(
     `SELECT host, source, refill_per_sec FROM host_fetch_state`,
   );
   const byHost: any = {};
@@ -289,12 +289,17 @@ export async function warmBatch(opts: {
       }
 
       const cacheKey = `${row.source}:${row.native_id}:${tier}`;
-      await sql(
+      await sql.query(
         `INSERT INTO img_cache_entries (cache_key, source, tier, native_id, requests, first_seen, last_seen)
          VALUES ($1,$2,$3,$4,1,now(),now()) ON CONFLICT (cache_key) DO NOTHING`,
         [cacheKey, row.source, tier, row.native_id],
       );
-      await sql(store.recordObjectSql(), [cacheKey, key, hash, body.length]);
+      await sql.query(store.recordObjectSql(), [
+        cacheKey,
+        key,
+        hash,
+        body.length,
+      ]);
 
       done++;
       breaker.succeed();

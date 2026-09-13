@@ -77,17 +77,17 @@ describe("getHeroPool", () => {
   });
 
   it("drops a hero item once it is quarantined, without touching hero_items itself", async () => {
-    await sql(
+    await sql.query(
       "UPDATE items SET review_status = 'quarantined' WHERE source = 'met' AND native_id = '191811'",
     );
     const pool = await getHeroPool(sql);
     expect(pool.find((h: any) => h.native_id === "191811")).toBeUndefined();
-    const stillSeeded = await sql(
+    const stillSeeded = await sql.query(
       "SELECT 1 FROM hero_items WHERE source = 'met' AND native_id = '191811'",
     );
     expect(stillSeeded.length).toBe(1);
     // Restore so this test can't leak state if the runner reorders within a file.
-    await sql(
+    await sql.query(
       "UPDATE items SET review_status = 'ok' WHERE source = 'met' AND native_id = '191811'",
     );
   });
