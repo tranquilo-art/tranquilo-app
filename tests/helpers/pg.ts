@@ -41,7 +41,7 @@ function ddl(...files: string[]) {
  * A `sql` function shaped like @neondatabase/serverless's, so modules under
  * test cannot tell the difference. Supports every calling convention in use
  * across lib/ and the test suite: a tagged template (sql`SELECT ${value}`),
- * sql.query(text, params), and a plain sql(text, params) call -- the last of
+ * sql.query(text, params), and a plain sql.query(text, params) call -- the last of
  * these is no longer valid against the real driver (see lib/ call sites
  * fixed alongside this file) but test scaffolding still uses it directly,
  * so the mock stays lenient there rather than being a faithful restriction.

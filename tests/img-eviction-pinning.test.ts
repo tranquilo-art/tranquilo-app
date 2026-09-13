@@ -53,7 +53,7 @@ afterEach(async () => {
 
 /** age in seconds: larger is colder, so it is chosen for eviction sooner. */
 const entry = (key: string, bytes: number, age: number) =>
-  sql(
+  sql.query(
     "INSERT INTO img_cache_entries (cache_key, source, tier, bytes, requests, last_seen, admitted_at) " +
       "VALUES ($1, split_part($1, ':', 1), 'display', $2, 3, now() - ($3 || ' seconds')::interval, now())",
     [key, bytes, String(age)],
