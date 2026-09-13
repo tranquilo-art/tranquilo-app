@@ -161,7 +161,7 @@ function buildPatternsNarrative(current: any, previous: any) {
 }
 
 async function getDatabaseSizeMB(client: any) {
-  const rows = await client(
+  const rows = await client.query(
     "SELECT pg_database_size(current_database()) AS bytes",
   );
   return Math.round(Number(rows[0].bytes) / 1024 / 1024);
@@ -179,7 +179,7 @@ async function sampleSourceLatency(client: any) {
       results.push([source, `skipped -- ${held[source]}`, null]);
       continue;
     }
-    const rows = await client(
+    const rows = await client.query(
       "SELECT img FROM items WHERE source = $1 ORDER BY random() LIMIT 2",
       [source],
     );
@@ -223,7 +223,7 @@ async function buildReportMarkdown(client: any, days: any, label: any) {
 
   // Page loads alongside raw count -- one client once produced 10,476
   // of these, which a raw count alone would present as visitor impact.
-  const imageFailuresBySource = await client(
+  const imageFailuresBySource = await client.query(
     "SELECT props->>'source' AS source, count(*) AS n, " +
       "count(DISTINCT coalesce(props->>'page_load', 'legacy')) AS page_loads " +
       "FROM analytics_events " +
@@ -231,18 +231,18 @@ async function buildReportMarkdown(client: any, days: any, label: any) {
     [interval],
   );
 
-  const totalRows = await client(
+  const totalRows = await client.query(
     "SELECT count(*), min(created_at), max(created_at) FROM analytics_events WHERE created_at >= now() - $1::interval",
     [interval],
   );
   const total = totalRows[0];
 
-  const byType = await client(
+  const byType = await client.query(
     "SELECT event_name, count(*) AS n FROM analytics_events WHERE created_at >= now() - $1::interval GROUP BY event_name ORDER BY n DESC",
     [interval],
   );
 
-  const byCategory = await client(
+  const byCategory = await client.query(
     "SELECT props->>'category' AS category, count(*) AS n FROM analytics_events " +
       "WHERE event_name = 'category_filter' AND created_at >= now() - $1::interval GROUP BY 1 ORDER BY n DESC",
     [interval],
@@ -250,30 +250,30 @@ async function buildReportMarkdown(client: any, days: any, label: any) {
 
   // Compared against the immediately preceding period of the same
   // length -- a monthly report compares trailing 30 vs. the 30 before.
-  const prevTotalRows = await client(
+  const prevTotalRows = await client.query(
     "SELECT count(*) FROM analytics_events WHERE created_at >= now() - $1::interval * 2 AND created_at < now() - $1::interval",
     [interval],
   );
   const prevTotal = prevTotalRows[0];
-  const prevByType = await client(
+  const prevByType = await client.query(
     "SELECT event_name, count(*) AS n FROM analytics_events " +
       "WHERE created_at >= now() - $1::interval * 2 AND created_at < now() - $1::interval GROUP BY event_name",
     [interval],
   );
-  const prevByCategory = await client(
+  const prevByCategory = await client.query(
     "SELECT props->>'category' AS category, count(*) AS n FROM analytics_events " +
       "WHERE event_name = 'category_filter' AND created_at >= now() - $1::interval * 2 " +
       "AND created_at < now() - $1::interval GROUP BY 1",
     [interval],
   );
 
-  const musicToggle = await client(
+  const musicToggle = await client.query(
     "SELECT props->>'on' AS on, count(*) AS n FROM analytics_events " +
       "WHERE event_name = 'music_toggle' AND created_at >= now() - $1::interval GROUP BY 1 ORDER BY 1 DESC",
     [interval],
   );
 
-  const discoverOpens = await client(
+  const discoverOpens = await client.query(
     "SELECT count(*) AS n FROM analytics_events WHERE event_name = 'discover_open' AND created_at >= now() - $1::interval",
     [interval],
   );
@@ -283,13 +283,13 @@ async function buildReportMarkdown(client: any, days: any, label: any) {
   // events -- collection_view_open reports collectionCount() at the
   // moment someone opens the view, answering both opens and avg size
   // from one event (forward-looking only).
-  const collectionViews = await client(
+  const collectionViews = await client.query(
     "SELECT count(*) AS n, avg((props->>'count')::numeric) AS avg_count FROM analytics_events " +
       "WHERE event_name = 'collection_view_open' AND created_at >= now() - $1::interval",
     [interval],
   );
 
-  const mostShared = await client(
+  const mostShared = await client.query (
     "SELECT i.title, i.artist, i.source, count(*) AS shares FROM analytics_events ae " +
       "JOIN items i ON i.source = ae.props->>'source' AND i.native_id = ae.props->>'id' " +
       "WHERE ae.event_name = 'share_click' AND ae.created_at >= now() - $1::interval " +
@@ -297,12 +297,12 @@ async function buildReportMarkdown(client: any, days: any, label: any) {
     [interval],
   );
 
-  const storylineOpens = await client(
+  const storylineOpens = await client.query(
     "SELECT props->>'storyline_id' AS storyline_id, count(*) AS opens FROM analytics_events " +
       "WHERE event_name = 'storyline_open' AND created_at >= now() - $1::interval GROUP BY 1",
     [interval],
   );
-  const storylineChapters = await client(
+  const storylineChapters = await client.query(
     "SELECT props->>'storyline_id' AS storyline_id, " +
       "count(*) FILTER (WHERE (props->>'position')::int = 1) AS reached_ch1, " +
       "count(DISTINCT props->>'position') AS distinct_chapters_seen " +
@@ -320,7 +320,7 @@ async function buildReportMarkdown(client: any, days: any, label: any) {
     r.distinct_chapters_seen,
   ]);
 
-  const search = await client(
+  const search = await client.query(
     "SELECT event_name, count(*) AS n FROM analytics_events " +
       "WHERE event_name IN ('search_submit', 'search_zero_results') AND created_at >= now() - $1::interval GROUP BY event_name",
     [interval],
@@ -328,7 +328,7 @@ async function buildReportMarkdown(client: any, days: any, label: any) {
 
   // Grouped case-insensitively so "shakespeare" and "Shakespeare" don't
   // split one term's count; min() picks one representative spelling.
-  const topSearchTerms = await client(
+  const topSearchTerms = await client.query(
     "SELECT min(props->>'query') AS term, count(*) AS n FROM analytics_events " +
       "WHERE event_name = 'search_submit' AND coalesce(props->>'query', '') != '' " +
       "AND created_at >= now() - $1::interval GROUP BY lower(trim(props->>'query')) ORDER BY n DESC LIMIT 20",
@@ -336,14 +336,14 @@ async function buildReportMarkdown(client: any, days: any, label: any) {
   );
   // The zero-result half is the most direct signal for what to acquire
   // more of -- what visitors wanted and the catalogue couldn't show.
-  const topZeroResultTerms = await client(
+  const topZeroResultTerms = await client.query(
     "SELECT min(props->>'query') AS term, count(*) AS n FROM analytics_events " +
       "WHERE event_name = 'search_zero_results' AND coalesce(props->>'query', '') != '' " +
       "AND created_at >= now() - $1::interval GROUP BY lower(trim(props->>'query')) ORDER BY n DESC LIMIT 20",
     [interval],
   );
 
-  const detailByTea = await client(
+  const detailByTea = await client.query(
     "SELECT props->>'tea_voice_status' AS status, count(*) AS n FROM analytics_events " +
       "WHERE event_name = 'detail_view' AND created_at >= now() - $1::interval GROUP BY 1 ORDER BY n DESC",
     [interval],

@@ -59,7 +59,7 @@ const SOURCES = ["met", "smithsonian", "cleveland", "commons", "europeana"];
 const IMAGE_FETCH_TIMEOUT_MS = 15000;
 
 async function checkDatabaseSize(client: any) {
-  const rows = await client(
+  const rows = await client.query(
     "SELECT pg_database_size(current_database()) AS bytes",
   );
   const bytes = Number(rows[0].bytes);
@@ -112,7 +112,7 @@ async function checkSourceFetchHealth(client: any) {
 }
 
 async function checkBlobUsage(client: any) {
-  const rows = await client(
+  const rows = await client.query(
     "SELECT total_bytes FROM blob_usage_tracker WHERE id = 1",
   );
   if (!rows.length) return null; // tracker not provisioned
@@ -153,7 +153,7 @@ async function checkSourceReachability(client: any) {
   for (let i = 0; i < SOURCES.length; i++) {
     if (held[SOURCES[i]]) continue;
     const source = SOURCES[i];
-    const rows = await client(
+    const rows = await client.query(
       "SELECT img FROM items WHERE source = $1 ORDER BY random() LIMIT 2",
       [source],
     );
@@ -200,7 +200,7 @@ async function checkRecentImageLoadFailures(client: any) {
   // 'legacy' bucket, which reads as one page load and can't raise an
   // alert on its own -- correct, since those rows can't distinguish
   // one client from many.
-  const rows = await client(
+  const rows = await client.query(
     "SELECT props->>'source' AS source, " +
       "count(*) AS n, " +
       "count(DISTINCT coalesce(props->>'page_load', 'legacy')) AS page_loads, " +

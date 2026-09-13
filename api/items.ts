@@ -681,7 +681,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
 
-    rows = await client(query.text, query.params);
+    rows = await client.query(query.text, query.params);
 
     res.setHeader("Cache-Control", "public, max-age=60, s-maxage=300");
     res.statusCode = 200;

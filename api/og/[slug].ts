@@ -446,7 +446,7 @@ export default async function handler(req: any, res: any) {
         cover = null;
         if (client) {
           try {
-            coverRows = await client(
+            coverRows = await client.query(
               `SELECT * FROM items WHERE native_id = $1 ${LIVE_ITEMS_AND} LIMIT 1`,
               [String(storyline.cover_item_id)],
             );
@@ -491,7 +491,7 @@ export default async function handler(req: any, res: any) {
 
     if (parsed && client) {
       try {
-        rows = await client(
+        rows = await client.query(
           // A quarantined item must not render a preview image either --
           // an OG card is as public as the page it represents.
           `SELECT * FROM items WHERE source = $1 AND native_id = $2 ${LIVE_ITEMS_AND} LIMIT 1`,
