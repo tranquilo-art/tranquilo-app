@@ -12,6 +12,7 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
+import { isValidEmail } from "../lib/is-valid-email.ts";
 import { reportError } from "../lib/sentry.ts";
 
 const VALID_SOURCES: Record<string, boolean> = {
@@ -19,10 +20,6 @@ const VALID_SOURCES: Record<string, boolean> = {
   feature_notify: true,
   newsletter_submit: true,
 };
-
-function isValidEmail(value: any): boolean {
-  return typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
 
 // Contact Properties must exist on the account before create-contact
 // can set one, or it 422s ("One or more properties do not exist"). This
