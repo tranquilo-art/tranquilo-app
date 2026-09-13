@@ -43,5 +43,7 @@ export function licenseLabel(raw: string | null | undefined): {
   const value = (raw ? String(raw) : "").trim();
   if (!value) return { label: "", deed: null };
   const entry = LICENSE_LABELS[value.toLowerCase()];
-  return entry ? { label: entry[0], deed: entry[1] } : { label: value, deed: null };
+  return entry
+    ? { label: entry[0], deed: entry[1] }
+    : { label: value, deed: null };
 }

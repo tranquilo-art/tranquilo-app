@@ -129,7 +129,12 @@ async function recordObject(
 ): Promise<boolean> {
   if (!sql) return false;
   try {
-    await sql.query(recordObjectSql(), [cacheKey, objectKey, contentHash, bytes]);
+    await sql.query(recordObjectSql(), [
+      cacheKey,
+      objectKey,
+      contentHash,
+      bytes,
+    ]);
     return true;
   } catch (_err) {
     // The object IS in S3; only our note failed. The next request finds no

@@ -95,7 +95,7 @@ test("the context field prefills from wherever on the site you came from", async
   await stubBackend(page);
   await stubFeedbackApi(page);
   await page.goto("/pages/about.html");
-  await page.click('.mkt-footer-links a[href="feedback.html"]');
+  await page.click('.mkt-footer-links a[href="/pages/feedback.html"]');
 
   await expect(page).toHaveURL(/feedback\.html/);
   await expect(page.locator("#context")).toHaveValue("/pages/about.html");
@@ -134,7 +134,7 @@ test("it is reachable from the static pages' footer", async ({ page }) => {
   // feedback taking its job, making this the only way to reach a human.
   await stubBackend(page);
   await page.goto("/pages/about.html");
-  const link = page.locator('.mkt-footer-links a[href="feedback.html"]');
+  const link = page.locator('.mkt-footer-links a[href="/pages/feedback.html"]');
   await expect(link).toHaveCount(1);
   await expect(link).toBeVisible();
   await expect(link).toHaveText("Feedback");
