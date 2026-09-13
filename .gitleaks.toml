@@ -2,10 +2,10 @@
 # gitleaks' own default ruleset rather than replacing it -- see
 # https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml
 # for what "default" actually checks.
+#
+# No local [allowlist] block: an empty one (regexes = []) fails gitleaks'
+# own config validation ("[[allowlists]] must contain at least one check"),
+# breaking secret-scan on every push/PR. Add one back only when there's an
+# actual non-secret identifier to allowlist, with at least one real entry.
 [extend]
 useDefault = true
-
-[allowlist]
-description = "Known non-secret, intentionally-public identifiers"
-regexes = [
-]
