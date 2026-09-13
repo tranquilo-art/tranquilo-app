@@ -30,6 +30,10 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(import.meta.dirname, "index.html"),
+        // Built to the root (dist/404.html), not dist/pages/ -- Vercel's
+        // static-output convention auto-serves a root-level 404.html for
+        // any unmatched path with a real 404 status, no rewrite needed.
+        notFound: resolve(import.meta.dirname, "404.html"),
         about: resolve(import.meta.dirname, "pages/about.html"),
         feedback: resolve(import.meta.dirname, "pages/feedback.html"),
         privacy: resolve(import.meta.dirname, "pages/privacy.html"),

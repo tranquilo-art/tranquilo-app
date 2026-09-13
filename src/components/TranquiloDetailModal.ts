@@ -20,6 +20,7 @@
 // Renders into light DOM, not a shadow root: every style already lives in
 // css/style.css.
 
+import { licenseLabel } from "../app/licenseLabels";
 import { isRealArtist as isRealArtistLogic } from "../logic/logic";
 import type { ITranquiloDetailModalHost } from "../types/ITranquiloDetailModalHost";
 import type { Item } from "../types/Item";
@@ -94,37 +95,9 @@ const AI_DISCLOSURE_HTML =
   `Spotted an error? <a href="mailto:${AI_CORRECTIONS_EMAIL}">${AI_CORRECTIONS_EMAIL}</a>` +
   `</span>`;
 
-// License labels/deed links, detail-modal-exclusive. Stored values are
-// slugs; an unknown slug falls through to the raw value in licenseRow()
-// below rather than being hidden, since showing nothing would silently
-// drop the one field that tells someone their rights.
-const LICENSE_LABELS: Record<string, [string, string | null]> = {
-  "cc0": ["CC0 1.0", "https://creativecommons.org/publicdomain/zero/1.0/"],
-  "public-domain": ["Public domain", null],
-  "public-domain-mark": [
-    "Public Domain Mark",
-    "https://creativecommons.org/publicdomain/mark/1.0/",
-  ],
-  "cc-by": ["CC BY", "https://creativecommons.org/licenses/by/4.0/"],
-  "cc-by-3.0": ["CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/"],
-  "cc-by-4.0": ["CC BY 4.0", "https://creativecommons.org/licenses/by/4.0/"],
-  "cc-by-sa": ["CC BY-SA", "https://creativecommons.org/licenses/by-sa/4.0/"],
-  "cc-by-sa-3.0": [
-    "CC BY-SA 3.0",
-    "https://creativecommons.org/licenses/by-sa/3.0/",
-  ],
-  "cc-by-sa-4.0": [
-    "CC BY-SA 4.0",
-    "https://creativecommons.org/licenses/by-sa/4.0/",
-  ],
-};
-
 function licenseRow(item: Item): string {
-  const raw = (item?.license ? String(item.license) : "").trim();
-  if (!raw) return "";
-  const entry = LICENSE_LABELS[raw.toLowerCase()];
-  const label = entry ? entry[0] : raw;
-  const deed = entry ? entry[1] : null;
+  const { label, deed } = licenseLabel(item?.license);
+  if (!label) return "";
   const value = deed
     ? `<a class="meta-license-link" href="${escapeHtml(deed)}" target="_blank" rel="noopener license">${escapeHtml(label)}</a>`
     : escapeHtml(label);

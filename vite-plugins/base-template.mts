@@ -36,17 +36,24 @@ const NAV_LINKS: Array<{ href: string; label: string; donationGated?: boolean }>
 // link (if any) is "current" depends on which page is being built, and a
 // static file can't know that. So every page effectively gets a computed
 // <block name="nav"> injected here, rather than any page authoring its own.
+//
+// Absolute (site-root) paths throughout, not "../"-relative: every page
+// under pages/*.html sits one directory below the site root, but a page
+// built to sit AT the root instead (404.html, so Vercel's static-output
+// convention picks it up as the site's 404 with no rewrite needed) would
+// need the opposite relative prefix. Absolute paths work identically
+// regardless of which directory the linking page itself lives in.
 function buildNav(currentFile: string): string {
   const links = NAV_LINKS.map(({ href, label, donationGated }) => {
     const current = href === currentFile ? ' class="current"' : "";
     const prefix = donationGated ? "data-donations " : "";
-    return `<a ${prefix}href="${href}"${current}>${label}</a>`;
+    return `<a ${prefix}href="/pages/${href}"${current}>${label}</a>`;
   }).join("\n      ");
 
   return `<header class="mkt-nav">
-    <a class="wordmark" href="../index.html"><img class="wordmark-mark" src="../assets/tranquilo-flower-violet.svg" alt="" width="30" height="41" aria-hidden="true"><span>Tranquilo</span></a>
+    <a class="wordmark" href="/index.html"><img class="wordmark-mark" src="/assets/tranquilo-flower-violet.svg" alt="" width="30" height="41" aria-hidden="true"><span>Tranquilo</span></a>
     <nav class="mkt-nav-links">
-      <a href="../index.html">Home</a>
+      <a href="/index.html">Home</a>
       ${links}
     </nav>
   </header>`;

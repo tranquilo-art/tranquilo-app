@@ -17,8 +17,13 @@ import { ScrollTelemetry } from "./app/ScrollTelemetry";
 import { SearchController } from "./app/SearchController";
 import { ShareService } from "./app/ShareService";
 import { SlugCodec } from "./app/SlugCodec";
-import { isAggregatorSource, sourceLinkLabel } from "./app/sourceLinks";
+import {
+  isAggregatorSource,
+  sourceLinkLabel,
+  sourceLinkPreposition,
+} from "./app/sourceLinks";
 import { TRANQUILO_CONFIG } from "./data/config.generated";
+import { renderErrorState } from "./errorState";
 import { buildEmptyCollectionSlide, buildIntroSlide } from "./feed/introSlides";
 import { createRecycleWindow } from "./feed/recycleWindow";
 import { createSlideBuilder } from "./feed/slideBuilder";
@@ -366,6 +371,7 @@ class TranquiloApp {
         shareItem(item);
       },
       sourceLinkLabel: (item: any) => sourceLinkLabel(item),
+      sourceLinkPreposition: (item: any) => sourceLinkPreposition(item),
       setArtistFilter: (artist: any) => {
         setArtistFilter(artist);
       },
@@ -1004,15 +1010,11 @@ new TranquiloApp().start().catch((err: any) => {
   console.error("Tranquilo failed to load:", err);
   // Not feedEl -- that's declared inside start()'s own scope.
   const feedEl = document.getElementById("feed") as any;
-  feedEl.innerHTML =
-    '<div class="feed-load-error">' +
-    "<p>Something went wrong loading Tranquilo. Please check your connection and try again.</p>" +
-    '<button type="button" class="btn-primary" id="feedLoadRetryBtn">Try again</button>' +
-    "</div>";
-  const retryBtn = document.getElementById("feedLoadRetryBtn") as any;
-  if (retryBtn) {
-    retryBtn.addEventListener("click", () => {
-      location.reload();
-    });
-  }
+  feedEl.innerHTML = "";
+  feedEl.appendChild(
+    renderErrorState({
+      detail: (err && err.message) || "Tranquilo failed to load.",
+      onRetry: () => location.reload(),
+    }),
+  );
 });

@@ -1,0 +1,111 @@
+/* Shared 404/outage template (src/errorState.ts) -- rendered both by the
+   static 404 page and by app.ts's startup-failure fallback in place of
+   the feed. Reuses .art-title/.art-meta/.meta-row/.meta-label/.btn-primary
+   as-is (already global, see css/style.css); only the layout wrapper and
+   the .source-link/.meta-license-link link treatment (normally scoped to
+   .detail-modal-inner) are new here. */
+.error-state{
+  height:100%;
+  min-height:100svh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  padding:48px 24px;
+  text-align:center;
+}
+
+.error-frame{
+  width:min(240px, 60vw);
+  aspect-ratio:1;
+  border-radius:16px;
+  overflow:hidden;
+  background:var(--surface-deep);
+  box-shadow:0 20px 60px rgba(0,0,0,0.4);
+}
+.error-frame img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.error-heading{
+  font-family:var(--serif);
+  font-style:italic;
+  font-size:1.3rem;
+  color:var(--text);
+  max-width:420px;
+  margin:0;
+}
+
+.error-detail{
+  font-family:var(--sans);
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  opacity:0.8;
+  margin:0;
+}
+
+.error-art-caption{
+  max-width:360px;
+  text-align:left;
+  margin-top:8px;
+}
+.error-art-caption .art-title{
+  font-family:var(--serif);
+  font-style:italic;
+  font-weight:500;
+  font-size:1.15rem;
+  color:var(--text);
+}
+.error-art-caption .d-body{
+  font-family:var(--sans);
+  font-weight:300;
+  font-size:0.85rem;
+  line-height:1.6;
+  color:var(--ink-soft);
+}
+.error-art-caption .d-body div{ margin-bottom:6px; }
+
+.error-art-caption a{ color:var(--gold); text-decoration:none; border-bottom:1px solid var(--gold-soft); }
+.error-art-caption a:hover{ color:var(--text); }
+
+.error-art-caption a.source-link{
+  color:var(--gold-soft);
+  text-decoration:none;
+  border-bottom:none;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  transition:color 0.2s ease;
+}
+.error-art-caption a.source-link .link-text{
+  text-decoration:underline;
+  text-underline-offset:3px;
+  text-decoration-color:rgba(203,184,136,0.5);
+}
+.error-art-caption a.source-link .link-arrow{
+  display:inline-block;
+  transition:transform 0.15s ease;
+}
+.error-art-caption a.source-link:hover{ color:#fff; }
+.error-art-caption a.source-link:hover .link-text{ text-decoration-color:rgba(255,255,255,0.6); }
+.error-art-caption a.source-link:hover .link-arrow{ transform:translateX(3px); }
+
+.error-art-caption .meta-row .meta-license-link{
+  color:var(--gold-soft);
+  text-decoration:underline;
+  text-underline-offset:2px;
+  text-decoration-color:rgba(203,184,136,0.45);
+  border-bottom:none;
+}
+.error-art-caption .meta-row .meta-license-link:hover{ color:#fff; }
+
+.error-retry-btn, .error-home-link{
+  background:var(--gold);
+  color:#fff;
+  border:none;
+  margin-top:8px;
+}
