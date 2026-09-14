@@ -57,17 +57,23 @@ test("the URL follows the slide you are looking at", async ({ page }) => {
     if (m) idPart = `${m[1]}-${m[2]}`;
   }
   const encoded = `/v/${source}-${encodeURIComponent(idPart)}`;
+  // The URL only reflects the active slide after syncUrlToActiveSlide()'s
+  // own debounce (TranquiloFeed.ts's URL_SYNC_DEBOUNCE_MS) fires, which
+  // resets on every scroll-driven recycle-window frame -- under CI's
+  // contended parallel shards the whole event loop can stall well past
+  // the default 5s assertion timeout before that settles.
   await expect(page).toHaveURL(
     new RegExp(`${encoded.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
+    { timeout: 15000 },
   );
 });
 
 test("scrolling back to the top restores the bare URL", async ({ page }) => {
   await gotoFeed(page);
   await scrollToSlide(page, 4);
-  await expect(page).toHaveURL(/\/v\//);
+  await expect(page).toHaveURL(/\/v\//, { timeout: 15000 });
   await scrollToSlide(page, 0);
-  await expect(page).not.toHaveURL(/\/v\//);
+  await expect(page).not.toHaveURL(/\/v\//, { timeout: 15000 });
 });
 
 test("the feed does not stack history entries per slide", async ({ page }) => {
