@@ -157,3 +157,20 @@
 @media (prefers-reduced-motion: reduce){
   .lightbox-spinner{ animation:none; border-top-color:rgba(255,255,255,0.6); }
 }
+
+/* TRA-274 Phase 2: shared-element transition, feed thumbnail -> lightbox.
+   Named group set/cleared in slideBuilder.ts's frame click handler and
+   TranquiloLightbox.ts's open()/close() -- see either for the full
+   mechanism. Duration/easing matched to the zoom transform's own curve
+   (setZoomTransform() in TranquiloLightbox.ts) so the two read as one
+   consistent motion language rather than two different animation systems
+   happening to run at once. */
+::view-transition-group(tranquilo-lightbox-artwork){
+  animation-duration:0.32s;
+  animation-timing-function:cubic-bezier(.2,.7,.3,1);
+}
+@media (prefers-reduced-motion: reduce){
+  ::view-transition-group(tranquilo-lightbox-artwork){
+    animation-duration:0.001s;
+  }
+}

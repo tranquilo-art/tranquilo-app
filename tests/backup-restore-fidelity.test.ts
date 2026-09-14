@@ -98,6 +98,7 @@ const RESTORE_COLUMNS = [
   "phash",
   "img_width",
   "img_height",
+  "palette_buckets",
 ];
 function restoreColumns() {
   return RESTORE_COLUMNS;

@@ -52,6 +52,17 @@ export interface Item {
   img: string;
   lightbox_img: string;
   blur_placeholder: string | null;
+  // TRA-274 Phase 1: additive, ingestion-time visual metadata. Absent
+  // (null) for any item not yet backfilled -- consumers must treat these
+  // as optional, not assume every item carries them.
+  img_width: number | null;
+  img_height: number | null;
+  palette_hex: string[] | null;
+  // Every distinct hue bucket among palette_hex's several colors (the
+  // real color filter) -- see classify_palette_buckets() in the ingestion
+  // repo. Same 9-value vocabulary as the existing `palette` facet, but
+  // multi-valued: an item can carry several.
+  palette_buckets: Palette[] | null;
   url: string | null;
   license: string | null;
   category: Category | null;

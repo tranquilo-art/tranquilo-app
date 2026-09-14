@@ -94,6 +94,10 @@ function serializeRow(row: any): any {
       row.full_img || row.img,
     ),
     blur_placeholder: row.blur_placeholder,
+    img_width: row.img_width,
+    img_height: row.img_height,
+    palette_hex: row.palette_hex,
+    palette_buckets: row.palette_buckets,
     url: row.url,
     license: row.license,
     category: row.category,
@@ -265,6 +269,10 @@ const FACETS = [
   "region_primary",
   "source",
   "subject_type",
+  // TRA-274 real color filter -- array-contains against palette_buckets,
+  // not equality; see the special case in the FACETS.forEach loop below,
+  // same shape as region_primary's own alternates special case.
+  "palette_bucket",
 ];
 
 // ---------------------------------------------------------------------------
@@ -285,6 +293,20 @@ function facetsQuery(): any {
     `  GROUP BY ${col}${
       having ? ` HAVING count(*) >= ${having}` : ""
     }  ORDER BY n DESC, value ASC${limit ? ` LIMIT ${limit}` : ""})`;
+  // Same shape as group(), for a TEXT[] column: unnest first, so an item
+  // carrying several values (palette_buckets) counts once per value
+  // rather than being invisible to a straight GROUP BY on the array itself.
+  const groupArray = (
+    label: string,
+    col: string,
+    having?: number,
+    limit?: number,
+  ) =>
+    `(SELECT '${label}' AS facet, val AS value, count(*)::int AS n` +
+    `   FROM items, unnest(${col}) AS val WHERE ${live} AND ${col} IS NOT NULL` +
+    `  GROUP BY val${
+      having ? ` HAVING count(*) >= ${having}` : ""
+    }  ORDER BY n DESC, val ASC${limit ? ` LIMIT ${limit}` : ""})`;
   return {
     text: [
       group("category", "category"),
@@ -294,6 +316,7 @@ function facetsQuery(): any {
       group("era", "timeframe", 10),
       group("type", "media_type", 10),
       group("color", "palette", 10),
+      groupArray("palette_bucket", "palette_buckets", 10),
     ].join(" UNION ALL "),
     params: [],
     facets: true,
@@ -417,6 +440,15 @@ function buildQuery(params: any): any {
       where.push(
         `(region_primary = ${bound} OR region_alt @> ARRAY[${bound}]::text[])`,
       );
+      return;
+    }
+    if (facet === "palette_bucket") {
+      // A real color filter: palette_buckets is multi-valued (GIN index,
+      // sql/038_items_palette_buckets.sql), so this is containment, not
+      // equality -- an item with both blue sky and green grass matches a
+      // "Blue" filter and a "Green" one, which is the whole point.
+      bound = bind(value);
+      where.push(`palette_buckets @> ARRAY[${bound}]::text[]`);
       return;
     }
     where.push(`${facet} = ${bind(value)}`);

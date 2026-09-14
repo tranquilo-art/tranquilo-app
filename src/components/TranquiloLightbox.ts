@@ -200,6 +200,16 @@ export class TranquiloLightbox extends HTMLElement {
 
   open(src: string, alt: string | null, item: Item | null): void {
     const host = this.requireApp();
+    // TRA-274 Phase 2: shared-element view transition target. Harmless to
+    // set unconditionally -- a view-transition-name with no active
+    // document.startViewTransition() capturing it (unsupported browser, or
+    // this element opened some other way) has no visible effect. The
+    // matching feed thumbnail sets the same name only for the duration of
+    // its own startViewTransition() call; see slideBuilder.ts's frame
+    // click handler. Cleared in close(), not just left to be overwritten
+    // next open(), so a stale name here can't collide with a *different*
+    // feed thumbnail naming itself the same thing on the next transition.
+    this.imgEl.style.viewTransitionName = "tranquilo-lightbox-artwork";
     this.imgEl.alt = alt || "";
     this.updateSourceLink(item);
     this.imageState = host.wireArtworkImageState(
@@ -244,6 +254,7 @@ export class TranquiloLightbox extends HTMLElement {
     this.setAttribute("aria-hidden", "true");
     this.imageState?.cancel();
     this.imgEl.src = "";
+    this.imgEl.style.viewTransitionName = "";
     this.resetZoomState(false);
   }
 
