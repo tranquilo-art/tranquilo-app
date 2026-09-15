@@ -52,6 +52,23 @@ export interface Item {
   img: string;
   lightbox_img: string;
   blur_placeholder: string | null;
+  // TRA-274 Phase 1: additive, ingestion-time visual metadata. Absent
+  // (null) for any item not yet backfilled -- consumers must treat these
+  // as optional, not assume every item carries them.
+  img_width: number | null;
+  img_height: number | null;
+  palette_hex: string[] | null;
+  // Every distinct hue bucket among palette_hex's several colors (the
+  // real color filter) -- see classify_palette_buckets() in the ingestion
+  // repo. Same 9-value vocabulary as the existing `palette` facet, but
+  // multi-valued: an item can carry several.
+  palette_buckets: Palette[] | null;
+  // TRA-274 Phase 3: up to 3 tags (1 primary + up to 2 secondary, in that
+  // order) from the closed vocabulary in artscroll-poc's
+  // vibe_taxonomy.py -- not sourced from shared/vocabulary.json like the
+  // fields above, so plain string[] rather than a literal union, same as
+  // caption_tea/tea_voice_status's own real-but-untyped vocabularies.
+  vibe_tags: string[] | null;
   url: string | null;
   license: string | null;
   category: Category | null;

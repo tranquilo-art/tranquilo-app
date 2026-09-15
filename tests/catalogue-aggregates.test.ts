@@ -50,6 +50,15 @@ describe("?shape=facets", () => {
     expect(q.text).toMatch(/HAVING count\(\*\) >= 2/);
     expect(q.text).toMatch(/HAVING count\(\*\) >= 10/);
   });
+
+  it("unnests palette_buckets for the real color filter's counts", () => {
+    // TRA-274: unlike every other pool above, palette_buckets is a TEXT[]
+    // -- an item can carry several, so a straight GROUP BY on the array
+    // itself would never match a single bucket name. Must unnest first.
+    const q = items.buildQuery({ shape: "facets" });
+    expect(q.text).toContain("'palette_bucket'");
+    expect(q.text).toMatch(/unnest\(palette_buckets\)/);
+  });
 });
 
 describe("?shape=facets response shape", () => {
@@ -233,6 +242,17 @@ describe("facet whitelist", () => {
       credit: "anything",
     });
     expect(q.text).not.toMatch(/credit/);
+  });
+
+  it("palette_bucket filters by containment, not equality -- an item can carry several", () => {
+    const q = items.buildQuery({
+      shape: "manifest",
+      order: "shuffle",
+      start: "0.5",
+      palette_bucket: "Blue",
+    });
+    expect(q.text).toMatch(/palette_buckets @> ARRAY\[\$\d+\]::text\[\]/);
+    expect(q.params).toContain("Blue");
   });
 
   it("resolves the rule shelf's three filters together", () => {

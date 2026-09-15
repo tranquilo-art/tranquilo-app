@@ -28,6 +28,23 @@ import type { Item } from "../types/Item";
 import type { SetOfWorkIndexEntry } from "../types/SetOfWork";
 import type { StorylineIndexEntry } from "../types/Storyline";
 
+// document.startViewTransition() isn't in this TS version's DOM lib yet
+// (Chromium-only browser API) -- a minimal local shape rather than `any`,
+// scoped to just the members this module actually calls.
+interface ViewTransition {
+  finished: Promise<void>;
+}
+type DocumentWithViewTransitions = Document & {
+  startViewTransition?(callback: () => void): ViewTransition;
+};
+
+// TRA-274 Phase 2: the shared name a feed thumbnail and the lightbox's own
+// <img> both carry for the duration of one open() transition, so the
+// browser morphs between their positions/sizes instead of cross-fading the
+// whole page. See TranquiloLightbox.ts's open()/close() for the lightbox
+// side of this same name.
+const LIGHTBOX_VIEW_TRANSITION_NAME = "tranquilo-lightbox-artwork";
+
 export interface ImageState {
   isFailed(): boolean;
   retry(): void;
@@ -376,6 +393,18 @@ export function createSlideBuilder(
     const img = document.createElement("img");
     // No loading="lazy" -- imageVisibilityObserver is the sole gate.
     img.alt = item.title || "Untitled";
+    // TRA-274 Phase 2: width/height attributes (not CSS) give the browser
+    // the image's real aspect ratio via its UA stylesheet (`img{
+    // aspect-ratio: attr(width) / attr(height) }`), the standard way to
+    // avoid a layout shift on decode -- .art-frame img's own
+    // max-width/max-height:100% + object-fit:contain still governs the
+    // actual display size, this only hints the ratio. Absent (null) for
+    // any item not yet backfilled; the image falls back to today's
+    // behavior with no ratio hint.
+    if (item.img_width && item.img_height) {
+      img.width = item.img_width;
+      img.height = item.img_height;
+    }
     frame.appendChild(img);
     applyNudityGate(frame, item);
 
@@ -400,7 +429,23 @@ export function createSlideBuilder(
       }
       // Opens on the display image, already loaded, so the lightbox
       // paints instantly; the host upgrades to lightbox tier in the background.
-      host.openLightbox(item.img, item.title || "Untitled", item);
+      const openLightbox = (): void =>
+        host.openLightbox(item.img, item.title || "Untitled", item);
+      // Feature-detected, scoped to exactly this thumbnail -> lightbox
+      // transition per TRA-274 Phase 2 -- not applied anywhere else this
+      // frame's img is used. Named only for the duration of the
+      // transition: set right before starting it, cleared once it
+      // resolves, so a later click on a *different* thumbnail can safely
+      // reuse the same name without colliding with this one.
+      const doc = document as DocumentWithViewTransitions;
+      if (typeof doc.startViewTransition !== "function") {
+        openLightbox();
+        return;
+      }
+      img.style.viewTransitionName = LIGHTBOX_VIEW_TRANSITION_NAME;
+      doc.startViewTransition(openLightbox).finished.finally(() => {
+        img.style.viewTransitionName = "";
+      });
     });
 
     const caption = document.createElement("div");

@@ -56,3 +56,6 @@ Temp/
 # disk here for convenience, not part of this project -- never meant to be
 # staged into this repo's history.
 /third-party/
+
+# macOS Finder metadata -- per-directory, never project content.
+.DS_Store

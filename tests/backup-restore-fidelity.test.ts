@@ -94,6 +94,14 @@ const RESTORE_COLUMNS = [
   "department",
   "contributor_nationality",
   "photograph_date",
+  "palette_hex",
+  "phash",
+  "img_width",
+  "img_height",
+  "palette_buckets",
+  "palette_contrast_score",
+  "vibe_tags",
+  "curator_boost",
 ];
 function restoreColumns() {
   return RESTORE_COLUMNS;

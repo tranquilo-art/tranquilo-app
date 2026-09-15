@@ -209,6 +209,20 @@ describe("run", () => {
     );
   });
 
+  it("TRA-274: a color word resolves to the real (array-contains) palette_bucket filter, not the categorical palette column", async () => {
+    const host = makeHost({
+      countMatches: vi.fn(async () => 0),
+      findCorrection: vi.fn(async () => null),
+      fetchJson: vi.fn(async () => ({ items: [{ id: "1" }] })),
+    });
+    const controller = new SearchController(host);
+    await controller.run("blue");
+    expect(host.setActiveConcept).toHaveBeenCalledWith({
+      label: "blue tones",
+      filter: { palette_bucket: "Blue" },
+    });
+  });
+
   it("reaches a dead end when a concept matches but the server has nothing for it", async () => {
     const host = makeHost({
       countMatches: vi.fn(async () => 0),

@@ -34,6 +34,22 @@ const CONCEPT_MAP: Record<string, ConceptEntry> = {
     // Rarely fires: a plain search usually finds these items first.
     filter: { q: "couples" },
   },
+  // TRA-274 real color filter, surfaced through the same soft term ->
+  // filter mechanism as every concept above, rather than a new UI
+  // component -- palette_bucket is the multi-valued array-contains
+  // filter (api/items.ts), distinct from the single-valued `palette`
+  // facet. One entry per classify_palette_buckets() bucket name; "Neutral"
+  // deliberately omitted here since "neutral"/"monochrome" isn't a color
+  // someone searches for the way "blue" or "green" is.
+  red: { label: "red tones", filter: { palette_bucket: "Red" } },
+  orange: { label: "orange tones", filter: { palette_bucket: "Orange" } },
+  yellow: { label: "yellow tones", filter: { palette_bucket: "Gold/Yellow" } },
+  gold: { label: "gold tones", filter: { palette_bucket: "Gold/Yellow" } },
+  green: { label: "green tones", filter: { palette_bucket: "Green" } },
+  teal: { label: "teal tones", filter: { palette_bucket: "Teal" } },
+  blue: { label: "blue tones", filter: { palette_bucket: "Blue" } },
+  purple: { label: "purple tones", filter: { palette_bucket: "Purple" } },
+  pink: { label: "pink tones", filter: { palette_bucket: "Pink" } },
 };
 
 export interface SearchControllerHost {
