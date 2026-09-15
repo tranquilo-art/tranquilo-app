@@ -62,6 +62,15 @@ UPDATE source_fetch_state
    SET hold_reason = 'Wikimedia rate-limit hold -- no server-side fetches until the hold is lifted'
  WHERE source = 'commons' AND hold_reason IS NULL;
 
+-- Added separately: a new source's adapter shipping is not the same event
+-- as this file being re-run, so a source added after the INSERT above has
+-- no row until it's added here too -- the img proxy fails closed
+-- (ImgProxyDegraded) on any source with no row, shedding every request to
+-- the visitor instead of fetching server-side.
+INSERT INTO source_fetch_state (source, tokens, capacity, refill_per_sec, hold_reason)
+VALUES ('npm', 30, 30, 0.5, NULL)
+ON CONFLICT (source) DO NOTHING;
+
 -- ---------------------------------------------------------------------------
 -- 1b: single-flight claims
 -- ---------------------------------------------------------------------------
