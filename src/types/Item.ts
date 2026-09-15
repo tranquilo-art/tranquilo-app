@@ -63,6 +63,12 @@ export interface Item {
   // repo. Same 9-value vocabulary as the existing `palette` facet, but
   // multi-valued: an item can carry several.
   palette_buckets: Palette[] | null;
+  // TRA-274 Phase 3: up to 3 tags (1 primary + up to 2 secondary, in that
+  // order) from the closed vocabulary in artscroll-poc's
+  // vibe_taxonomy.py -- not sourced from shared/vocabulary.json like the
+  // fields above, so plain string[] rather than a literal union, same as
+  // caption_tea/tea_voice_status's own real-but-untyped vocabularies.
+  vibe_tags: string[] | null;
   url: string | null;
   license: string | null;
   category: Category | null;

@@ -98,6 +98,10 @@ function serializeRow(row: any): any {
     img_height: row.img_height,
     palette_hex: row.palette_hex,
     palette_buckets: row.palette_buckets,
+    // curator_boost/palette_contrast_score deliberately absent -- pure
+    // server-side ranking inputs (see vibeSearchQuery() above), not
+    // something the client renders.
+    vibe_tags: row.vibe_tags,
     url: row.url,
     license: row.license,
     category: row.category,
@@ -366,6 +370,60 @@ function correctionQuery(params: any): any {
   };
 }
 
+// TRA-274 Phase 3: a "moody paintings" style query is a bounded, RANKED
+// result set, not the infinite shuffle-cursor feed every other filter
+// (including palette_bucket) rides -- see vibeSearchQuery() below for why
+// this is its own shape rather than another FACETS entry.
+const VIBE_SEARCH_DEFAULT_LIMIT = 60;
+const VIBE_SEARCH_MAX_LIMIT = 100;
+
+// Filters to items carrying ANY of the given vibe_tags (array overlap,
+// `&&` -- a "moody" search expands to several tags client-side; matching
+// ANY of them is the whole point, not requiring all of them) and ranks
+// the matches: curator_boost dominates (a human-promoted item always
+// sorts first), then harmony and contrast break ties, equally weighted.
+// Harmony is a cheap inline expression over the already-stored
+// palette_buckets array (fewer distinct hue buckets scores higher --
+// see classify_palette_buckets()'s own doc in the ingestion repo) rather
+// than a second precomputed column; contrast is precomputed at ingestion
+// (palette_contrast_score) since it needs real per-pixel image data SQL
+// doesn't have. A bounded LIMIT over an already-filtered set, never the
+// whole catalogue, so this ORDER BY is not the kind of per-query dynamic
+// sort this repo's shuffle_key architecture exists to avoid -- it's
+// sorting dozens of rows, not the catalogue.
+function vibeSearchQuery(params: any): any {
+  const raw = String(params.vibe_tags_any || "").trim();
+  const tags = raw
+    ? raw
+        .split(",")
+        .map((t: string) => t.trim())
+        .filter(Boolean)
+    : [];
+  if (!tags.length) {
+    throw Object.assign(
+      new Error("vibe_tags_any is required for shape=vibe_search"),
+      { status: 400 },
+    );
+  }
+  const limit = Math.min(
+    VIBE_SEARCH_MAX_LIMIT,
+    Math.max(1, parseInt(params.limit, 10) || VIBE_SEARCH_DEFAULT_LIMIT),
+  );
+  return {
+    // No cursor_ts alias -- unlike the paginated shapes below, this never
+    // pages, so there's nothing to encode a cursor from.
+    text:
+      `SELECT * FROM items ` +
+      ` WHERE ${LIVE_ITEMS_PREDICATE} AND vibe_tags && $1::text[] ` +
+      ` ORDER BY COALESCE(curator_boost, 0) DESC, ` +
+      `   (COALESCE(palette_contrast_score, 0) ` +
+      `    + 1.0 / COALESCE(array_length(palette_buckets, 1), 1)) DESC ` +
+      ` LIMIT ${limit}`,
+    params: [tags],
+    vibeSearch: true,
+  };
+}
+
 function buildQuery(params: any): any {
   let ids: any, clauses: any, lowered: any, era: any, s: any, c: any;
   const counting = params.shape === "count";
@@ -373,6 +431,7 @@ function buildQuery(params: any): any {
   if (params.shape === "facets") return facetsQuery();
   if (params.shape === "suggest") return suggestQuery(params);
   if (params.shape === "correction") return correctionQuery(params);
+  if (params.shape === "vibe_search") return vibeSearchQuery(params);
 
   const where = [LIVE_ITEMS_PREDICATE];
   const values: any[] = [];
@@ -783,6 +842,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     items = rows.map(serializeRow);
+
+    // Bounded and ranked, not paginated -- no cursor, same shape as the
+    // My Collection / storyline-chapter / set-of-works lookups, which are
+    // all "a small, complete result in one response" rather than an
+    // infinite scroll.
+    if (query.vibeSearch) {
+      res.json({ items });
+      return;
+    }
 
     // `missing` is always present (empty when everything resolved), so
     // a caller can fail loudly instead of silently degrading (a short
