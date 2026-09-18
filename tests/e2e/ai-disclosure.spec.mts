@@ -103,19 +103,28 @@ test("it stays subtle: small, quiet, and never wider than the label it sits by",
   // ignore reads as a warning rather than a note.
   await gotoFeed(page);
   await openDetailWithCaption(page, true);
-  const m = await page
-    .locator("[data-ai-disclosure]")
-    .first()
-    .evaluate((el) => {
-      const s = getComputedStyle(el);
-      const label = el.closest(".fact-box")!.querySelector(".fact-label")!;
-      return {
-        fontPx: parseFloat(s.fontSize),
-        opacity: parseFloat(s.opacity),
-        width: el.getBoundingClientRect().width,
-        labelWidth: label.getBoundingClientRect().width,
-      };
-    });
+  // openDetailWithCaption's click on .art-title-btn leaves the real cursor
+  // sitting wherever that button was; if the badge renders near that same
+  // point in the opened modal it picks up a genuine :hover, so move the
+  // pointer away and let the 0.15s opacity transition (css/style.css)
+  // settle before reading the resting style.
+  await page.mouse.move(0, 0);
+  const badge = page.locator("[data-ai-disclosure]").first();
+  await expect
+    .poll(() =>
+      badge.evaluate((el) => parseFloat(getComputedStyle(el).opacity)),
+    )
+    .toBeLessThanOrEqual(0.75);
+  const m = await badge.evaluate((el) => {
+    const s = getComputedStyle(el);
+    const label = el.closest(".fact-box")!.querySelector(".fact-label")!;
+    return {
+      fontPx: parseFloat(s.fontSize),
+      opacity: parseFloat(s.opacity),
+      width: el.getBoundingClientRect().width,
+      labelWidth: label.getBoundingClientRect().width,
+    };
+  });
   expect(m.fontPx).toBeLessThanOrEqual(14);
   expect(m.opacity).toBeLessThanOrEqual(0.75);
   expect(m.width).toBeLessThan(m.labelWidth);

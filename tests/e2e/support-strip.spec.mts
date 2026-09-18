@@ -563,10 +563,15 @@ test.describe("the top bar sheds the word once you reach the art", () => {
     await scrollToSlide(page, 2);
     await expect(page.locator(".topbar")).toHaveClass(/compact/);
     await expect(page.locator(".topbar .wordmark-mark")).toBeVisible();
-    const width = await page
-      .locator(".topbar .wordmark span")
-      .evaluate((el) => el.getBoundingClientRect().width);
-    expect(width).toBeLessThan(2);
+    // The class toggles immediately, but the collapse itself is a 0.32s
+    // max-width transition (css/style.css) -- poll rather than read a
+    // single frame that can land mid-animation.
+    const wordmarkSpan = page.locator(".topbar .wordmark span");
+    await expect
+      .poll(() =>
+        wordmarkSpan.evaluate((el) => el.getBoundingClientRect().width),
+      )
+      .toBeLessThan(2);
   });
 
   test("comes back when you scroll home", async ({ page }) => {
