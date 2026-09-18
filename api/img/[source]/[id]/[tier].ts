@@ -137,14 +137,6 @@ const ALLOWED_ORIGIN_HOSTS: Record<string, string[]> = {
   // the S3 cache-hit lookup below, regardless of whether the object was
   // already cached.
   npm: ["iiifod.npm.gov.tw"],
-  // wellcome.py's IIIF image service host -- confirmed against the
-  // adapter's own map_item() (img/full both built from the work's
-  // digital location's IIIF base url). Added ahead of the adapter's
-  // first real ingestion run, not after, following the lesson recorded
-  // above: this allowlist and ingest-time S3 caching are unrelated code
-  // paths, so a source can cache cleanly at ingest time while every live
-  // image request for it still 400s here until this entry exists.
-  wellcome: ["iiif.wellcomecollection.org"],
 };
 
 type ImgSource = keyof typeof ALLOWED_ORIGIN_HOSTS;
