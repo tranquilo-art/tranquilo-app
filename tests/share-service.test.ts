@@ -4,9 +4,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ShareService } from "../src/app/ShareService";
 
-let trackEvent: ReturnType<typeof vi.fn>;
-let showToast: ReturnType<typeof vi.fn>;
-let encodeSlugId: ReturnType<typeof vi.fn>;
+let trackEvent: ReturnType<
+  typeof vi.fn<(name: string, props?: Record<string, unknown>) => void>
+>;
+let showToast: ReturnType<typeof vi.fn<(msg: string) => void>>;
+let encodeSlugId: ReturnType<
+  typeof vi.fn<(source: string, rawId: string | number) => string>
+>;
 
 function makeService() {
   trackEvent = vi.fn();
