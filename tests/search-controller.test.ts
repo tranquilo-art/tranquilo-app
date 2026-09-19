@@ -209,7 +209,7 @@ describe("run", () => {
     );
   });
 
-  it("TRA-274: a color word resolves to the real (array-contains) palette_bucket filter, not the categorical palette column", async () => {
+  it("a color word resolves to the real (array-contains) palette_bucket filter, not the categorical palette column", async () => {
     const host = makeHost({
       countMatches: vi.fn(async () => 0),
       findCorrection: vi.fn(async () => null),

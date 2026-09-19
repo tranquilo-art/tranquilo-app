@@ -273,7 +273,7 @@ const FACETS = [
   "region_primary",
   "source",
   "subject_type",
-  // TRA-274 real color filter -- array-contains against palette_buckets,
+  // Real color filter -- array-contains against palette_buckets,
   // not equality; see the special case in the FACETS.forEach loop below,
   // same shape as region_primary's own alternates special case.
   "palette_bucket",
@@ -370,7 +370,7 @@ function correctionQuery(params: any): any {
   };
 }
 
-// TRA-274 Phase 3: a "moody paintings" style query is a bounded, RANKED
+// A "moody paintings" style query is a bounded, RANKED
 // result set, not the infinite shuffle-cursor feed every other filter
 // (including palette_bucket) rides -- see vibeSearchQuery() below for why
 // this is its own shape rather than another FACETS entry.

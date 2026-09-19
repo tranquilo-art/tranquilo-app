@@ -1,4 +1,4 @@
--- TRA-274 Phase 3: the vibe-tag real color/mood search. Three columns,
+-- The vibe-tag real color/mood search. Three columns,
 -- together -- all inputs to the same ranked, bounded vibe_search shape
 -- (api/items.ts), not filters over the whole catalogue, so none of them
 -- need to be index-scanned against millions of rows; they only ever sort

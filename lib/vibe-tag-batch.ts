@@ -1,4 +1,4 @@
-// Pre-flight checks and apply-planning for a TRA-274 Phase 3 vibe-tag
+// Pre-flight checks and apply-planning for a vibe-tag
 // batch, shared by scripts/check_vibe_tag_batch.mts and
 // scripts/apply_vibe_tag_batch.mts -- same "extract the testable logic,
 // keep the script a thin DB/CLI wrapper" shape as lib/tea-voice-check.ts

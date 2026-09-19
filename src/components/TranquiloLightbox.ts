@@ -200,7 +200,7 @@ export class TranquiloLightbox extends HTMLElement {
 
   open(src: string, alt: string | null, item: Item | null): void {
     const host = this.requireApp();
-    // TRA-274 Phase 2: shared-element view transition target. Harmless to
+    // Shared-element view transition target. Harmless to
     // set unconditionally -- a view-transition-name with no active
     // document.startViewTransition() capturing it (unsupported browser, or
     // this element opened some other way) has no visible effect. The

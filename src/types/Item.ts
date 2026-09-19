@@ -52,7 +52,7 @@ export interface Item {
   img: string;
   lightbox_img: string;
   blur_placeholder: string | null;
-  // TRA-274 Phase 1: additive, ingestion-time visual metadata. Absent
+  // Additive, ingestion-time visual metadata. Absent
   // (null) for any item not yet backfilled -- consumers must treat these
   // as optional, not assume every item carries them.
   img_width: number | null;
@@ -63,7 +63,7 @@ export interface Item {
   // repo. Same 9-value vocabulary as the existing `palette` facet, but
   // multi-valued: an item can carry several.
   palette_buckets: Palette[] | null;
-  // TRA-274 Phase 3: up to 3 tags (1 primary + up to 2 secondary, in that
+  // Up to 3 tags (1 primary + up to 2 secondary, in that
   // order) from the closed vocabulary in artscroll-poc's
   // vibe_taxonomy.py -- not sourced from shared/vocabulary.json like the
   // fields above, so plain string[] rather than a literal union, same as

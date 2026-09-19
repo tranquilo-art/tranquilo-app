@@ -2,7 +2,7 @@
 //
 // Check a mined vibe-tag batch before a human reviews it.
 //
-// TRA-274 Phase 3. The batch file is produced by artscroll-poc's (private,
+// The batch file is produced by artscroll-poc's (private,
 // separate repo) python/ingest/mine_vibe_tags.py -- it lives wherever that
 // repo is checked out locally, so this takes an arbitrary path, same as
 // check_tea_voice_batch.mts does for its own drafts.

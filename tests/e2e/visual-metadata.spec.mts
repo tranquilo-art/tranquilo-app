@@ -1,4 +1,4 @@
-// TRA-274 Phase 2: the feed slide reads the new img_width/img_height/
+// The feed slide reads the new img_width/img_height/
 // palette_hex fields when present, and falls back to today's behavior when
 // absent -- most items aren't backfilled yet, so the fallback path is the
 // common case in production right now, not a hypothetical.

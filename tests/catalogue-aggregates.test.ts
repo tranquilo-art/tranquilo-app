@@ -52,7 +52,7 @@ describe("?shape=facets", () => {
   });
 
   it("unnests palette_buckets for the real color filter's counts", () => {
-    // TRA-274: unlike every other pool above, palette_buckets is a TEXT[]
+    // Unlike every other pool above, palette_buckets is a TEXT[]
     // -- an item can carry several, so a straight GROUP BY on the array
     // itself would never match a single bucket name. Must unnest first.
     const q = items.buildQuery({ shape: "facets" });

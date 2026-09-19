@@ -8,7 +8,7 @@ name: Warm image cache
 # this same idea.
 #
 # The actual, current tool for this job is the CLI:
-# `node scripts/warm_image_cache.mts --commit` (TRA-335). Run it by hand,
+# `node scripts/warm_image_cache.mts --commit`. Run it by hand,
 # occasionally, as a backfill -- not on a standing schedule, here or on
 # Vercel.
 #
@@ -41,9 +41,9 @@ name: Warm image cache
 # public (days away as of 2026-09-08, not months), and GitHub Actions
 # minutes stop being scarce for public repos.
 #
-# Reconsidered same-day, independent of that: TRA-336's ingest-time
+# Reconsidered same-day, independent of that: ingest-time
 # caching already retries on its own (fetch_image_bytes()'s 6x backoff),
-# so once TRA-335 clears the current backlog, what either this workflow
+# so once the current backlog clears, what either this workflow
 # or lib/cron/warm-image-cache.ts would be catching -- an ingest-time
 # write that failed despite those retries -- is rare enough that "run the
 # CLI occasionally when item_cache_status suggests something slipped

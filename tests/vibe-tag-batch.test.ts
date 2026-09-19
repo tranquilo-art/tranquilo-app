@@ -1,4 +1,4 @@
-// Pre-flight checks and apply-planning for a TRA-274 Phase 3 vibe-tag
+// Pre-flight checks and apply-planning for a vibe-tag
 // batch. Errors are factual and block (an id that doesn't resolve, a tag
 // outside the closed vocabulary); warnings inform a human reviewer but
 // don't block.

@@ -1,4 +1,4 @@
--- TRA-274: a real color filter. palette_buckets holds every distinct hue
+-- A real color filter. palette_buckets holds every distinct hue
 -- bucket among an item's *several* extracted colors (palette_hex), derived
 -- by the ingestion pipeline's classify_palette_buckets() reusing the same
 -- hue-bucket vocabulary/thresholds as the existing single-valued `palette`

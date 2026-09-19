@@ -1,4 +1,4 @@
-// TRA-274 Phase 3: ?shape=vibe_search -- a bounded, RANKED result set for
+// ?shape=vibe_search -- a bounded, RANKED result set for
 // a "moody paintings" style query, distinct from every other filter
 // (including palette_bucket), which rides the infinite shuffle-cursor
 // feed. These are assertions about the SQL buildQuery() produces, same

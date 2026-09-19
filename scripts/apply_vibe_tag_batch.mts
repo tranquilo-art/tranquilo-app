@@ -2,7 +2,7 @@
 //
 // Apply a reviewed vibe-tag batch to items.vibe_tags.
 //
-// TRA-274 Phase 3. The reviewed batch file IS the input -- a human has
+// The reviewed batch file IS the input -- a human has
 // already edited it directly (corrected a tag, deleted an entry to skip
 // it), so this writes exactly what's in the file, nothing re-derived.
 // Same "no second copy to drift" discipline as artscroll-poc's own

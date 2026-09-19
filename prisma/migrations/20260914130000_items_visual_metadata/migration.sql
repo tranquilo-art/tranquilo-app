@@ -1,4 +1,4 @@
--- TRA-274 Phase 1: deterministic, ingestion-time visual metadata. Run once
+-- Deterministic, ingestion-time visual metadata. Run once
 -- by hand in Neon's web SQL editor, same convention as every other file
 -- here. Safe to re-run (ADD COLUMN IF NOT EXISTS).
 --

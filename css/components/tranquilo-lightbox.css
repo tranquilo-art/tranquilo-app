@@ -158,7 +158,7 @@
   .lightbox-spinner{ animation:none; border-top-color:rgba(255,255,255,0.6); }
 }
 
-/* TRA-274 Phase 2: shared-element transition, feed thumbnail -> lightbox.
+/* Shared-element transition, feed thumbnail -> lightbox.
    Named group set/cleared in slideBuilder.ts's frame click handler and
    TranquiloLightbox.ts's open()/close() -- see either for the full
    mechanism. Duration/easing matched to the zoom transform's own curve

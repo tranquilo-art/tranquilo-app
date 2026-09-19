@@ -34,7 +34,7 @@ const CONCEPT_MAP: Record<string, ConceptEntry> = {
     // Rarely fires: a plain search usually finds these items first.
     filter: { q: "couples" },
   },
-  // TRA-274 real color filter, surfaced through the same soft term ->
+  // Real color filter, surfaced through the same soft term ->
   // filter mechanism as every concept above, rather than a new UI
   // component -- palette_bucket is the multi-valued array-contains
   // filter (api/items.ts), distinct from the single-valued `palette`

@@ -38,7 +38,7 @@ type DocumentWithViewTransitions = Document & {
   startViewTransition?(callback: () => void): ViewTransition;
 };
 
-// TRA-274 Phase 2: the shared name a feed thumbnail and the lightbox's own
+// The shared name a feed thumbnail and the lightbox's own
 // <img> both carry for the duration of one open() transition, so the
 // browser morphs between their positions/sizes instead of cross-fading the
 // whole page. See TranquiloLightbox.ts's open()/close() for the lightbox
@@ -393,7 +393,7 @@ export function createSlideBuilder(
     const img = document.createElement("img");
     // No loading="lazy" -- imageVisibilityObserver is the sole gate.
     img.alt = item.title || "Untitled";
-    // TRA-274 Phase 2: width/height attributes (not CSS) give the browser
+    // Width/height attributes (not CSS) give the browser
     // the image's real aspect ratio via its UA stylesheet (`img{
     // aspect-ratio: attr(width) / attr(height) }`), the standard way to
     // avoid a layout shift on decode -- .art-frame img's own
@@ -432,7 +432,7 @@ export function createSlideBuilder(
       const openLightbox = (): void =>
         host.openLightbox(item.img, item.title || "Untitled", item);
       // Feature-detected, scoped to exactly this thumbnail -> lightbox
-      // transition per TRA-274 Phase 2 -- not applied anywhere else this
+      // transition -- not applied anywhere else this
       // frame's img is used. Named only for the duration of the
       // transition: set right before starting it, cleared once it
       // resolves, so a later click on a *different* thumbnail can safely
