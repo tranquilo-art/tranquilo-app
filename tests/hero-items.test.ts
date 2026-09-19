@@ -9,14 +9,24 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getHeroPool } from "../lib/hero-items.ts";
 import { makeSql } from "./helpers/pg.ts";
 
+type TestSql = {
+  query: (
+    statement: string,
+    parameters?: unknown[],
+  ) => Promise<Array<Record<string, unknown>>>;
+  $close: () => Promise<void>;
+};
+
+type HeroEntry = { source: string; native_id: string; media_type: string };
+
 function insertItem(
-  sql: any,
+  sql: TestSql,
   source: string,
   nativeId: string,
   mediaType: string,
-  overrides: any = {},
+  overrides: Record<string, string> = {},
 ) {
-  const row = {
+  const row: Record<string, string> = {
     id: `${source}:${nativeId}`,
     source,
     native_id: nativeId,
@@ -33,7 +43,7 @@ function insertItem(
   );
 }
 
-let sql: any;
+let sql: TestSql;
 beforeAll(async () => {
   sql = await makeSql([
     "001_items_schema.sql",
@@ -53,17 +63,17 @@ afterAll(async () => {
 
 describe("getHeroPool", () => {
   it("resolves each entry's media_type from the live items row, not a stored copy", async () => {
-    const pool = await getHeroPool(sql);
+    const pool = (await getHeroPool(sql)) as HeroEntry[];
     const rodin = pool.find(
-      (h: any) => h.source === "met" && h.native_id === "191811",
+      (h) => h.source === "met" && h.native_id === "191811",
     );
     expect(rodin).toBeDefined();
     expect(rodin.media_type).toBe("Metalwork");
   });
 
   it("returns entries ordered by the seed's own position", async () => {
-    const pool = await getHeroPool(sql);
-    const positions = pool.map((h: any) => `${h.source}:${h.native_id}`);
+    const pool = (await getHeroPool(sql)) as HeroEntry[];
+    const positions = pool.map((h) => `${h.source}:${h.native_id}`);
     expect(positions.indexOf("met:191811")).toBeLessThan(
       positions.indexOf("met:436528"),
     );
@@ -72,7 +82,7 @@ describe("getHeroPool", () => {
   it("silently drops a hero whose item was never inserted (or has since been quarantined)", async () => {
     // The join simply excludes unmatched pairs -- the same fail-soft
     // behavior a real quarantined/rejected hero gets via LIVE_ITEMS_PREDICATE.
-    const pool = await getHeroPool(sql);
+    const pool = (await getHeroPool(sql)) as HeroEntry[];
     expect(pool.length).toBe(3);
   });
 
@@ -80,8 +90,8 @@ describe("getHeroPool", () => {
     await sql.query(
       "UPDATE items SET review_status = 'quarantined' WHERE source = 'met' AND native_id = '191811'",
     );
-    const pool = await getHeroPool(sql);
-    expect(pool.find((h: any) => h.native_id === "191811")).toBeUndefined();
+    const pool = (await getHeroPool(sql)) as HeroEntry[];
+    expect(pool.find((h) => h.native_id === "191811")).toBeUndefined();
     const stillSeeded = await sql.query(
       "SELECT 1 FROM hero_items WHERE source = 'met' AND native_id = '191811'",
     );
@@ -93,7 +103,7 @@ describe("getHeroPool", () => {
   });
 
   it("only ever returns {source, native_id, media_type} -- no full item data", async () => {
-    const pool = await getHeroPool(sql);
+    const pool = (await getHeroPool(sql)) as HeroEntry[];
     for (const h of pool) {
       expect(Object.keys(h).sort()).toEqual([
         "media_type",
