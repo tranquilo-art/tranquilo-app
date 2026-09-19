@@ -55,6 +55,7 @@ const INSTITUTION_NAMES = {
   cleveland: "Cleveland Museum of Art",
   commons: "Wikimedia Commons",
   europeana: "Europeana",
+  wellcome: "Wellcome Collection",
 };
 
 // Serves the real app in place rather than a redirect stub, so a

@@ -141,7 +141,7 @@ describe("share-link attribution never invents an institution", () => {
   });
 
   it("maps every live source, so the fallback stays a genuine last resort", () => {
-    ["met", "smithsonian", "cleveland", "commons", "europeana"].forEach(
+    ["met", "smithsonian", "cleveland", "commons", "europeana", "wellcome"].forEach(
       (src) => {
         expect(slugSource, `INSTITUTION_NAMES missing ${src}`).toMatch(
           new RegExp(`\\b${src}\\s*:`),

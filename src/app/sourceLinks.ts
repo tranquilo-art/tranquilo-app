@@ -12,6 +12,11 @@ const SOURCE_LINK_LABELS: Record<string, string> = {
   // for, say, metmuseum.org. See SOURCE_LINK_PREPOSITIONS below for why
   // this one also gets "View AT" instead of "View on".
   npm: "National Palace Museum",
+  // Same reasoning as npm above -- the brand name as it appears on
+  // Wellcome's own About page ("Wellcome Collection"), not the bare
+  // domain or the uncapitalized source id (the fallback below, before
+  // this entry existed).
+  wellcome: "Wellcome Collection",
 };
 
 // Every other source's label is a domain ("View on metmuseum.org"), where
@@ -20,7 +25,7 @@ const SOURCE_LINK_LABELS: Record<string, string> = {
 // keyed separately, rather than baking a preposition into the label
 // string itself, so a future domain-style source doesn't inherit "at" by
 // copy-paste. Defaults to "on" for every source not listed here.
-const SOURCE_LINK_PREPOSITIONS: Record<string, string> = { npm: "at" };
+const SOURCE_LINK_PREPOSITIONS: Record<string, string> = { npm: "at", wellcome: "at" };
 
 export function sourceLinkPreposition(item: any): string {
   return SOURCE_LINK_PREPOSITIONS[item?.source] || "on";
