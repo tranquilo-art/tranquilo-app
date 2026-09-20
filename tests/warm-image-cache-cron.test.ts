@@ -5,7 +5,7 @@
 // here touches Postgres, S3, or a museum.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../scripts/warm_image_cache.mts", () => ({
+vi.mock("../lib/img-warm.ts", () => ({
   warmBatch: vi.fn(),
   sourcesToWarm: vi.fn(() => ["met", "cleveland"]),
 }));
@@ -20,9 +20,7 @@ vi.mock("../lib/img-s3.ts", () => ({}));
 vi.mock("../lib/source-identity.ts", () => ({}));
 vi.mock("../api/img/[source]/[id]/[tier].ts", () => ({}));
 
-const { warmBatch, sourcesToWarm } = await import(
-  "../scripts/warm_image_cache.mts"
-);
+const { warmBatch, sourcesToWarm } = await import("../lib/img-warm.ts");
 const { getSql } = await import("../lib/db.ts");
 const handlerModule = await import("../lib/cron/warm-image-cache.ts");
 const handler = handlerModule.default;
