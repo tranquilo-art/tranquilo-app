@@ -22,6 +22,14 @@ import type { ITopbarHost } from "../types/ITopbarHost";
 import { on } from "../utils/on";
 
 const TOPBAR_MARKUP = `
+<div class="share-banner" id="shareBanner" style="display:none;">
+  <span>Tranquilo is open source and volunteer-run.</span>
+  <div class="share-banner-actions">
+    <button id="shareBannerNewsletter" type="button" data-open-newsletter><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 6-10 7L2 6"></path></svg>Get newsletter</button>
+    <a id="shareBannerInvolved" href="/pages/get-involved.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>Get involved</a>
+    <button id="shareBannerClose" type="button" aria-label="Dismiss">&times;</button>
+  </div>
+</div>
 <div class="topbar-row1">
   <a class="wordmark" href="/" aria-label="Tranquilo, back to the top"><img class="wordmark-mark" src="${tranquiloFlowerVioletUrl}" alt="" width="30" height="41" aria-hidden="true"><span>Tranquilo</span></a>
   <div class="topbar-icons">
@@ -51,6 +59,7 @@ export class TranquiloTopbar extends HTMLElement {
   app: ITopbarHost | null = null;
 
   private chipsEl!: HTMLElement;
+  private shareBannerEl!: HTMLElement;
   private filterBannerEl!: HTMLElement;
   private filterBannerLabelEl!: HTMLElement;
   private filterBannerExportEl!: HTMLButtonElement;
@@ -90,6 +99,15 @@ export class TranquiloTopbar extends HTMLElement {
 
     this.innerHTML = TOPBAR_MARKUP;
     this.chipsEl = this.requireEl<HTMLElement>("#chips");
+    this.shareBannerEl = this.requireEl<HTMLElement>("#shareBanner");
+    const shareBannerNewsletterEl = this.requireEl<HTMLButtonElement>(
+      "#shareBannerNewsletter",
+    );
+    const shareBannerInvolvedEl = this.requireEl<HTMLAnchorElement>(
+      "#shareBannerInvolved",
+    );
+    const shareBannerCloseEl =
+      this.requireEl<HTMLButtonElement>("#shareBannerClose");
     this.filterBannerEl = this.requireEl<HTMLElement>("#filterBanner");
     this.filterBannerLabelEl =
       this.requireEl<HTMLElement>("#filterBannerLabel");
@@ -112,6 +130,19 @@ export class TranquiloTopbar extends HTMLElement {
     on(this.collectionToggleEl, () => this.app?.onCollectionToggle());
     on(filterBannerClearEl, () => this.app?.onFilterBannerClear());
     on(this.filterBannerExportEl, () => this.app?.onFilterBannerExport());
+    on(shareBannerCloseEl, () => {
+      this.hideShareBanner();
+      this.app?.onShareBannerDismiss();
+    });
+    // Fires alongside (not instead of) TranquiloNewsletterModal's own
+    // delegated [data-open-newsletter] document listener, which actually
+    // opens the dialog -- this just reports the click for the funnel.
+    on(shareBannerNewsletterEl, () =>
+      this.app?.onShareBannerCtaClick("newsletter"),
+    );
+    on(shareBannerInvolvedEl, () =>
+      this.app?.onShareBannerCtaClick("get_involved"),
+    );
 
     // --topbar-h stays in sync with the topbar's actual rendered height
     // (it grows on mobile, two rows) so .search-bar/.filter-banner can
@@ -377,6 +408,20 @@ export class TranquiloTopbar extends HTMLElement {
 
   setFilterBannerExportVisible(visible: boolean): void {
     this.filterBannerExportEl.style.display = visible ? "inline-block" : "none";
+  }
+
+  // Unlike showFilterBanner/hideFilterBanner, this never touches a CSS
+  // var of its own: it's plain topbar content, picked up by the existing
+  // whole-topbar --topbar-h ResizeObserver above for free, and (unlike
+  // --filter-banner-h/--search-bar-h) nothing subtracts its height from
+  // #feed/.slide -- it's an overlay, not a push, so it never needs to know
+  // its own height.
+  showShareBanner(): void {
+    this.shareBannerEl.style.display = "flex";
+  }
+
+  hideShareBanner(): void {
+    this.shareBannerEl.style.display = "none";
   }
 
   // ---- Icon button state ----

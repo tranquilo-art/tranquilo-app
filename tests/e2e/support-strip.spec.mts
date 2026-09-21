@@ -279,7 +279,7 @@ test.describe("on the homepage", () => {
     page,
   }) => {
     await gotoFeed(page);
-    await page.locator("[data-open-newsletter]").click();
+    await page.locator("#feed [data-open-newsletter]").click();
     await expect(page.locator("#newsletterDialog")).toHaveClass(/open/);
     // The donate dialog is created lazily on first [data-support-open]
     // click; with no such trigger left on the homepage, it never exists at
@@ -311,7 +311,7 @@ test.describe("the homepage newsletter modal", () => {
         body: JSON.stringify({ ok: true }),
       });
     });
-    await page.locator("[data-open-newsletter]").click();
+    await page.locator("#feed [data-open-newsletter]").click();
     await page.fill("#newsletterEmail", "reader@example.com");
     await page.click("#newsletterSubmitBtn");
     await expect(page.locator("#newsletterSuccess")).toBeVisible();
@@ -323,7 +323,7 @@ test.describe("the homepage newsletter modal", () => {
 
   test("closes on Escape and returns focus", async ({ page }) => {
     await gotoFeed(page);
-    await page.locator("[data-open-newsletter]").click();
+    await page.locator("#feed [data-open-newsletter]").click();
     await expect(page.locator("#newsletterDialog")).toHaveClass(/open/);
     await page.keyboard.press("Escape");
     await expect(page.locator("#newsletterDialog")).not.toHaveClass(/open/);

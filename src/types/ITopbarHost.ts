@@ -11,4 +11,6 @@ export interface ITopbarHost {
   onCollectionToggle(): void;
   onFilterBannerClear(): void;
   onFilterBannerExport(): void;
+  onShareBannerDismiss(): void;
+  onShareBannerCtaClick(cta: "newsletter" | "get_involved"): void;
 }
