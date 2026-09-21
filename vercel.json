@@ -2,6 +2,18 @@
   "buildCommand": "bun run build",
   "outputDirectory": "dist",
   "devCommand": "bun run build && bun x vite preview --port $PORT",
+  "redirects": [
+    {
+      "source": "/pages/volunteer.html",
+      "destination": "/pages/get-involved.html",
+      "permanent": false
+    },
+    {
+      "source": "/pages/volunteer",
+      "destination": "/pages/get-involved.html",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/v/:slug",

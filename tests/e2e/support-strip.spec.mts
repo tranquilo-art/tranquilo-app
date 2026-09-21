@@ -228,58 +228,63 @@ test.describe("the sandbox-link guard", () => {
 });
 
 test.describe("on the homepage", () => {
-  test("the strip sits at the foot of the intro slide", async ({ page }) => {
-    // Asserts the strip, not the button: while COMING_SOON is set there is
-    // deliberately no button, but the strip's job is done either way.
+  // The intro slide's donate button was replaced by three action cards
+  // (Mission/Connect/Support); the Give card is a plain link out to
+  // pages/support.html rather than an inline chooser, so the strip/dialog
+  // itself is only exercised on that page (see "Support Us page" and "the
+  // Donate chooser" above).
+  test("shows all three action cards", async ({ page }) => {
     await gotoFeed(page);
-    const introStrip = page.locator("#feed .slide.intro [data-support-strip]");
-    await expect(introStrip).toHaveCount(1);
-    await expect(introStrip).toContainText("direct support");
+    const cards = page.locator("#feed .slide.intro .action-card");
+    await expect(cards).toHaveCount(3);
+    await expect(cards.nth(0)).toContainText("Mission");
+    await expect(cards.nth(1)).toContainText("Connect");
+    await expect(cards.nth(2)).toContainText("Support");
   });
 
-  test("its chooser works from the feed too", async ({ page }) => {
-    await gotoFeed(page);
-    const soon = await page.evaluate(
-      () => window.TranquiloSupport!.COMING_SOON,
-    );
-    test.skip(soon, "donations not open yet -- COMING_SOON is set");
-    await page.locator("#feed .slide.intro [data-support-open]").click();
-    await expect(dialog(page)).toHaveClass(/open/);
-    await expect(dialog(page).locator(".support-tier")).toHaveCount(3);
-  });
-
-  test("the homepage strip matches whichever state the gate is in", async ({
+  test("the Give card matches whichever state the donations gate is in", async ({
     page,
   }) => {
     await gotoFeed(page);
-    const soon = await page.evaluate(
-      () => window.TranquiloSupport!.COMING_SOON,
-    );
-    const homeStrip = page.locator("#feed .slide.intro [data-support-strip]");
-    if (soon) {
-      await expect(homeStrip).toContainText(/donations open soon/i);
+    const giveCard = page.locator("#feed .slide.intro .action-card", {
+      hasText: "Support",
+    });
+    // The kill switch hides the whole card via [data-donations]; whether
+    // it's currently armed is read from the CSS rather than assumed.
+    const gateOn = await page.evaluate(() => {
+      const rule = [...document.styleSheets]
+        .flatMap((s) => {
+          try {
+            return [...s.cssRules];
+          } catch {
+            return [];
+          }
+        })
+        .find(
+          (r) =>
+            r instanceof CSSStyleRule && r.selectorText === "[data-donations]",
+        ) as CSSStyleRule | undefined;
+      return rule?.style.display === "none";
+    });
+    if (gateOn) {
+      await expect(giveCard).toBeHidden();
     } else {
-      await expect(homeStrip.locator("[data-support-open]")).toHaveCount(1);
+      await expect(
+        giveCard.locator('a[href="/pages/support.html"]'),
+      ).toHaveCount(1);
     }
   });
 
-  test("the homepage strip keeps its line, which the Support page drops", async ({
+  test("Connect opens the newsletter modal, not the donate chooser", async ({
     page,
   }) => {
-    // The two strips are the same component and deliberately differ here:
-    // on the homepage this sentence is the only thing saying why a Donate
-    // button is on an art feed at all.
     await gotoFeed(page);
-    const soon = await page.evaluate(
-      () => window.TranquiloSupport!.COMING_SOON,
-    );
-    const homeStrip = page.locator("#feed .slide.intro [data-support-strip]");
-    await expect(homeStrip.locator(".support-strip-line")).toHaveText(
-      "Tranquilo runs on direct support, not ads.",
-    );
-    if (!soon) {
-      await expect(homeStrip.locator("[data-support-open]")).toHaveCount(1);
-    }
+    await page.locator("[data-open-newsletter]").click();
+    await expect(page.locator("#newsletterDialog")).toHaveClass(/open/);
+    // The donate dialog is created lazily on first [data-support-open]
+    // click; with no such trigger left on the homepage, it never exists at
+    // all here (unlike on pages/support.html, where it still does).
+    await expect(dialog(page)).toHaveCount(0);
   });
 
   test("Support us is reachable from the app's own nav", async ({ page }) => {
@@ -287,6 +292,45 @@ test.describe("on the homepage", () => {
     await expect(
       page.locator('#feed .slide.intro a[href="/pages/support.html"]'),
     ).toHaveCount(1);
+  });
+});
+
+test.describe("the homepage newsletter modal", () => {
+  test("subscribes with a distinct source tag", async ({ page }) => {
+    let posted: unknown = null;
+    await gotoFeed(page);
+    // Registered after gotoFeed (whose stubBackend() already routes
+    // **/api/subscribe** to a bare 204): Playwright runs the
+    // most-recently-added matching handler first, so this one has to be
+    // added after stubBackend's for it to actually see the request.
+    await page.route("**/api/subscribe", async (route) => {
+      posted = JSON.parse(route.request().postData() || "{}");
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true }),
+      });
+    });
+    await page.locator("[data-open-newsletter]").click();
+    await page.fill("#newsletterEmail", "reader@example.com");
+    await page.click("#newsletterSubmitBtn");
+    await expect(page.locator("#newsletterSuccess")).toBeVisible();
+    expect(posted).toEqual({
+      email: "reader@example.com",
+      source: "homepage_newsletter",
+    });
+  });
+
+  test("closes on Escape and returns focus", async ({ page }) => {
+    await gotoFeed(page);
+    await page.locator("[data-open-newsletter]").click();
+    await expect(page.locator("#newsletterDialog")).toHaveClass(/open/);
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#newsletterDialog")).not.toHaveClass(/open/);
+    const focused = await page.evaluate(() =>
+      document.activeElement?.hasAttribute("data-open-newsletter"),
+    );
+    expect(focused).toBe(true);
   });
 });
 
@@ -308,6 +352,7 @@ test.describe("site navigation after the nav/footer trim", () => {
   const PAGES = [
     "about",
     "submit",
+    "get-involved",
     "pro",
     "terms",
     "privacy",
@@ -325,6 +370,7 @@ test.describe("site navigation after the nav/footer trim", () => {
         "Home",
         "About",
         "Submit",
+        "Get involved",
         "Support us",
       ]);
       await expect(page.locator(".mkt-footer-links a")).toHaveText([
@@ -488,6 +534,7 @@ test.describe("logo", () => {
   const PAGES = [
     "about",
     "submit",
+    "get-involved",
     "pro",
     "terms",
     "privacy",
@@ -911,18 +958,16 @@ test.describe("the intro slide fits its screen", () => {
         // Hidden by design below 700px tall, where the slide scrolls
         // instead of cramming.
         if (getComputedStyle(cue).display === "none") return null;
-        const strip = document.querySelector(
-          ".slide.intro [data-support-strip]",
-        )!;
+        const cards = document.querySelector(".slide.intro .action-cards")!;
         return Math.round(
           cue.getBoundingClientRect().top -
-            strip.getBoundingClientRect().bottom,
+            cards.getBoundingClientRect().bottom,
         );
       });
       if (clear === null) return;
       expect(
         clear,
-        `the support strip runs under the scroll cue at ${label}`,
+        `the action cards run under the scroll cue at ${label}`,
       ).toBeGreaterThan(0);
     });
   }

@@ -29,6 +29,7 @@ export const EXTENDS_MARKER = "<extends";
 const NAV_LINKS: Array<{ href: string; label: string; donationGated?: boolean }> = [
   { href: "about.html", label: "About" },
   { href: "submit.html", label: "Submit" },
+  { href: "get-involved.html", label: "Get involved" },
   { href: "support.html", label: "Support us", donationGated: true },
 ];
 

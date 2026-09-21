@@ -37,6 +37,7 @@ import type { ITranquiloShelvesModeHost } from "./types/ITranquiloShelvesModeHos
 import type { ITranquiloStorylineModeHost } from "./types/ITranquiloStorylineModeHost";
 
 import "./components/TranquiloSupportStrip";
+import "./components/TranquiloNewsletterModal";
 import "./components/TranquiloTopbar";
 import "./components/TranquiloMusicToggle";
 import "./components/TranquiloSearchBar";

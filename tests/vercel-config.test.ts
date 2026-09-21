@@ -67,6 +67,24 @@ describe("vercel.json", () => {
     ).toEqual([]);
   });
 
+  it("redirects the retired volunteer page to Get Involved", () => {
+    // pages/volunteer.html was deleted in favor of pages/get-involved.html;
+    // a temporary redirect (not permanent -- easy to retarget again later)
+    // keeps any existing links from dead-ending.
+    const redirects = JSON.parse(raw).redirects || [];
+    const toGetInvolved = redirects.filter(
+      (r: { destination: string }) =>
+        r.destination === "/pages/get-involved.html",
+    );
+    expect(
+      toGetInvolved.map((r: { source: string }) => r.source).sort(),
+      "expected redirects from both the old .html path and its extensionless form",
+    ).toEqual(["/pages/volunteer", "/pages/volunteer.html"]);
+    for (const r of toGetInvolved) {
+      expect(r.permanent).toBe(false);
+    }
+  });
+
   it("keeps api/ within Vercel Hobby's 12-function cap", () => {
     // A thirteenth function fails the deploy while the build passes, so
     // production silently keeps serving the previous commit.
