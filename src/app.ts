@@ -58,6 +58,7 @@ class TranquiloApp {
     const COLLECTION_KEY = "tranquilo:collection";
     const LAST_TOAST_KEY = "tranquilo:lastToastShownAt";
     const SESSION_TOAST_KEY = "tranquilo:toastShownThisSession";
+    const SESSION_SHARE_BANNER_KEY = "tranquilo:shareBannerShownThisSession";
     // Team member's own device-level opt-out (?tranquilo_internal=1/0),
     // not IP-based since dev/team IPs change and there's no server-side
     // beacon filter without Zaraz.
@@ -105,6 +106,14 @@ class TranquiloApp {
       const params = new URLSearchParams(location.search);
       if (params.get("resetUpsell") !== "1") return;
       sessionStorage.removeItem(SESSION_TOAST_KEY);
+    })();
+
+    // ?resetShareBanner=1 re-arms the once-per-session deep-link share
+    // banner for testing, same shape as resetUpsellThrottle above.
+    (function resetShareBanner() {
+      const params = new URLSearchParams(location.search);
+      if (params.get("resetShareBanner") !== "1") return;
+      sessionStorage.removeItem(SESSION_SHARE_BANNER_KEY);
     })();
 
     // Bumping CACHE_BUST_VERSION (config.toml's [cache].bust_version)
@@ -242,6 +251,10 @@ class TranquiloApp {
     // Deep-linked items render first rather than being scrolled to --
     // scroll-snap fights programmatic scrollTop changes unreliably.
     let pendingDeepLinkSlug: string | null = null;
+    // Captured once at share-banner show-time, reused by its dismiss/CTA
+    // handlers so every event in the funnel -- not just the impression --
+    // is attributable to which entry type (artwork vs storyline) triggered it.
+    let shareBannerSource: "artwork" | "storyline" | null = null;
     let searchResultCount = 0;
 
     const feedEl = document.getElementById("feed") as any;
@@ -557,6 +570,12 @@ class TranquiloApp {
         }
         exportCollectionCsv(collectedItems);
         exportModalEl.open();
+      },
+      onShareBannerDismiss: () => {
+        trackEvent("share_banner_dismiss", { source: shareBannerSource });
+      },
+      onShareBannerCtaClick: (cta: "newsletter" | "get_involved") => {
+        trackEvent("share_banner_cta_click", { cta, source: shareBannerSource });
       },
     };
     topbarEl.app = topbarHost;
@@ -986,7 +1005,13 @@ class TranquiloApp {
     migrateCollectionKeys();
 
     const initialSlug = slugFromLocation();
-    if (/^[a-z]+-.+$/.test(initialSlug)) {
+    // Captured separately from pendingDeepLinkSlug itself: feedEl.render()
+    // below consumes and nulls that variable synchronously (TranquiloFeed.ts
+    // calls host.consumeDeepLinkSlug(), app.ts:315-317), so reading
+    // pendingDeepLinkSlug again afterward -- as the share-banner trigger
+    // originally did -- always sees null and never fires.
+    const hadDeepLinkArtwork = /^[a-z]+-.+$/.test(initialSlug);
+    if (hadDeepLinkArtwork) {
       pendingDeepLinkSlug = initialSlug;
     }
     feedEl.render();
@@ -996,6 +1021,23 @@ class TranquiloApp {
     const initialStorylineId = storylineIdFromLocation();
     if (initialStorylineId) {
       storylineModeEl.open(initialStorylineId);
+    }
+
+    // Either deep-link form means the same thing for this banner: the
+    // intro slide (and its Mission/Connect/Support cards) was skipped,
+    // so a visitor arriving from social media never sees that context at
+    // all. One signal, one session key -- they share identical copy/CTAs,
+    // so forking into two independently-tracked states would only invite
+    // them drifting out of sync.
+    const arrivedViaShareLink = hadDeepLinkArtwork || Boolean(initialStorylineId);
+    if (
+      arrivedViaShareLink &&
+      !sessionStorage.getItem(SESSION_SHARE_BANNER_KEY)
+    ) {
+      shareBannerSource = hadDeepLinkArtwork ? "artwork" : "storyline";
+      topbarEl.showShareBanner();
+      sessionStorage.setItem(SESSION_SHARE_BANNER_KEY, "1");
+      trackEvent("share_banner_shown", { source: shareBannerSource });
     }
 
     function slugFromLocation() {

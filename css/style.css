@@ -937,6 +937,123 @@ html,body{
 }
 
 /* ---------- Lightbox: moved to css/components/tranquilo-lightbox.css ---------- */
+/* ---------- Share banner (deep-link entry from social) ---------- */
+/* A solid background, deliberately, unlike .filter-banner below: that one
+   was reverted from solid-over-artwork specifically because it was a
+   PERSISTENT bar shown for an entire filter/search session ("the only
+   overlay in the app that did not float on a fading gradient" -- see its
+   own comment). This banner shows once and is dismissed in seconds, not a
+   whole browsing session, so the same "hard bar over scrolling art"
+   complaint doesn't carry over the same way -- and a solid highlight
+   color is the point here, to read as a real announcement. In flow (not
+   fixed) like .filter-banner, so --topbar-h measures it for free -- see
+   the comment above that ResizeObserver in TranquiloTopbar.ts. */
+.share-banner{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:6px 14px;
+  /* At >=720px .topbar is a row (its own override below unwraps the
+     mobile wordmark/chips wrapper divs via display:contents, flattening
+     everything into siblings of this banner). Without an explicit full
+     width here, the banner only ever takes up as much space as its own
+     content needs, so the wordmark/nav end up sharing its line instead
+     of wrapping below it -- .topbar's flex-wrap:wrap (added alongside
+     this) is what actually pushes them down, but only once the banner
+     itself claims the whole line for them to wrap out of.
+     calc(100% + 40px), not 100%: width is resolved to a fixed pixel value
+     against .topbar's own content-box (excluding its 20px+20px padding),
+     then the negative left margin below shifts that fixed-width box's
+     left edge out -- it does NOT also stretch the box to cover the
+     bled-into space on the right, so a plain 100% left a 40px gap short
+     of the true right edge. The +40px makes the box's own width already
+     include both bled sides. */
+  width:calc(100% + 40px);
+  /* Bleeds past .topbar's own padding on all three open sides (20px
+     left/right, 18px top -- see .topbar above) so the banner reaches the
+     true edges of the viewport instead of floating in a padded box with
+     a visible gap above it. margin-bottom stays 0: below the banner,
+     .topbar-row1 should keep the normal gap:12px spacing from .topbar's
+     own flex column, not get pulled in too. */
+  margin:-18px -20px 0;
+  padding:8px 20px;
+  /* At >=720px .topbar becomes a row with align-items:center (see its own
+     override below) -- without this, the banner gets vertically CENTERED
+     in the row's cross-axis instead of pinned to the top, leaving a small
+     gap above it despite the negative margin already canceling the
+     padding. Harmless in the narrower column layout, where align-self
+     only affects horizontal position. */
+  align-self:flex-start;
+  background:var(--gold);
+  color:#fff;
+  font-family:var(--sans);
+  font-size:0.76rem;
+  font-weight:500;
+  text-align:center;
+  /* .topbar itself is pointer-events:none with `.topbar *{ pointer-
+     events:auto; }` reinstating it on every descendant, so empty topbar
+     space passes clicks through to the artwork feed behind it. Without
+     this override the banner's own background/message area (non-
+     interactive) would swallow clicks near the top of the viewport --
+     .share-banner-actions and its buttons/links opt back in below so the
+     banner's real controls stay clickable. */
+  pointer-events:none;
+}
+/* flex:0 1 auto (the default), not 1 1 auto: a growing message span
+   competes with .share-banner-actions for leftover width on a wide line,
+   which is what let "Get newsletter" drift away from "Get involved"/"x"
+   onto its own line even with room to spare -- see the comment on
+   .share-banner-actions below. */
+.share-banner span{ min-width:0; pointer-events:none; }
+/* The three actions as one unit, not three independent flex children of
+   .share-banner: three siblings each decide on their own whether they
+   fit the current line, so which ONE wraps first (and how ragged the
+   result looks) depends on exactly how much width the message text ate
+   first -- unpredictable across viewport widths. Grouped, they wrap
+   together as a single centered row under the message, every time. */
+.share-banner-actions{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  flex:none;
+  gap:8px;
+}
+.share-banner-actions button,
+.share-banner-actions a{
+  flex:none;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  font-family:var(--sans);
+  font-size:0.6rem;
+  font-weight:600;
+  letter-spacing:0.02em;
+  text-transform:uppercase;
+  text-decoration:none;
+  color:#fff;
+  background:none;
+  border:1px solid rgba(255,255,255,0.55);
+  border-radius:999px;
+  padding:4px 10px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+/* Same icon+action pairing as the homepage's Mission/Connect cards (see
+   src/feed/introSlides.ts's actionCard() calls) -- Get involved uses the
+   globe, Get newsletter the envelope, so the same action reads the same
+   way in both places. */
+.share-banner-actions svg{ width:11px; height:11px; flex:none; }
+.share-banner-actions button:hover,
+.share-banner-actions a:hover{ background:rgba(255,255,255,0.15); }
+#shareBannerClose{
+  border:none;
+  font-size:0.9rem;
+  line-height:1;
+  padding:4px 6px;
+}
+#shareBannerClose:hover{ background:rgba(255,255,255,0.15); }
 /* ---------- Filter banner (artist / search results) ---------- */
 .filter-banner{
   /* Aug 2026, search status in the header: in the header's flow, not fixed
@@ -1664,6 +1781,11 @@ html,body{
      element now sits in the DOM. */
   .topbar{
     flex-direction:row;
+    /* nowrap (the default) would squeeze the share banner onto the same
+       line as the wordmark/nav instead of pushing them to a line of
+       their own -- .share-banner's own width:100% claims the whole line,
+       wrap is what actually lets everything else fall to the next one. */
+    flex-wrap:wrap;
     align-items:center;
     justify-content:space-between;
     padding:18px 20px 28px;

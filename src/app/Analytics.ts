@@ -15,8 +15,16 @@ export class Analytics {
   }
 
   track(name: string, props?: Record<string, unknown>): void {
-    if (localStorage.getItem(this.internalTrafficKey)) return;
+    // localStorage.getItem is now inside the try too, not just the fetch
+    // below it: storage access can throw in privacy-strict browser
+    // contexts (strict tracking protection, certain private-browsing
+    // configurations), and this call used to sit unprotected ahead of the
+    // try -- any caller during early, synchronous app startup (before the
+    // feed has rendered) would have that throw abort everything after it,
+    // not just this one measurement. See TranquiloLightbox.ts's open()
+    // comment: "measurement must never sit upstream of the thing it measures."
     try {
+      if (localStorage.getItem(this.internalTrafficKey)) return;
       fetch("/api/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
