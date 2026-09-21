@@ -141,14 +141,14 @@ test("it is reachable from the static pages' footer", async ({ page }) => {
 });
 
 test("the homepage nav stays short", async ({ page }) => {
-  // It stacks on mobile past three or four items, which is why Pro and
-  // Feedback came out of it.
+  // The intro slide's old text-link nav was replaced by three action cards
+  // (Mission/Connect/Support); Pro and Feedback were never among them and
+  // still aren't.
   await gotoFeed(page);
-  const links = page.locator("#feed .slide.intro .intro-links a");
-  await expect(links).toHaveCount(3);
-  await expect(links).toHaveText([
-    "About",
-    "Submit a Collection",
-    "Support us",
-  ]);
+  const cards = page.locator("#feed .slide.intro .action-card");
+  await expect(cards).toHaveCount(3);
+  const text = await cards.allInnerTexts();
+  for (const t of text) {
+    expect(t).not.toMatch(/\b(pro|feedback)\b/i);
+  }
 });

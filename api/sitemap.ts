@@ -33,6 +33,7 @@ function escapeXml(value: any): string {
 const STATIC_PAGES = [
   { path: "/pages/about.html", priority: "0.8" },
   { path: "/pages/submit.html", priority: "0.6" },
+  { path: "/pages/get-involved.html", priority: "0.6" },
   { path: "/pages/pro.html", priority: "0.5" },
   { path: "/pages/privacy.html", priority: "0.3" },
   { path: "/pages/terms.html", priority: "0.3" },

@@ -1,21 +1,19 @@
 <extends src="_base.html">
 <block name="head" type="append">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<title>Volunteer with us — Tranquilo</title>
-<meta name="description" content="Tranquilo is looking for volunteers to help with art curation, UX research, and grant strategy.">
+<title>Get involved — Tranquilo</title>
+<meta name="description" content="Tranquilo is looking for volunteers to help with art curation, UX research, and grant strategy — plus a standing invite to contribute on GitHub.">
 </block>
 
 <block name="main">
   <main class="mkt-main narrow">
 
-    <section class="mkt-section">
-      <div class="mkt-eyebrow">Support us</div>
+    <section class="mkt-section" style="margin-bottom:24px;">
+      <div class="mkt-eyebrow">Get involved</div>
       <h1 class="mkt-h1">Tranquilo.art is seeking volunteers</h1>
 
-      <p class="mkt-lead">Interested in an art-related volunteer opportunity? We're making public
-        domain art a calm scrolling experience for everyone. Tranquilo.art is open source, ad-free,
-        free to use, and privacy-friendly. We're aiming to scale with public support. If that sounds
-        interesting to you, we'd love to hear from you.</p>
+      <p class="mkt-lead">Tranquilo.art is looking for art lovers who are interested in
+        volunteering their time to make public domain art free for all to enjoy.</p>
     </section>
 
     <section class="mkt-section">
@@ -23,7 +21,13 @@
         <div class="icon-chip" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
         </div>
-        <p><strong style="color:var(--text);">Developers:</strong> Please check out our <a href="https://github.com/tranquilo-art/tranquilo-app" style="color:var(--gold-soft);">GitHub</a> and let us know how we can support you!</p>
+        <p><strong style="color:var(--text);">Developers:</strong> join us on <a href="https://github.com/tranquilo-art/tranquilo-app" style="color:var(--gold-soft);">GitHub</a>, where we'd welcome your contributions and feedback.</p>
+      </div>
+      <div class="mkt-callout" style="margin-bottom:0;">
+        <div class="icon-chip" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </div>
+        <p>Prefer to give money instead of time? You can also <a href="support.html" data-donations style="color:var(--gold-soft);">support us</a> directly.</p>
       </div>
     </section>
 
@@ -128,10 +132,13 @@
         <p class="about-body"><strong>Interested?</strong> Reach out to Mel directly: <a href="mailto:hello@tranquilo.art">hello@tranquilo.art</a></p>
       </div>
 
+      <p class="about-body">Don't see a role here that matches your skills? We encourage you to
+        reach out anyway if interested to see if there's a potential fit.</p>
+
     </section>
 
   </main>
 </block>
 
-<block name="script"><script type="module" src="../src/pages/volunteer.ts"></script></block>
+<block name="script"><script type="module" src="../src/pages/get-involved.ts"></script></block>
 </extends>

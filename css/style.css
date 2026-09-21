@@ -276,7 +276,20 @@ html,body{
   background:var(--surface);
   color:var(--text);
   text-align:center;
-  padding:0 32px;
+  /* A fixed offset from the top instead of .slide's own vertical
+     centering (see above): centering a fixed-size content block in a
+     variable-height box means the gap above it keeps changing with
+     every viewport height -- comfortable on one phone, too much on the
+     next, and on a 4K display large enough that the content can render
+     entirely below a shorter reviewer's own visible screen. 148px clears
+     the tallest state the topbar renders at (108px, phones narrow enough
+     to wrap the category-chip row under the wordmark) plus a flat 40px
+     of breathing room -- the same clearance on every viewport, not a
+     value re-tuned per device. */
+  justify-content:flex-start;
+  padding-top:148px;
+  padding-left:32px;
+  padding-right:32px;
 }
 .slide.intro .intro-eyebrow{
   font-family:var(--sans);
@@ -307,21 +320,197 @@ html,body{
   width:40px;
   height:1px;
   background:var(--gold);
-  margin:26px auto;
+  margin:14px auto;
 }
-.intro-links{
-  margin-top:34px;
+/* The three homepage action cards -- Mission/Connect/Support -- replacing
+   the old text-link nav + inline donate button.
+   Below 640px: a stack of compact cards, each a column of [title row
+   (small inline icon + title), body text, button] -- short enough per
+   card that even three stacked still fit the intro slide's fixed height
+   budget between the top bar and the scroll cue (see "the intro slide
+   fits its screen" in tests/e2e/support-strip.spec.mts).
+   640px and up: a row of three vertical cards, icon stacked above the
+   (now centered) title row. Flex row + stretch (the default align-items)
+   makes every card the same height regardless of how much its own copy
+   wraps, and the button's margin-top:auto rides that spare space down to
+   the bottom, so all three buttons land on one line even though "Sustained
+   by direct community." and "Monthly curated art, free." wrap differently. */
+.action-cards{
+  margin-top:36px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:18px;
+  width:100%;
+  max-width:420px;
+  margin-left:auto;
+  margin-right:auto;
+}
+.action-card{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  text-align:center;
+  background:var(--surface);
+  border:1px solid var(--hairline);
+  border-radius:12px;
+  padding:8px 10px;
+  /* Narrower and centered rather than stretched to the full container
+     width -- a smaller centered card reads more like a tile than a wide,
+     mostly-empty bar. */
+  width:100%;
+  max-width:260px;
+}
+/* Icon rides beside the title on a phone, rather than sitting in its own
+   column and taking up horizontal space the copy could use. Centered as a
+   unit (not left-aligned) now that the card itself is centered. */
+.action-card-title-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+}
+.action-card .icon-chip{
+  width:18px;
+  height:18px;
+  border-radius:5px;
+  border:none;
+}
+.action-card .icon-chip svg{ width:10px; height:10px; }
+.action-card-body{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.action-card h2{
   font-family:var(--sans);
+  font-size:0.66rem;
+  font-weight:600;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--text);
+  margin:0;
+}
+/* Qualified with .slide.intro, not just .action-card: a bare ".action-card
+   p" (one class + one type, specificity 0,0,1,1) loses to ".slide.intro p"
+   (two classes + one type, 0,0,2,1) since these cards live inside the intro
+   slide -- higher specificity wins regardless of which rule comes later in
+   the file, so a lower-specificity override here is silently never applied. */
+.slide.intro .action-card p{
+  font-family:var(--sans);
+  font-weight:300;
   font-size:0.76rem;
-  letter-spacing:0.03em;
-}
-.intro-links a{
+  line-height:1.3;
   color:var(--ink-soft);
-  text-decoration:none;
-  transition:color 0.15s ease;
+  margin:0;
 }
-.intro-links a:hover{ color:var(--gold-soft); }
-.intro-links .sep{ margin:0 10px; color:var(--hairline); }
+.action-card-btn{
+  flex:none;
+  /* Centered under the text on the narrowest phones, matching the
+     centered icon/title/body above it now that the card itself is a
+     smaller, centered tile rather than a full-width left-aligned strip. */
+  align-self:center;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-family:var(--sans);
+  font-size:0.6rem;
+  font-weight:600;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:var(--text);
+  border:1px solid transparent;
+  border-radius:999px;
+  padding:7px 10px;
+  cursor:pointer;
+  text-decoration:none;
+  white-space:nowrap;
+  transition:color 0.2s ease;
+  /* A static gradient border, matching .hint's ("scroll to explore")
+     gradient -- the two-background-layer trick, since a plain border
+     can't take a gradient directly. The first layer fills the
+     padding-box with the card's own background (so the button still
+     reads as transparent against it, not tinted); the second paints the
+     gradient into the border ring itself (border-box minus padding-box). */
+  background-image:
+    linear-gradient(var(--surface), var(--surface)),
+    linear-gradient(90deg, var(--gold), var(--gold-soft), var(--accent-deep), var(--gold));
+  background-origin:border-box;
+  background-clip:padding-box, border-box;
+}
+.action-card-btn:hover{ color:var(--gold-soft); }
+@media (prefers-reduced-motion: reduce){
+  .action-card-btn{ transition:none; }
+}
+/* Vertical cards in a row once there's width to spare. Three tiers: an
+   extra-compact row starting at 400px (past the ~360px-wide phones where
+   three columns get too squished to read -- those stay on the stacked,
+   right-aligned-button layout above), a roomier compact row at 520px, then
+   the full-size row at 640px+ overrides again with roomier padding/type. */
+@media (min-width: 400px){
+  /* align-items:stretch (the flex default), not the base rule's :center
+     -- once cards sit in a row, stretch is what makes every card the
+     same height regardless of how many lines its own body text wraps
+     to, with the button's margin-top:auto riding the spare space down
+     to a consistent bottom edge. :center here left each card sized to
+     its own content, so Mission/Support (2-line body text) rendered
+     visibly taller than Connect (1 line). */
+  .action-cards{ flex-direction:row; justify-content:center; align-items:stretch; max-width:480px; gap:8px; }
+  .action-card{
+    align-items:center;
+    text-align:center;
+    flex:1 1 0;
+    min-width:0;
+    max-width:150px;
+    padding:6px 5px;
+    gap:5px;
+  }
+  /* Icon goes back to sitting above the title, centered, once there's
+     room for the card to be a full vertical stack rather than a compact
+     phone-width strip. */
+  .action-card-title-row{ flex-direction:column; gap:5px; }
+  .action-card .icon-chip{ width:22px; height:22px; border-radius:6px; }
+  .action-card .icon-chip svg{ width:11px; height:11px; }
+  .action-card-body{ flex:none; align-items:center; gap:3px; }
+  .action-card h2{ font-size:0.56rem; letter-spacing:0.04em; }
+  .slide.intro .action-card p{ font-size:0.66rem; line-height:1.25; }
+  /* Pinned to the bottom of the (stretch-equalized) card height, not just
+     given a top margin -- see the block comment above .action-cards.
+     white-space normal (not the base rule's nowrap): "Get involved" has
+     nowhere left to grow horizontally at this width, so it wraps instead
+     of overflowing the card. */
+  .action-card-btn{
+    align-self:center;
+    margin-top:auto;
+    font-size:0.54rem;
+    letter-spacing:0.02em;
+    padding:5px 8px;
+    white-space:normal;
+  }
+}
+@media (min-width: 520px){
+  .action-cards{ max-width:560px; gap:14px; }
+  .action-card{ max-width:170px; padding:8px 6px; gap:6px; }
+  .action-card-title-row{ gap:6px; }
+  .action-card .icon-chip{ width:26px; height:26px; border-radius:7px; }
+  .action-card .icon-chip svg{ width:13px; height:13px; }
+  .action-card h2{ font-size:0.62rem; letter-spacing:0.06em; }
+  .slide.intro .action-card p{ font-size:0.72rem; line-height:1.3; }
+  .action-card-btn{ font-size:0.6rem; letter-spacing:0.04em; padding:6px 10px; white-space:nowrap; }
+}
+@media (min-width: 640px){
+  .action-cards{ max-width:640px; gap:30px; }
+  .action-card{ max-width:220px; padding:11px 9px; gap:10px; }
+  .action-card-title-row{ gap:10px; }
+  .action-card .icon-chip{ width:38px; height:38px; border-radius:10px; }
+  .action-card .icon-chip svg{ width:19px; height:19px; }
+  .action-card h2{ font-size:0.78rem; letter-spacing:0.08em; }
+  .slide.intro .action-card p{ font-size:0.9rem; line-height:1.45; }
+  .action-card-btn{ font-size:0.74rem; letter-spacing:0.06em; padding:9px 18px; }
+}
 
 /* artwork image */
 .art-frame{
@@ -1110,10 +1299,19 @@ html,body{
   font-size:0.68rem;
   letter-spacing:0.14em;
   text-transform:uppercase;
-  color:rgba(255,255,255,0.5);
   z-index:10;
   pointer-events:none;
   transition:opacity 0.4s ease;
+  /* A moving gradient through the app's own accent pair, not a flat
+     color, so the one line of copy inviting the first scroll reads as
+     more than static muted text. */
+  background-image:linear-gradient(90deg, var(--gold), var(--gold-soft), var(--accent-deep), var(--gold));
+  background-size:300% auto;
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  color:transparent;
+  animation:hint-gradient 6s linear infinite;
 }
 .hint::after{
   content:"";
@@ -1126,6 +1324,13 @@ html,body{
 @keyframes hintbob{
   0%,100%{ transform:translateY(0); opacity:0.4; }
   50%{ transform:translateY(6px); opacity:1; }
+}
+@keyframes hint-gradient{
+  0%{ background-position:0% 50%; }
+  100%{ background-position:300% 50%; }
+}
+@media (prefers-reduced-motion: reduce){
+  .hint{ animation:none; background-position:0 50%; }
 }
 .hint.hidden{ opacity:0; }
 
@@ -1534,6 +1739,15 @@ html,body{
   margin-left:auto;
   margin-right:auto;
 }
+/* pages/support.html's variant: no line of copy above the button (its own
+   .mkt-lead already says the same thing), so the divider it would
+   otherwise separate from has nothing to separate -- just a stray rule
+   sitting above the Donate button. */
+.support-strip[data-support-strip-line="off"]{
+  margin-top:0;
+  padding-top:0;
+  border-top:none;
+}
 .support-strip-line{
   font-family:var(--sans);
   font-weight:300;
@@ -1856,7 +2070,7 @@ html,body{
     padding-bottom:40px;
   }
   .hint{ display:none; }
-  .intro-lockup-wrap{ --lockup-w:min(74px, 20vw); gap:8px; }
+  .intro-lockup-wrap{ --lockup-w:min(52px, 14vw); gap:8px; }
   .slide.intro p{ font-size:0.85rem; }
 }
 
@@ -1864,14 +2078,17 @@ html,body{
    screen rather than scrolling a few pixels and fighting scroll-snap. */
 @media (max-height: 760px){
   .slide.intro{ padding-top:120px; padding-bottom:70px; }
-  .intro-lockup-wrap{ --lockup-w:min(78px, 22vw); }
+  .intro-lockup-wrap{ --lockup-w:min(55px, 15vw); }
   .slide.intro p{ font-size:0.85rem; }
-  .intro-links{ margin-top:22px; }
+  .action-cards{ margin-top:2px; gap:10px; }
+  .action-card{ padding:3px 6px; gap:4px; }
+  .action-card .icon-chip{ width:16px; height:16px; }
+  .action-card .icon-chip svg{ width:9px; height:9px; }
   .support-strip{ margin-top:16px; padding-top:14px; }
 }
 
 @media (max-height: 800px){
-  .intro-lockup-wrap{ --lockup-w:min(88px, 24vw); gap:calc(var(--lockup-w) * 0.16); }
+  .intro-lockup-wrap{ --lockup-w:min(62px, 17vw); gap:calc(var(--lockup-w) * 0.16); }
   .slide.intro p{ font-size:0.9rem; }
   .intro-rule{ margin:18px auto; }
   .support-strip{ margin-top:22px; padding-top:18px; gap:10px; }
@@ -1912,7 +2129,7 @@ html,body{
   /* Every measurement below is a ratio taken from the original artwork, so
      the icon, gap and wordmark all scale together and keep the designer's
      proportions. */
-  --lockup-w:min(128px, 33vw);
+  --lockup-w:min(90px, 23vw);
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -2036,7 +2253,7 @@ html,body{
 /* Must come AFTER .intro-lockup-wrap's own --lockup-w: same specificity, so
    source order decides which value wins. */
 @media (max-width: 600px){
-  .intro-lockup-wrap{ --lockup-w:min(112px, 29vw); }
+  .intro-lockup-wrap{ --lockup-w:min(78px, 20vw); }
 }
 
 /* Marketing header wordmark, same brand face as the app's. No <span> to

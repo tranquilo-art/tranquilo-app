@@ -13,7 +13,8 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { buildIntroSlide } from "../src/feed/introSlides";
 
 const ROOT = join(import.meta.dirname, "..");
 const read = (p: string) => readFileSync(join(ROOT, p), "utf8");
@@ -87,11 +88,38 @@ describe("what the gate has to cover", () => {
     expect(unmarked).toEqual([]);
   });
 
-  it("marks the support strip placeholder", () => {
+  it("marks the homepage's Give action card", () => {
+    // Checks the rendered output, not introSlides.ts's exact source
+    // phrasing -- a source-text match here already broke once for free
+    // when the three cards were pulled behind a shared actionCard()
+    // helper, even though the rendered markup (and the guarantee this
+    // test cares about) didn't change at all.
+    vi.stubGlobal("document", {
+      createElement: (tag: string) => {
+        const el: any = { tagName: tag };
+        Object.defineProperty(el, "className", {
+          get() {
+            return this._className;
+          },
+          set(v) {
+            this._className = v;
+          },
+        });
+        Object.defineProperty(el, "innerHTML", {
+          get() {
+            return this._innerHTML;
+          },
+          set(v) {
+            this._innerHTML = v;
+          },
+        });
+        return el;
+      },
+    });
+    const html = buildIntroSlide({ sources: ["met"], total: 100 }).innerHTML;
     // Unmarked, a "Donate" affordance sits on the site's most-viewed screen.
-    expect(read("src/feed/introSlides.ts")).toMatch(
-      /<tranquilo-support-strip data-donations>/,
-    );
+    expect(html).toMatch(/<div class="action-card" data-donations>[\s\S]*Give/);
+    vi.unstubAllGlobals();
   });
 
   it("keeps neither gated page in the sitemap", () => {
