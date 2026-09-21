@@ -39,8 +39,11 @@ Sentry.init({
   beforeSendTransaction: scrubEvent,
 });
 
-async function reportError(err: unknown): Promise<void> {
-  Sentry.captureException(err);
+async function reportError(
+  err: unknown,
+  context?: { tags?: Record<string, string>; extra?: Record<string, unknown> },
+): Promise<void> {
+  Sentry.captureException(err, context);
   await Sentry.flush(2000);
 }
 

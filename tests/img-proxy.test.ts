@@ -148,6 +148,28 @@ describe("alertOnce", () => {
     reportError.mockRejectedValueOnce(new Error("sentry unreachable"));
     await expect(proxy.alertOnce("x", "y")).resolves.toBeUndefined();
   });
+
+  it("tags the report with the alert key, so a Sentry rule can filter on one condition", async () => {
+    // All conditions here share one error name (ImgProxyDegraded) -- the
+    // tag is what lets an alert rule target e.g. s3-put-failed alone.
+    await proxy.alertOnce("s3-put-failed", "boom", {
+      source: "met",
+      id: "1",
+      tier: "display",
+    });
+    expect(reportError.mock.calls[0][1]).toEqual({
+      tags: { alert_key: "s3-put-failed" },
+      extra: { source: "met", id: "1", tier: "display" },
+    });
+  });
+
+  it("still tags a report that has no extra context", async () => {
+    await proxy.alertOnce("breaker-tripped", "cache is full");
+    expect(reportError.mock.calls[0][1]).toEqual({
+      tags: { alert_key: "breaker-tripped" },
+      extra: undefined,
+    });
+  });
 });
 
 describe("thresholds and vocabulary", () => {
