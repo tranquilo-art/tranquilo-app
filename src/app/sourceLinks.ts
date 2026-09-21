@@ -25,7 +25,10 @@ const SOURCE_LINK_LABELS: Record<string, string> = {
 // keyed separately, rather than baking a preposition into the label
 // string itself, so a future domain-style source doesn't inherit "at" by
 // copy-paste. Defaults to "on" for every source not listed here.
-const SOURCE_LINK_PREPOSITIONS: Record<string, string> = { npm: "at", wellcome: "at" };
+const SOURCE_LINK_PREPOSITIONS: Record<string, string> = {
+  npm: "at",
+  wellcome: "at",
+};
 
 export function sourceLinkPreposition(item: any): string {
   return SOURCE_LINK_PREPOSITIONS[item?.source] || "on";
