@@ -51,8 +51,13 @@ model items {
   palette        String?
   subject_type   String?
 
-  accent_color     String?
-  blur_placeholder String?
+  accent_color        String?
+  // "monochrome" when color computation ran and correctly found no vivid
+  // hue -- distinguishes that from "never computed/failed" so the
+  // ingestion repo's completeness.accent_color_missing rule can skip it.
+  // See sql/040_items_accent_color_status.sql.
+  accent_color_status String?
+  blur_placeholder    String?
 
   contains_nudity Boolean?
 
