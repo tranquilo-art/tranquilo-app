@@ -33,6 +33,16 @@ describe("lib/sentry.ts PII policy", () => {
     expect(src).toMatch(/beforeSendTransaction:\s*scrubEvent/);
   });
 
+  it("forwards an optional tags/extra context through to captureException", () => {
+    // Without this, a caller's context (e.g. alertOnce's `extra`) has no
+    // path into Sentry at all -- captureException doesn't walk arbitrary
+    // properties on the passed-in Error.
+    const reportErrorSrc = src.slice(src.indexOf("async function reportError"));
+    expect(reportErrorSrc).toMatch(
+      /Sentry\.captureException\(err,\s*context\)/,
+    );
+  });
+
   it("leaves tracing off by default, tunable only via env var", () => {
     // Number(undefined) || 0 === 0 -- tracing stays off unless the env
     // var is set, a sampling/cost decision rather than a code change.

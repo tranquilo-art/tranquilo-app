@@ -297,8 +297,12 @@ async function alertOnce(key: any, message: any, extra?: any) {
   try {
     err = new Error(`img proxy: ${message}`);
     err.name = "ImgProxyDegraded";
-    if (extra) err.context = extra;
-    await sentry.reportError(err);
+    // Every degraded condition here shares the same error name, so an
+    // alert scoped to one condition (e.g. s3-put-failed) needs this tag
+    // to filter on -- and `extra` as a plain Error property never reached
+    // Sentry (captureException doesn't walk custom properties), only
+    // console.error, which Vercel's runtime logs drop after an hour.
+    await sentry.reportError(err, { tags: { alert_key: String(key) }, extra });
   } catch (_e) {
     // Alerting must never take down the request path it is watching.
   }
