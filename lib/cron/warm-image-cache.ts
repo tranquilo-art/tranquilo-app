@@ -12,17 +12,19 @@
 // scaling with visitor traffic (unlike Fluid CPU / Fast Origin Transfer).
 //
 // Bounded (default 50 items/run) to fit one invocation without a mid-batch
-// timeout, and resumable by construction. Shares
-// scripts/warm_image_cache.mts's warmBatch() rather than reimplementing the
-// loop. Required env vars if invoked: DATABASE_URL, CRON_SECRET, plus the
-// S3_*/IMG_CDN_BASE_URL vars api/img's own S3 path already requires.
+// timeout, and resumable by construction. Shares lib/img-warm.ts's
+// warmBatch() rather than reimplementing the loop -- that module (not
+// scripts/warm_image_cache.mts, which isn't part of this function's bundle)
+// is the shared implementation; the CLI re-exports it. Required env vars if
+// invoked: DATABASE_URL, CRON_SECRET, plus the S3_*/IMG_CDN_BASE_URL vars
+// api/img's own S3 path already requires.
 
 import * as proxy from "../../api/img/[source]/[id]/[tier].ts";
-import { sourcesToWarm, warmBatch } from "../../scripts/warm_image_cache.mts";
 import { getSql } from "../db.ts";
 import * as objectKey from "../img-object-key.ts";
 import * as s3 from "../img-s3.ts";
 import * as store from "../img-store.ts";
+import { sourcesToWarm, warmBatch } from "../img-warm.ts";
 import { reportError, Sentry } from "../sentry.ts";
 import * as identity from "../source-identity.ts";
 
