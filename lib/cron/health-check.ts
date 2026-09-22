@@ -17,7 +17,7 @@
 // SUBMIT_NOTIFY_EMAIL.
 
 import * as Sentry from "@sentry/node";
-import { del, list, put } from "@vercel/blob";
+import { del, list } from "@vercel/blob";
 import * as blobOps from "../blob-ops.ts";
 import { getSql } from "../db.ts";
 import * as cacheAlerts from "../img-cache-alerts.ts";
@@ -27,16 +27,6 @@ import * as sourceHealth from "../source-health.ts";
 import { imageFetchHeaders } from "../source-identity.ts";
 
 const DB_SIZE_THRESHOLD_BYTES = 400 * 1024 * 1024; // 80% of Neon free tier's 500MB cap
-// 80% of Vercel Blob's 1GB ceiling. Past the cap the image proxy's
-// circuit breaker fails CLOSED and SILENTLY, hotlinking source CDNs
-// with no error and nothing in the logs.
-//
-// Decimal bytes deliberately, since "1GB" could mean 10^9 or 2^30
-// (7% apart) -- taking the smaller reading fires early if the real
-// limit is binary, rather than late if it's decimal.
-const BLOB_HARD_CEILING_BYTES = 1000 * 1000 * 1000;
-const BLOB_USAGE_THRESHOLD_BYTES = 0.8 * BLOB_HARD_CEILING_BYTES;
-
 // The Simple Operations meter, which actually stopped us once while
 // storage sat at 30%. 70% (lower than storage's 80%) because operations
 // only reset with the calendar -- there's nothing to free, so the
@@ -106,23 +96,6 @@ async function blobDeleteByKey(cacheKey: any) {
 async function checkSourceFetchHealth(client: any) {
   const classified = await sourceHealth.loadSourceHealth(client);
   return sourceHealth.healthAlerts(classified);
-}
-
-async function checkBlobUsage(client: any) {
-  const rows = await client.query(
-    "SELECT total_bytes FROM blob_usage_tracker WHERE id = 1",
-  );
-  if (!rows.length) return null; // tracker not provisioned
-  const bytes = Number(rows[0].total_bytes);
-  if (bytes < BLOB_USAGE_THRESHOLD_BYTES) return null;
-  const mb = Math.round(bytes / 1024 / 1024);
-  const pct = Math.round((bytes / BLOB_HARD_CEILING_BYTES) * 100);
-  return (
-    `Vercel Blob storage is ${mb}MB, ${pct}% of the 1GB ceiling. ` +
-    `At the cap the image proxy stops caching and silently falls back to ` +
-    `hotlinking source CDNs. Free up space or change the caching policy ` +
-    `before that happens.`
-  );
 }
 
 // null means "cannot tell" (table absent); 0 means "genuinely none" --
@@ -472,8 +445,6 @@ export default async function handler(req: any, res: any) {
     const blobOpsAlert = await checkBlobOperations(client);
     if (blobOpsAlert) alerts.push(blobOpsAlert);
 
-    const blobAlert = await checkBlobUsage(client);
-    if (blobAlert) alerts.push(blobAlert);
     alerts = alerts.concat(await checkSourceReachability(client));
     alerts = alerts.concat(await checkRecentImageLoadFailures(client));
     alerts = alerts.concat(await checkSourceFetchHealth(client));
@@ -481,11 +452,6 @@ export default async function handler(req: any, res: any) {
     alerts = alerts.concat(await cacheAlerts.checkEvictionThrash(client));
     alerts = alerts.concat(await cacheAlerts.checkRateLimits(client));
     alerts = alerts.concat(await cacheAlerts.checkShedReasons(client));
-    // Temporary, for as long as the S3 migration stays paused --
-    // see lib/img-cache-alerts.ts.
-    alerts = alerts.concat(
-      await cacheAlerts.checkBlobSuspended(client, put, del),
-    );
 
     if (alerts.length === 0) {
       // Flushed before the response, not merely before returning --

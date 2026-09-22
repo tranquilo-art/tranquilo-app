@@ -145,63 +145,6 @@ describe("rate-limit digest", () => {
   });
 });
 
-describe("blob suspension flag", () => {
-  // list()/head() keep working on a suspended Vercel Blob store -- only a
-  // write actually fails, with this exact message.
-  const suspendedPut = async () => {
-    throw new Error("Vercel Blob: This store has been suspended.");
-  };
-  const okPut = async () => ({
-    url: "https://example.public.blob.vercel-storage.com/probe",
-  });
-  const del = async () => {};
-
-  it("stays quiet the first time it sees a healthy store", async () => {
-    expect(await alerts.checkBlobSuspended(sql, okPut, del)).toEqual([]);
-  });
-
-  it("alerts once when the store flips into suspended", async () => {
-    const out = await alerts.checkBlobSuspended(sql, suspendedPut, del);
-    expect(out).toHaveLength(1);
-    expect(out[0]).toMatch(/SUSPENDED/);
-    const row = await sql.query(
-      "SELECT simple_ops_suspended_since FROM blob_usage_tracker WHERE id = 1",
-    );
-    expect(row[0].simple_ops_suspended_since).not.toBeNull();
-  });
-
-  it("stays quiet on the second day it is still suspended -- known, unactionable, no daily paging", async () => {
-    await alerts.checkBlobSuspended(sql, suspendedPut, del); // day 1: fires
-    const out = await alerts.checkBlobSuspended(sql, suspendedPut, del); // day 2: same state
-    expect(out).toEqual([]);
-  });
-
-  it("alerts once when the suspension clears -- the actionable moment, since the S3 migration can resume", async () => {
-    await alerts.checkBlobSuspended(sql, suspendedPut, del); // becomes suspended
-    const out = await alerts.checkBlobSuspended(sql, okPut, del); // recovers
-    expect(out).toHaveLength(1);
-    expect(out[0]).toMatch(/AVAILABLE/);
-    const row = await sql.query(
-      "SELECT simple_ops_suspended_since FROM blob_usage_tracker WHERE id = 1",
-    );
-    expect(row[0].simple_ops_suspended_since).toBeNull();
-  });
-
-  it("does not fold a different write failure into the suspension bucket", async () => {
-    const networkDown = async () => {
-      throw new Error("fetch failed: ENOTFOUND");
-    };
-    const out = await alerts.checkBlobSuspended(sql, networkDown, del);
-    expect(out).toHaveLength(1);
-    expect(out[0]).toMatch(/unexpected error/);
-    // And it must not have recorded a (wrong) suspension transition.
-    const row = await sql.query(
-      "SELECT simple_ops_suspended_since FROM blob_usage_tracker WHERE id = 1",
-    );
-    expect(row[0].simple_ops_suspended_since).toBeNull();
-  });
-});
-
 describe("every alert fails safe", () => {
   it("returns no alerts rather than throwing when the database is unreachable", async () => {
     const broken = async () => {
@@ -210,12 +153,5 @@ describe("every alert fails safe", () => {
     expect(await alerts.checkTokenBuckets(broken)).toEqual([]);
     expect(await alerts.checkEvictionThrash(broken)).toEqual([]);
     expect(await alerts.checkRateLimits(broken)).toEqual([]);
-    expect(
-      await alerts.checkBlobSuspended(
-        broken,
-        async () => ({ url: "x" }),
-        async () => {},
-      ),
-    ).toEqual([]);
   });
 });
