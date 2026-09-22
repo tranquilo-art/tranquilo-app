@@ -2,9 +2,8 @@
 // since DB growth is bursty rather than sub-daily-urgent and source
 // reliability needs a multi-day trend.
 //
-// Silent on a healthy run. On a threshold breach: emails the
-// maintainer directly and posts to the "Analytics Reports" Linear doc
-// (see lib/cron/analytics-report.ts for the separate periodic
+// Silent on a healthy run. On a threshold breach: emails the maintainer
+// directly (see lib/cron/analytics-report.ts for the separate periodic
 // trend-review rollup -- this file is the fast threshold-triggered path).
 //
 // Checks:
@@ -15,7 +14,7 @@
 //   3. image_load_failed analytics events in the last 24h, per source.
 //
 // Required env vars: DATABASE_URL, CRON_SECRET, RESEND_API_KEY,
-// SUBMIT_NOTIFY_EMAIL, LINEAR_API_KEY.
+// SUBMIT_NOTIFY_EMAIL.
 
 import * as Sentry from "@sentry/node";
 import { del, list, put } from "@vercel/blob";
@@ -26,8 +25,6 @@ import * as eviction from "../img-eviction.ts";
 import { reportError } from "../sentry.ts";
 import * as sourceHealth from "../source-health.ts";
 import { imageFetchHeaders } from "../source-identity.ts";
-
-const LINEAR_DOC_ID = "2c5a75f9-7ad3-448b-a942-ee84779f3af9"; // "Analytics Reports" doc
 
 const DB_SIZE_THRESHOLD_BYTES = 400 * 1024 * 1024; // 80% of Neon free tier's 500MB cap
 // 80% of Vercel Blob's 1GB ceiling. Past the cap the image proxy's
@@ -246,36 +243,7 @@ async function sendAlertEmail(alerts: any) {
       subject: `Tranquilo health check: ${alerts.length} issue(s) found`,
       text: textBody,
     }),
-  }).catch(() => {}); // best-effort -- the Linear doc post is the durable record
-}
-
-async function linearGraphQL(query: any, variables?: any) {
-  const resp = await fetch("https://api.linear.app/graphql", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: process.env.LINEAR_API_KEY || "",
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-  const json = await resp.json();
-  if (json.errors)
-    throw new Error(`Linear API error: ${JSON.stringify(json.errors)}`);
-  return json.data;
-}
-
-async function postAlertToLinearDoc(alerts: any) {
-  const current = await linearGraphQL(
-    "query($id: String!) { document(id: $id) { content } }",
-    { id: LINEAR_DOC_ID },
-  );
-  const now = new Date().toISOString().slice(0, 10);
-  const section = `## Health check alert — ${now}\n\n${alerts.map((a: any) => `- ${a}`).join("\n")}\n\n---\n`;
-  const updatedContent = `${current.document.content}\n${section}`;
-  await linearGraphQL(
-    "mutation($id: String!, $content: String!) { documentUpdate(id: $id, input: { content: $content }) { success } }",
-    { id: LINEAR_DOC_ID, content: updatedContent },
-  );
+  }).catch(() => {}); // best-effort -- Resend is the only durable record now
 }
 
 // This cron IS the monitoring, so it needs its own outside observer --
@@ -535,9 +503,6 @@ export default async function handler(req: any, res: any) {
     }
 
     await sendAlertEmail(alerts);
-    if (process.env.LINEAR_API_KEY) {
-      await postAlertToLinearDoc(alerts);
-    }
     // Finding alerts is a SUCCESSFUL run -- checking in as "error"
     // would conflate "health-check is broken" with "health-check
     // found something", which is the whole point of running it.

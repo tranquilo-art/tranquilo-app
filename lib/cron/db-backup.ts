@@ -13,12 +13,11 @@
 // Registered as a Sentry Cron Monitor -- a missed or failed run creates
 // a Sentry issue independent of this function's own alert code.
 //
-// Silent on a healthy run. On any failure, both sendAlertEmail()
-// (Resend) and postAlertToLinearDoc() fire.
+// Silent on a healthy run. On any failure, sendAlertEmail() (Resend) fires.
 //
 // Required env vars: DATABASE_URL, CRON_SECRET, GITHUB_BACKUP_TOKEN (a
 // fine-grained PAT scoped to Contents read/write on this repo only),
-// plus RESEND_API_KEY/OPS_ALERT_EMAIL/LINEAR_API_KEY.
+// plus RESEND_API_KEY/OPS_ALERT_EMAIL.
 
 import { neonConfig, Pool } from "@neondatabase/serverless";
 import ws from "ws";
@@ -37,8 +36,6 @@ import { reportError, Sentry } from "../sentry.ts";
 // Required for Pool/Client below -- Node's global WebSocket varies by
 // runtime, so this uses the documented `ws` path rather than assuming one.
 neonConfig.webSocketConstructor = ws;
-
-const LINEAR_DOC_ID = "2c5a75f9-7ad3-448b-a942-ee84779f3af9"; // "Analytics Reports" doc
 
 const GITHUB_REPO = "loveycakes/artscroll";
 const BACKUP_BRANCH = "db-backups";
@@ -221,44 +218,12 @@ async function sendAlertEmail(alerts: any) {
       subject: `Tranquilo database backup: ${alerts.length} issue(s) found`,
       text: textBody,
     }),
-  }).catch(() => {}); // best-effort -- the Linear doc post is the durable record
-}
-
-async function linearGraphQL(query: any, variables?: any) {
-  const resp = await fetch("https://api.linear.app/graphql", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: process.env.LINEAR_API_KEY || "",
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-  const json = await resp.json();
-  if (json.errors)
-    throw new Error(`Linear API error: ${JSON.stringify(json.errors)}`);
-  return json.data;
-}
-
-async function postAlertToLinearDoc(alerts: any) {
-  const current = await linearGraphQL(
-    "query($id: String!) { document(id: $id) { content } }",
-    { id: LINEAR_DOC_ID },
-  );
-  const today = new Date().toISOString().slice(0, 10);
-  const section = `## Database backup alert — ${today}\n\n${alerts.map((a: any) => `- ${a}`).join("\n")}\n\n---\n`;
-  const updatedContent = `${current.document.content}\n${section}`;
-  await linearGraphQL(
-    "mutation($id: String!, $content: String!) { documentUpdate(id: $id, input: { content: $content }) { success } }",
-    { id: LINEAR_DOC_ID, content: updatedContent },
-  );
+  }).catch(() => {}); // best-effort -- Resend is the only durable record now
 }
 
 async function alertOnFailure(message: any) {
   const alerts = [message];
   await sendAlertEmail(alerts);
-  if (process.env.LINEAR_API_KEY) {
-    await postAlertToLinearDoc(alerts);
-  }
 }
 
 // Re-reads the backup just written through the GitHub API (not the
