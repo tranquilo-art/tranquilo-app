@@ -2,20 +2,11 @@ openapi: 3.0.3
 info:
   title: Tranquilo API
   description: >-
-<<<<<<< Updated upstream
     Vercel Serverless Functions backing tranquilo.art. Every function under
     api/ is documented here (public routes and internal Vercel Cron
     endpoints alike) -- see CONVENTIONS.md for why these stay one file per
     route rather than a framework. Not machine-verified against the
     handlers (no contract-testing setup exists yet) -- kept in sync by hand
-=======
-    AWS lambdas backing tranquilo.art. Every function under
-    api/ is documented here (public routes and internal AWS lambda cron
-    endpoints alike) — see CONVENTIONS.md for why these stay one file per
-    route rather than a framework, and README.md's "API" section for the
-    prose version of most of what's below. Not machine-verified against the
-    handlers (no contract-testing setup exists yet) — kept in sync by hand
->>>>>>> Stashed changes
     as routes change; treat a mismatch as this file being stale, not the
     handler.
   version: "1.0.0"
@@ -34,15 +25,10 @@ tags:
     description: Analytics, waitlists, feedback and collection submissions
   - name: cron
     description: >-
-<<<<<<< Updated upstream
       Vercel Cron-triggered maintenance. Not meant to be called directly --
       every one of these requires the CRON_SECRET bearer token Vercel's own
       dispatcher sends, documented here for completeness rather than as an
       invitation to call them by hand.
-=======
-      AWS lambda cron-triggered maintenance. Not meant to be called directly —
-      every one of these requires the CRON_SECRET bearer token.
->>>>>>> Stashed changes
 
 paths:
   /api/items:
