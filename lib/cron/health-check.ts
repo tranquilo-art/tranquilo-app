@@ -17,11 +17,10 @@
 // SUBMIT_NOTIFY_EMAIL.
 
 import * as Sentry from "@sentry/node";
-import { del, list } from "@vercel/blob";
+import { list } from "@vercel/blob";
 import * as blobOps from "../blob-ops.ts";
 import { getSql } from "../db.ts";
 import * as cacheAlerts from "../img-cache-alerts.ts";
-import * as eviction from "../img-eviction.ts";
 import { reportError } from "../sentry.ts";
 import * as sourceHealth from "../source-health.ts";
 import { imageFetchHeaders } from "../source-identity.ts";
@@ -63,10 +62,6 @@ async function checkDatabaseSize(client: any) {
 // hand only; the scheduled cron invocation passes no ?op.
 // ---------------------------------------------------------------------------
 
-function blobPathnameFor(source: any, id: any, tier: any) {
-  return `img-cache/${source}/${id}/${tier}`;
-}
-
 // The id can contain slashes (Commons "File:x.jpg", Europeana
 // "/318/..."), so the tier is taken from the end.
 function parseBlobPathname(pathname: any) {
@@ -83,14 +78,6 @@ function parseBlobPathname(pathname: any) {
     tier: tier,
     cacheKey: `${source}:${id}:${tier}`,
   };
-}
-
-async function blobDeleteByKey(cacheKey: any) {
-  const parts = String(cacheKey).split(":");
-  const source = parts[0];
-  const tier = parts[parts.length - 1];
-  const id = parts.slice(1, -1).join(":");
-  return await del(blobPathnameFor(source, id, tier));
 }
 
 async function checkSourceFetchHealth(client: any) {
@@ -346,78 +333,10 @@ export default async function handler(req: any, res: any) {
         return;
       }
 
-      if (op === "verify-eviction") {
-        const capOverride = Number(req.query?.cap);
-        const cap =
-          Number.isFinite(capOverride) && capOverride > 0
-            ? capOverride
-            : Number(process.env.BLOB_USAGE_SOFT_CAP_BYTES) ||
-              950 * 1024 * 1024;
-
-        const beforeRows = await opClient.query(
-          "SELECT total_bytes FROM blob_usage_tracker WHERE id = 1",
-        );
-        const usedBefore = beforeRows.length
-          ? Number(beforeRows[0].total_bytes)
-          : null;
-        const storedRows = await opClient.query(
-          "SELECT count(*) AS n FROM img_cache_entries WHERE bytes IS NOT NULL",
-        );
-        const storedCount = Number(storedRows[0].n);
-        if (storedCount === 0) {
-          res.statusCode = 200;
-          res.json({
-            op: op,
-            ok: false,
-            blocked_on: "img_cache_entries has no stored rows",
-            detail:
-              "Eviction can only remove objects it knows about. Run " +
-              "?op=reconcile-blob&commit=1 first.",
-            used_bytes: usedBefore,
-          });
-          return;
-        }
-        // force bypasses IMG_EVICTION_ENABLED to exercise the real
-        // path before arming it globally -- none of eviction's own
-        // safety rules are bypassed.
-        const result = await eviction.evictIfNeeded(opClient, blobDeleteByKey, {
-          cap: cap,
-          force: true,
-          dryRun: !commit,
-        });
-        const afterRows = await opClient.query(
-          "SELECT total_bytes FROM blob_usage_tracker WHERE id = 1",
-        );
-        const usedAfter = afterRows.length
-          ? Number(afterRows[0].total_bytes)
-          : null;
-        res.statusCode = 200;
-        res.json({
-          op: op,
-          mode: commit
-            ? "COMMITTED -- objects were deleted"
-            : "dry run -- nothing deleted",
-          cap_used: cap,
-          cap_was_overridden: Number.isFinite(capOverride) && capOverride > 0,
-          high_water_bytes: Math.round(cap * eviction.HIGH_WATER),
-          low_water_bytes: Math.round(cap * eviction.LOW_WATER),
-          stored_entries: storedCount,
-          tracker_before: usedBefore,
-          tracker_after: usedAfter,
-          tracker_delta:
-            usedBefore != null && usedAfter != null
-              ? usedBefore - usedAfter
-              : null,
-          result: result,
-          eviction_globally_enabled: eviction.isEnabled(),
-        });
-        return;
-      }
-
       res.statusCode = 400;
       res.json({
         error: "Unknown op",
-        known: ["reconcile-blob", "verify-eviction"],
+        known: ["reconcile-blob"],
       });
       return;
     } catch (opErr) {

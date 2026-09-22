@@ -50,19 +50,6 @@ upsell_min_saved = 3
 # api/items.ts's own comment on the Aug 7 2026 incident this exists for.
 bust_version = 1
 
-[img_cache_eviction]
-# Start evicting above this share of the soft cap; stop once back under the
-# low mark. The GAP between them is the point -- evicting to exactly the
-# high mark would put us one write away from evicting again, forever. See
-# lib/img-eviction.ts's own comment.
-high_water = 0.90
-low_water = 0.80
-
-# Per request. Small on purpose: a visitor is waiting, and eviction is not
-# their errand. Sustained pressure is handled by many requests each doing
-# a little, not by one request doing all of it.
-max_evictions_per_call = 3
-
 [img_cache_fetch_guard]
 # A claim is a lease, not a lock -- it must outlive a slow origin fetch but
 # not a dead function. See lib/img-fetch-guard.ts's own comment for why 30s
