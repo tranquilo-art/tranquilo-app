@@ -575,7 +575,10 @@ class TranquiloApp {
         trackEvent("share_banner_dismiss", { source: shareBannerSource });
       },
       onShareBannerCtaClick: (cta: "newsletter" | "get_involved") => {
-        trackEvent("share_banner_cta_click", { cta, source: shareBannerSource });
+        trackEvent("share_banner_cta_click", {
+          cta,
+          source: shareBannerSource,
+        });
       },
     };
     topbarEl.app = topbarHost;
@@ -1029,7 +1032,8 @@ class TranquiloApp {
     // all. One signal, one session key -- they share identical copy/CTAs,
     // so forking into two independently-tracked states would only invite
     // them drifting out of sync.
-    const arrivedViaShareLink = hadDeepLinkArtwork || Boolean(initialStorylineId);
+    const arrivedViaShareLink =
+      hadDeepLinkArtwork || Boolean(initialStorylineId);
     if (
       arrivedViaShareLink &&
       !sessionStorage.getItem(SESSION_SHARE_BANNER_KEY)
@@ -1056,7 +1060,7 @@ new TranquiloApp().start().catch((err: any) => {
   feedEl.innerHTML = "";
   feedEl.appendChild(
     renderErrorState({
-      detail: (err && err.message) || "Tranquilo failed to load.",
+      detail: err?.message || "Tranquilo failed to load.",
       onRetry: () => location.reload(),
     }),
   );
