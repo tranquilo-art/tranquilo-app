@@ -47,7 +47,7 @@
     },
     {
       "path": "/api/cron?job=db-backup",
-      "schedule": "27 7 * * *"
+      "schedule": "27 7 1 * *"
     },
     {
       "path": "/api/cron?job=db-backup&task=reshuffle",

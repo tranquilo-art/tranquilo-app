@@ -1,6 +1,9 @@
-// Daily backup of the `items` table to GitHub, since Neon's free tier
+// Monthly backup of the `items` table to GitHub, since Neon's free tier
 // offers no scheduled backups -- only a 6-hour PITR window and one
-// manual snapshot.
+// manual snapshot. Was daily until the full-table pull's egress started
+// eating too much of the free tier's public network transfer allowance
+// as `items` grew; monthly trades recovery granularity for staying
+// under that cap.
 //
 // Exports `items` only, not `analytics_events` (anonymous, low-value,
 // already expected to stay tiny).
@@ -40,11 +43,15 @@ neonConfig.webSocketConstructor = ws;
 const GITHUB_REPO = "loveycakes/artscroll";
 const BACKUP_BRANCH = "db-backups";
 const BACKUP_DIR = "backups/items";
-const RETENTION_DAYS = 30;
+// 30 days made sense at daily cadence (keeping ~30 snapshots); at
+// monthly cadence that would prune the previous dated file the same
+// day the next one lands, leaving no history. 180 keeps roughly the
+// last 6 monthly snapshots instead.
+const RETENTION_DAYS = 180;
 const MONITOR_SLUG = "db-backup";
 
 const RESHUFFLE_FRACTION = 0.1;
-const CRON_SCHEDULE = "27 7 * * *"; // must match vercel.json's schedule for this path
+const CRON_SCHEDULE = "27 7 1 * *"; // must match vercel.json's schedule for this path
 
 // Uses Neon's WebSocket Pool, not the HTTP client used elsewhere in
 // this file -- Neon's HTTP mode hard-caps a response at 64MB, which
