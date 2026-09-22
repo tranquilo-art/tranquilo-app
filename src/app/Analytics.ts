@@ -1,9 +1,15 @@
 // Sends custom analytics events to api/track.js, which stores them in the
-// `analytics_events` table (see sql/002_analytics_events.sql). Cloudflare's
-// page-view beacon covers the rest. Every send is fire-and-forget: nothing
-// in the UI waits on or reacts to the request, and a failed send fails
-// silently. A device with the internal-traffic localStorage key set (a team
-// member's own browser) skips sending entirely.
+// `analytics_events` table (see sql/002_analytics_events.sql), and mirrors
+// the same event to PostHog (see analytics/posthogDraft.ts) when it's
+// initialized -- PostHog's own real-external-traffic gate already returns
+// null instead of an instance otherwise, so this needs no separate check.
+// Cloudflare's page-view beacon covers pageviews. Every send is
+// fire-and-forget: nothing in the UI waits on or reacts to the request, and
+// a failed send fails silently. A device with the internal-traffic
+// localStorage key set (a team member's own browser) skips sending
+// entirely, to both destinations.
+import posthog from "../analytics/posthogDraft";
+
 export class Analytics {
   // A nonce regenerated per page load, attached only to image-failure
   // reports so the health check can say "3 page loads saw failures" rather
@@ -31,6 +37,7 @@ export class Analytics {
         body: JSON.stringify({ event_name: name, props: props || {} }),
         keepalive: true,
       }).catch(() => {});
+      posthog?.capture(name, props);
     } catch (_e) {}
   }
 

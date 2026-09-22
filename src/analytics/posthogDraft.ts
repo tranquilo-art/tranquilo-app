@@ -1,19 +1,22 @@
-// PostHog Analytics -- DRAFT, not live. Loaded on index.html only.
-// VITE_POSTHOG_TOKEN is unset until this ships. Before shipping:
-//   1. Set VITE_POSTHOG_TOKEN to a real project token, and api_host below
-//      to the matching region.
-//   2. Turn on "Discard client IP data" in the PostHog project settings --
+// PostHog Analytics -- live in production (VITE_POSTHOG_TOKEN is set,
+// loaded on index.html). File name/module path are pre-launch leftovers --
+// promoting this out of "draft" status for real (rename, confirm the two
+// checklist items below actually landed) is still open.
+// Outstanding from before this shipped, unconfirmed:
+//   1. "Discard client IP data" in the PostHog project settings --
 //      posthog-js's own `ip` init option is deprecated and has no effect
 //      (confirmed against its source), so raw IPs otherwise reach PostHog
 //      regardless of anything set here, which pages/privacy.html does not permit.
-//   3. Update the commented-out pages/privacy.html copy ("PostHog Analytics
-//      -- draft") to describe what's actually configured, and un-comment it.
-//   4. No new Vercel function needed -- events go straight to PostHog's
-//      ingestion host, not through api/ (already at Hobby's 12-function cap).
+//   2. pages/privacy.html has no PostHog disclosure at all as of 22 Sep
+//      2026 -- this was supposed to be updated before shipping and looks
+//      like it got missed.
 //
-// Additive alongside Cloudflare Web Analytics and trackEvent()'s /api/track
-// pipeline, not replacing either -- covers general click/pageview/
-// navigation-timing signals neither captures today.
+// Mirrors trackEvent()'s named product events too now (src/app/Analytics.ts
+// imports this module's default export and calls .capture() alongside its
+// own /api/track send) -- originally additive alongside Cloudflare Web
+// Analytics and trackEvent()'s /api/track pipeline for general
+// click/pageview/navigation-timing signals neither captured, now also the
+// mirror target for the events analytics-report.ts used to summarize.
 //
 // Configured for the strictest anonymous mode posthog-js supports: no
 // person profiles ever created, autocapture scoped to clicks only (no form

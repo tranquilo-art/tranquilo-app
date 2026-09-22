@@ -2,9 +2,8 @@
 // since DB growth is bursty rather than sub-daily-urgent and source
 // reliability needs a multi-day trend.
 //
-// Silent on a healthy run. On a threshold breach: emails the
-// maintainer directly and posts to the "Analytics Reports" Linear doc
-// (see lib/cron/analytics-report.ts for the separate periodic
+// Silent on a healthy run. On a threshold breach: emails the maintainer
+// directly (see lib/cron/analytics-report.ts for the separate periodic
 // trend-review rollup -- this file is the fast threshold-triggered path).
 //
 // Checks:
@@ -15,31 +14,18 @@
 //   3. image_load_failed analytics events in the last 24h, per source.
 //
 // Required env vars: DATABASE_URL, CRON_SECRET, RESEND_API_KEY,
-// SUBMIT_NOTIFY_EMAIL, LINEAR_API_KEY.
+// SUBMIT_NOTIFY_EMAIL.
 
 import * as Sentry from "@sentry/node";
-import { del, list, put } from "@vercel/blob";
+import { list } from "@vercel/blob";
 import * as blobOps from "../blob-ops.ts";
 import { getSql } from "../db.ts";
 import * as cacheAlerts from "../img-cache-alerts.ts";
-import * as eviction from "../img-eviction.ts";
 import { reportError } from "../sentry.ts";
 import * as sourceHealth from "../source-health.ts";
 import { imageFetchHeaders } from "../source-identity.ts";
 
-const LINEAR_DOC_ID = "2c5a75f9-7ad3-448b-a942-ee84779f3af9"; // "Analytics Reports" doc
-
 const DB_SIZE_THRESHOLD_BYTES = 400 * 1024 * 1024; // 80% of Neon free tier's 500MB cap
-// 80% of Vercel Blob's 1GB ceiling. Past the cap the image proxy's
-// circuit breaker fails CLOSED and SILENTLY, hotlinking source CDNs
-// with no error and nothing in the logs.
-//
-// Decimal bytes deliberately, since "1GB" could mean 10^9 or 2^30
-// (7% apart) -- taking the smaller reading fires early if the real
-// limit is binary, rather than late if it's decimal.
-const BLOB_HARD_CEILING_BYTES = 1000 * 1000 * 1000;
-const BLOB_USAGE_THRESHOLD_BYTES = 0.8 * BLOB_HARD_CEILING_BYTES;
-
 // The Simple Operations meter, which actually stopped us once while
 // storage sat at 30%. 70% (lower than storage's 80%) because operations
 // only reset with the calendar -- there's nothing to free, so the
@@ -76,10 +62,6 @@ async function checkDatabaseSize(client: any) {
 // hand only; the scheduled cron invocation passes no ?op.
 // ---------------------------------------------------------------------------
 
-function blobPathnameFor(source: any, id: any, tier: any) {
-  return `img-cache/${source}/${id}/${tier}`;
-}
-
 // The id can contain slashes (Commons "File:x.jpg", Europeana
 // "/318/..."), so the tier is taken from the end.
 function parseBlobPathname(pathname: any) {
@@ -98,34 +80,9 @@ function parseBlobPathname(pathname: any) {
   };
 }
 
-async function blobDeleteByKey(cacheKey: any) {
-  const parts = String(cacheKey).split(":");
-  const source = parts[0];
-  const tier = parts[parts.length - 1];
-  const id = parts.slice(1, -1).join(":");
-  return await del(blobPathnameFor(source, id, tier));
-}
-
 async function checkSourceFetchHealth(client: any) {
   const classified = await sourceHealth.loadSourceHealth(client);
   return sourceHealth.healthAlerts(classified);
-}
-
-async function checkBlobUsage(client: any) {
-  const rows = await client.query(
-    "SELECT total_bytes FROM blob_usage_tracker WHERE id = 1",
-  );
-  if (!rows.length) return null; // tracker not provisioned
-  const bytes = Number(rows[0].total_bytes);
-  if (bytes < BLOB_USAGE_THRESHOLD_BYTES) return null;
-  const mb = Math.round(bytes / 1024 / 1024);
-  const pct = Math.round((bytes / BLOB_HARD_CEILING_BYTES) * 100);
-  return (
-    `Vercel Blob storage is ${mb}MB, ${pct}% of the 1GB ceiling. ` +
-    `At the cap the image proxy stops caching and silently falls back to ` +
-    `hotlinking source CDNs. Free up space or change the caching policy ` +
-    `before that happens.`
-  );
 }
 
 // null means "cannot tell" (table absent); 0 means "genuinely none" --
@@ -246,36 +203,7 @@ async function sendAlertEmail(alerts: any) {
       subject: `Tranquilo health check: ${alerts.length} issue(s) found`,
       text: textBody,
     }),
-  }).catch(() => {}); // best-effort -- the Linear doc post is the durable record
-}
-
-async function linearGraphQL(query: any, variables?: any) {
-  const resp = await fetch("https://api.linear.app/graphql", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: process.env.LINEAR_API_KEY || "",
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-  const json = await resp.json();
-  if (json.errors)
-    throw new Error(`Linear API error: ${JSON.stringify(json.errors)}`);
-  return json.data;
-}
-
-async function postAlertToLinearDoc(alerts: any) {
-  const current = await linearGraphQL(
-    "query($id: String!) { document(id: $id) { content } }",
-    { id: LINEAR_DOC_ID },
-  );
-  const now = new Date().toISOString().slice(0, 10);
-  const section = `## Health check alert — ${now}\n\n${alerts.map((a: any) => `- ${a}`).join("\n")}\n\n---\n`;
-  const updatedContent = `${current.document.content}\n${section}`;
-  await linearGraphQL(
-    "mutation($id: String!, $content: String!) { documentUpdate(id: $id, input: { content: $content }) { success } }",
-    { id: LINEAR_DOC_ID, content: updatedContent },
-  );
+  }).catch(() => {}); // best-effort -- Resend is the only durable record now
 }
 
 // This cron IS the monitoring, so it needs its own outside observer --
@@ -405,78 +333,10 @@ export default async function handler(req: any, res: any) {
         return;
       }
 
-      if (op === "verify-eviction") {
-        const capOverride = Number(req.query?.cap);
-        const cap =
-          Number.isFinite(capOverride) && capOverride > 0
-            ? capOverride
-            : Number(process.env.BLOB_USAGE_SOFT_CAP_BYTES) ||
-              950 * 1024 * 1024;
-
-        const beforeRows = await opClient.query(
-          "SELECT total_bytes FROM blob_usage_tracker WHERE id = 1",
-        );
-        const usedBefore = beforeRows.length
-          ? Number(beforeRows[0].total_bytes)
-          : null;
-        const storedRows = await opClient.query(
-          "SELECT count(*) AS n FROM img_cache_entries WHERE bytes IS NOT NULL",
-        );
-        const storedCount = Number(storedRows[0].n);
-        if (storedCount === 0) {
-          res.statusCode = 200;
-          res.json({
-            op: op,
-            ok: false,
-            blocked_on: "img_cache_entries has no stored rows",
-            detail:
-              "Eviction can only remove objects it knows about. Run " +
-              "?op=reconcile-blob&commit=1 first.",
-            used_bytes: usedBefore,
-          });
-          return;
-        }
-        // force bypasses IMG_EVICTION_ENABLED to exercise the real
-        // path before arming it globally -- none of eviction's own
-        // safety rules are bypassed.
-        const result = await eviction.evictIfNeeded(opClient, blobDeleteByKey, {
-          cap: cap,
-          force: true,
-          dryRun: !commit,
-        });
-        const afterRows = await opClient.query(
-          "SELECT total_bytes FROM blob_usage_tracker WHERE id = 1",
-        );
-        const usedAfter = afterRows.length
-          ? Number(afterRows[0].total_bytes)
-          : null;
-        res.statusCode = 200;
-        res.json({
-          op: op,
-          mode: commit
-            ? "COMMITTED -- objects were deleted"
-            : "dry run -- nothing deleted",
-          cap_used: cap,
-          cap_was_overridden: Number.isFinite(capOverride) && capOverride > 0,
-          high_water_bytes: Math.round(cap * eviction.HIGH_WATER),
-          low_water_bytes: Math.round(cap * eviction.LOW_WATER),
-          stored_entries: storedCount,
-          tracker_before: usedBefore,
-          tracker_after: usedAfter,
-          tracker_delta:
-            usedBefore != null && usedAfter != null
-              ? usedBefore - usedAfter
-              : null,
-          result: result,
-          eviction_globally_enabled: eviction.isEnabled(),
-        });
-        return;
-      }
-
       res.statusCode = 400;
       res.json({
         error: "Unknown op",
-        known: ["reconcile-blob", "verify-eviction"],
+        known: ["reconcile-blob"],
       });
       return;
     } catch (opErr) {
@@ -504,8 +364,6 @@ export default async function handler(req: any, res: any) {
     const blobOpsAlert = await checkBlobOperations(client);
     if (blobOpsAlert) alerts.push(blobOpsAlert);
 
-    const blobAlert = await checkBlobUsage(client);
-    if (blobAlert) alerts.push(blobAlert);
     alerts = alerts.concat(await checkSourceReachability(client));
     alerts = alerts.concat(await checkRecentImageLoadFailures(client));
     alerts = alerts.concat(await checkSourceFetchHealth(client));
@@ -513,11 +371,6 @@ export default async function handler(req: any, res: any) {
     alerts = alerts.concat(await cacheAlerts.checkEvictionThrash(client));
     alerts = alerts.concat(await cacheAlerts.checkRateLimits(client));
     alerts = alerts.concat(await cacheAlerts.checkShedReasons(client));
-    // Temporary, for as long as the S3 migration stays paused --
-    // see lib/img-cache-alerts.ts.
-    alerts = alerts.concat(
-      await cacheAlerts.checkBlobSuspended(client, put, del),
-    );
 
     if (alerts.length === 0) {
       // Flushed before the response, not merely before returning --
@@ -535,9 +388,6 @@ export default async function handler(req: any, res: any) {
     }
 
     await sendAlertEmail(alerts);
-    if (process.env.LINEAR_API_KEY) {
-      await postAlertToLinearDoc(alerts);
-    }
     // Finding alerts is a SUCCESSFUL run -- checking in as "error"
     // would conflate "health-check is broken" with "health-check
     // found something", which is the whole point of running it.

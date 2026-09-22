@@ -1,8 +1,7 @@
 // Count Blob operations directly, because inferring them from
 // img_cache_stats undercounted: the proxy's hit response is a cached 302
-// that never re-enters the function, and eviction's del() calls were never
-// counted at all -- Vercel hit 7.6K/10K ops with days left in the month and
-// we had no idea.
+// that never re-enters the function -- Vercel hit 7.6K/10K ops with days
+// left in the month and we had no idea.
 //
 // Two design choices the tests pin down: wrap the imports rather than count
 // at call sites (so a future call site can't silently skip a hand-placed
@@ -15,7 +14,6 @@ function harness(impl: any = {}) {
   const ops = makeCountedBlobOps({
     put: impl.put || (async () => ({ url: "https://blob/x" })),
     head: impl.head || (async () => ({ url: "https://blob/x" })),
-    del: impl.del || (async () => undefined),
     record: async (op: any) => {
       counted.push(op);
     },
@@ -34,12 +32,6 @@ describe("counting", () => {
     const { ops, counted } = harness();
     await ops.head("k");
     expect(counted).toEqual(["head"]);
-  });
-
-  it("counts a del", async () => {
-    const { ops, counted } = harness();
-    await ops.del("k");
-    expect(counted).toEqual(["del"]);
   });
 
   it("counts every call, not just the first", async () => {
@@ -79,7 +71,6 @@ describe("the counter never breaks image serving", () => {
     const ops = makeCountedBlobOps({
       put: async () => ({ url: "https://blob/ok" }),
       head: async () => ({ url: "https://blob/ok" }),
-      del: async () => undefined,
       record: async () => {
         throw new Error("neon down");
       },

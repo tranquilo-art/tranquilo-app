@@ -2,28 +2,26 @@
 // reported 7.6K of 10K Simple Operations with ten days left in the month,
 // found out via email, since operations had been inferred from cache
 // hits/misses (which undercounts: hits are an immutable 302 that never
-// re-enters the function, and eviction's del() was never counted at all).
+// re-enters the function).
 //
-// Wraps put/head/del rather than placing counters at call sites, so a new
+// Wraps put/head rather than placing counters at call sites, so a new
 // call site is counted automatically. Counts failures too, since Vercel
 // bills an operation whether or not it succeeds. Fire-and-forget and
 // approximate by design: serving an image matters more than counting it, so
 // a failing recorder is swallowed. Aggregated on write (one row per day/op),
 // never a per-request log, same discipline as img_cache_stats.
 
-// `record(op)` is injected rather than imported so this stays testable without
-// a database, and so the eviction path can share it.
+// `record(op)` is injected rather than imported so this stays testable
+// without a database.
 type BlobOpsDeps = {
   put: (...args: any[]) => any;
   head: (...args: any[]) => any;
-  del: (...args: any[]) => any;
   record: (op: string) => any;
 };
 
 function makeCountedBlobOps(deps: BlobOpsDeps) {
   const put = deps.put;
   const head = deps.head;
-  const del = deps.del;
   const record = deps.record;
 
   function count(op: string): void {
@@ -46,10 +44,6 @@ function makeCountedBlobOps(deps: BlobOpsDeps) {
     head: (...args: any[]) => {
       count("head");
       return head.apply(null, args);
-    },
-    del: (...args: any[]) => {
-      count("del");
-      return del.apply(null, args);
     },
   };
 }

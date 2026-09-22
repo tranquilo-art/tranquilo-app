@@ -142,88 +142,6 @@ async function checkShedReasons(sql: any): Promise<string[]> {
   }
 }
 
-/* Vercel Blob suspends the whole store when Hobby-tier Simple
- * Operations run out for the month, with no API flag to check --
- * put() is what actually fails ("This store has been suspended"), so
- * this spends one disposable probe object and reads what comes back.
- *
- * Temporary: only needed while the S3 migration stays paused on the
- * Simple Operations lockout. Delete this check (and sql/032's column)
- * once that migration finishes.
- *
- * Alerts on a state CHANGE only -- daily confirmation of a known,
- * unactionable fact trains a reader to stop opening the alert. The
- * flip back to available is deliberately probed for rather than
- * assumed at the calendar reset, since some suspensions need manual
- * Vercel reactivation. */
-const BLOB_PROBE_PATHNAME = "health-check/blob-suspension-probe";
-
-async function checkBlobSuspended(
-  sql: any,
-  putFn: any,
-  delFn: any,
-): Promise<string[]> {
-  if (!sql) return [];
-  let rows: any[];
-  try {
-    rows = await sql.query(
-      "SELECT simple_ops_suspended_since FROM blob_usage_tracker WHERE id = 1",
-    );
-  } catch (_err) {
-    return []; // tracker not provisioned
-  }
-  if (!rows.length) return [];
-  const wasSuspended = rows[0].simple_ops_suspended_since !== null;
-
-  let isSuspended: boolean;
-  try {
-    const written = await putFn(BLOB_PROBE_PATHNAME, "ok", {
-      access: "public",
-      addRandomSuffix: false,
-      contentType: "text/plain",
-    });
-    isSuspended = false;
-    try {
-      await delFn(written.url);
-    } catch (_err) {
-      // Best-effort -- a stray probe object is harmless either way.
-    }
-  } catch (err) {
-    const msg = String((err && (err as any).message) || err);
-    if (!/suspend/i.test(msg)) {
-      // A real, different failure -- always worth seeing.
-      return [
-        `Vercel Blob write probe failed with an unexpected error (not the ` +
-          `known suspension): ${msg}`,
-      ];
-    }
-    isSuspended = true;
-  }
-
-  if (isSuspended === wasSuspended) return []; // no change; stay quiet
-
-  try {
-    await sql.query(
-      "UPDATE blob_usage_tracker SET simple_ops_suspended_since = $1 WHERE id = 1",
-      [isSuspended ? new Date().toISOString() : null],
-    );
-  } catch (_err) {
-    return []; // couldn't record the transition; don't alert on a flip we can't remember tomorrow
-  }
-
-  return [
-    isSuspended
-      ? "Vercel Blob store is now SUSPENDED (Simple Operations quota hit). " +
-        "This is the known Hobby-tier lockout -- S3 migration " +
-        "stays paused until it clears. No action needed unless it persists " +
-        "past the monthly reset, since some suspensions need Vercel " +
-        "support to reactivate rather than clearing on their own."
-      : "Vercel Blob Simple Operations are AVAILABLE again -- the " +
-        "suspension has cleared. This is the signal to resume the S3 " +
-        "migration.",
-  ];
-}
-
 // Thresholds live in config.toml's [img_cache_alerts] -- baked in at
 // build time, never read live.
 import { TRANQUILO_CONFIG } from "./config.generated.ts";
@@ -236,7 +154,6 @@ const THRASH_MIN_REQUESTS =
 const THRASH_MIN_KEYS = TRANQUILO_CONFIG.img_cache_alerts.thrash_min_keys;
 
 export {
-  checkBlobSuspended,
   checkEvictionThrash,
   checkRateLimits,
   checkShedReasons,

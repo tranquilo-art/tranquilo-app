@@ -3,7 +3,7 @@
 // header comment). No DOM environment is configured for this project's
 // Vitest suite (see vitest.config.mts), so localStorage/fetch/window are
 // stubbed directly rather than pulled from jsdom.
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Analytics } from "../src/app/Analytics";
 
 const KEY = "tranquilo:internalTraffic";
@@ -67,6 +67,55 @@ describe("track", () => {
     });
     const analytics = new Analytics(KEY);
     expect(() => analytics.track("share_click", {})).not.toThrow();
+  });
+});
+
+describe("PostHog mirroring", () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.doUnmock("../src/analytics/posthogDraft");
+  });
+
+  it("mirrors the same event and props to posthog.capture when it's initialized", async () => {
+    const capture = vi.fn();
+    vi.doMock("../src/analytics/posthogDraft", () => ({
+      default: { capture },
+    }));
+    const { Analytics: MockedAnalytics } = await import("../src/app/Analytics");
+
+    const analytics = new MockedAnalytics(KEY);
+    analytics.track("share_click", { id: "1", source: "met" });
+
+    expect(capture).toHaveBeenCalledWith("share_click", {
+      id: "1",
+      source: "met",
+    });
+  });
+
+  it("skips posthog too once the internal-traffic flag is set", async () => {
+    const capture = vi.fn();
+    vi.doMock("../src/analytics/posthogDraft", () => ({
+      default: { capture },
+    }));
+    const { Analytics: MockedAnalytics } = await import("../src/app/Analytics");
+
+    store[KEY] = "1";
+    const analytics = new MockedAnalytics(KEY);
+    analytics.track("share_click", {});
+
+    expect(capture).not.toHaveBeenCalled();
+  });
+
+  it("never throws even when posthog is unavailable (null)", async () => {
+    vi.doMock("../src/analytics/posthogDraft", () => ({ default: null }));
+    const { Analytics: MockedAnalytics } = await import("../src/app/Analytics");
+
+    const analytics = new MockedAnalytics(KEY);
+    expect(() => analytics.track("share_click", {})).not.toThrow();
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
 });
 

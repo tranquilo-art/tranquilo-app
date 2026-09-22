@@ -30,22 +30,20 @@
 //
 // Required env vars: BLOB_READ_WRITE_TOKEN, DATABASE_URL,
 // BLOB_USAGE_SOFT_CAP_BYTES (optional).
-import { del as rawDel, head as rawHead, put as rawPut } from "@vercel/blob";
+import { head as rawHead, put as rawPut } from "@vercel/blob";
 // Wrapped rather than counted at call sites, so a new call site can't
 // go uncounted. Failures count too -- Vercel bills either way.
 import { makeCountedBlobOps, recordBlobOp } from "../../../../lib/blob-ops.ts";
 import { getSql } from "../../../../lib/db.ts";
 
-const { put, head, del } = makeCountedBlobOps({
+const { put, head } = makeCountedBlobOps({
   put: rawPut,
   head: rawHead,
-  del: rawDel,
   record: (op: any) => recordBlobOp(getSql(), op),
 });
 
 import sharp from "sharp";
 import * as admission from "../../../../lib/img-admission.ts";
-import * as eviction from "../../../../lib/img-eviction.ts";
 import * as guard from "../../../../lib/img-fetch-guard.ts";
 import * as objectKeys from "../../../../lib/img-object-key.ts";
 import * as s3 from "../../../../lib/img-s3.ts";
@@ -169,16 +167,6 @@ function isAllowedOrigin(
   if (source === "europeana" && tier === "lightbox") return true;
   if (!isImgSource(source)) return false;
   return ALLOWED_ORIGIN_HOSTS[source].indexOf(parsed.hostname) !== -1;
-}
-
-// Translates a cache key (source:id:tier) to a Blob pathname, keeping
-// that layout in one place.
-async function blobDelete(cacheKey: any) {
-  const parts = String(cacheKey).split(":");
-  const source = parts[0];
-  const tier = parts[parts.length - 1];
-  const id = parts.slice(1, -1).join(":");
-  return await del(pathnameFor(source, id, tier));
 }
 
 function pathnameFor(source: any, id: any, tier: any) {
@@ -590,8 +578,7 @@ export default async function handler(req: any, res: any) {
     hash: any,
     objectKey: any,
     putResult: any,
-    written: any,
-    evicted: any;
+    written: any;
 
   try {
     // Phase 6: ask the database first, not Blob. If a row carries an
@@ -920,25 +907,6 @@ export default async function handler(req: any, res: any) {
     res.end();
     await admission.markStored(sqlClient, cacheKey, outBuf.length);
     await guard.releaseFetch(sqlClient, cacheKey);
-
-    // Runs after res.end(), so the visitor is never waiting on it.
-    // Disabled by default -- see lib/img-eviction.ts.
-    try {
-      evicted = await eviction.evictIfNeeded(sqlClient, blobDelete, {
-        cap:
-          Number(process.env.BLOB_USAGE_SOFT_CAP_BYTES) ||
-          DEFAULT_USAGE_SOFT_CAP_BYTES,
-      });
-      if (evicted.evicted) {
-        console.log(
-          `img proxy: evicted ${evicted.evicted} object(s), freed ${Math.round(
-            evicted.freed / 1e6,
-          )}MB`,
-        );
-      }
-    } catch (_evictErr) {
-      // Never let cache maintenance surface as a request failure.
-    }
   } catch (err) {
     console.error(`img proxy: failed for ${source}:${id}:${tier}`, err);
     await sentry.reportError(err);

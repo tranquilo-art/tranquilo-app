@@ -9,6 +9,13 @@
 // load is in -- and since both are bare side-effect imports in
 // src/app.ts, that throw aborted the app's entire module graph. Neither
 // module may throw on import, in any of the disabled branches below.
+//
+// A second incident, same shape: once Analytics.ts (src/app/Analytics.ts)
+// started importing posthogDraft.ts to mirror events to PostHog, a plain
+// Node-based test importing Analytics.ts -- no `location` global at all,
+// not just a non-production one -- crashed the same way. `location` being
+// entirely absent needs the same "disabled, don't throw" treatment as
+// every other branch here.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 function stubProductionSite() {
@@ -40,6 +47,21 @@ afterEach(() => {
 });
 
 describe("initPosthog", () => {
+  it("returns null without throwing when `location` doesn't exist at all (a plain Node import)", async () => {
+    vi.stubGlobal("location", undefined);
+    vi.stubGlobal("localStorage", {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    });
+    vi.stubEnv("VITE_POSTHOG_TOKEN", "test-token");
+    const { default: instance, initPosthog } = await import(
+      "../src/analytics/posthogDraft"
+    );
+    expect(instance).toBeNull();
+    expect(initPosthog()).toBeNull();
+  });
+
   it("returns null without throwing when no token is configured", async () => {
     stubProductionSite();
     vi.stubEnv("VITE_POSTHOG_TOKEN", "");
