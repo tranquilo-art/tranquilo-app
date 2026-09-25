@@ -7,11 +7,10 @@
 // trend-review rollup -- this file is the fast threshold-triggered path).
 //
 // Checks:
-//   1. Neon database size vs. the 500MB free-tier cap.
-//   2. Per-source image reachability -- samples real image URLs from
+//   1. Per-source image reachability -- samples real image URLs from
 //      every live source, alerting only on a genuine failure
 //      (non-2xx/timeout/network error), not mere slowness.
-//   3. image_load_failed analytics events in the last 24h, per source.
+//   2. image_load_failed analytics events in the last 24h, per source.
 //
 // Required env vars: DATABASE_URL, CRON_SECRET, RESEND_API_KEY,
 // SUBMIT_NOTIFY_EMAIL.
@@ -25,7 +24,6 @@ import { reportError } from "../sentry.ts";
 import * as sourceHealth from "../source-health.ts";
 import { imageFetchHeaders } from "../source-identity.ts";
 
-const DB_SIZE_THRESHOLD_BYTES = 400 * 1024 * 1024; // 80% of Neon free tier's 500MB cap
 // The Simple Operations meter, which actually stopped us once while
 // storage sat at 30%. 70% (lower than storage's 80%) because operations
 // only reset with the calendar -- there's nothing to free, so the
@@ -43,18 +41,6 @@ const IMAGE_LOAD_FAILED_THRESHOLD_24H = 5;
 const IMAGE_LOAD_FAILED_MIN_PAGE_LOADS = 2;
 const SOURCES = ["met", "smithsonian", "cleveland", "commons", "europeana"];
 const IMAGE_FETCH_TIMEOUT_MS = 15000;
-
-async function checkDatabaseSize(client: any) {
-  const rows = await client.query(
-    "SELECT pg_database_size(current_database()) AS bytes",
-  );
-  const bytes = Number(rows[0].bytes);
-  if (bytes >= DB_SIZE_THRESHOLD_BYTES) {
-    const mb = Math.round(bytes / 1024 / 1024);
-    return `Neon database size is ${mb}MB, over the ${Math.round(DB_SIZE_THRESHOLD_BYTES / 1024 / 1024)}MB (80%) checkpoint of the 500MB free-tier cap.`;
-  }
-  return null;
-}
 
 // ---------------------------------------------------------------------------
 // Maintenance operations, reached with ?op=... rather than their own
@@ -359,8 +345,6 @@ export default async function handler(req: any, res: any) {
 
   try {
     let alerts = [];
-    const dbSizeAlert = await checkDatabaseSize(client);
-    if (dbSizeAlert) alerts.push(dbSizeAlert);
     const blobOpsAlert = await checkBlobOperations(client);
     if (blobOpsAlert) alerts.push(blobOpsAlert);
 
