@@ -786,46 +786,49 @@ test.describe("the collection bookmark", () => {
     expect(inside, "the count is not inside the bookmark button").toBe(true);
   });
 
-  test("active looks like an active category chip", async ({ page }) => {
+  test("active looks like an active filter dropdown", async ({ page }) => {
     await gotoFeed(page);
-    // Captured before entering the collection: chips have no active state
-    // while the collection filter is on, so there'd be nothing to compare
-    // against once the bookmark lights up.
-    const chipColour = await page
-      .locator(".chip.active")
-      .first()
-      .evaluate((el) => getComputedStyle(el).backgroundColor);
+    // The category chip row became a Category dropdown -- "All
+    // Categories" is its unmarked default now (a <select>'s own displayed
+    // text is indicator enough), so a real, non-default pick is needed to
+    // produce the same gold .filter-select-active this test compares
+    // against. Captured before entering the collection, same reasoning as
+    // before: nothing to compare against once the collection view's own
+    // category-less state takes over.
+    const select = page.locator("#categorySelect");
+    const options = await select.locator("option").allTextContents();
+    const label = options.find((o) => o !== "All Categories")!;
+    await select.selectOption({ label });
+    await expect(select).toHaveClass(/filter-select-active/);
+    const activeColour = await select.evaluate(
+      (el) => getComputedStyle(el).backgroundColor,
+    );
     await save(page, 1);
     await btn(page).click();
     await expect(btn(page)).toHaveClass(/active/);
     // toHaveCSS rather than a one-shot evaluate: `transition: all 0.2s`
     // means reading the style the instant the class lands returns the
     // colour it's transitioning from.
-    await expect(btn(page)).toHaveCSS("background-color", chipColour);
+    await expect(btn(page)).toHaveCSS("background-color", activeColour);
   });
 
-  test("saving does not reset the chip row's scroll", async ({ page }) => {
-    // It used to call renderChips() to refresh the count, rebuilding every
-    // chip and snapping the row back to the start mid-browse. Pinned to a
-    // phone viewport, since on desktop the row collapses into a More menu
-    // and scrollLeft is always 0.
-    await page.setViewportSize({ width: 390, height: 844 });
+  test("saving does not rebuild the filter dropdowns", async ({ page }) => {
+    // Regression guard for the bug this test used to catch a different
+    // way: saving an item calling renderChips() (rebuilding every chip,
+    // snapping a scrolled category row back to the start mid-browse) --
+    // That work replaced the scrollable chip row with three dropdowns that
+    // shrink to fit rather than scroll, so the same DOM-identity check is
+    // more direct here than the scroll-position proxy the chip version
+    // used: if a save ever starts calling setFilters() again, these
+    // <select> elements would be replaced (and along with them, whatever
+    // menu a visitor had open mid-interaction).
     await gotoFeed(page);
-    // Save from the slide the row already shows, so only a rebuild could
-    // move the chips.
-    await scrollToSlide(page, 1);
-    await page.locator("#chips").evaluate((el) => {
-      el.scrollLeft = 200;
-    });
-    const before = await page.locator("#chips").evaluate((el) => el.scrollLeft);
-    expect(
-      before,
-      "the chip row does not scroll at this width",
-    ).toBeGreaterThan(0);
+    const before = await page.locator("#categorySelect").elementHandle();
     await page.locator("#feed .slide").nth(1).locator(".btn-collect").click();
     await expect(btn(page)).toHaveClass(/has-items/);
-    expect(await page.locator("#chips").evaluate((el) => el.scrollLeft)).toBe(
-      before,
+    const after = await page.locator("#categorySelect").elementHandle();
+    expect(await page.evaluate(([a, b]) => a === b, [before, after])).toBe(
+      true,
     );
   });
 });

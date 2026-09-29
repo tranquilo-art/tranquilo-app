@@ -218,6 +218,14 @@ export class TranquiloFeed extends HTMLElement {
     const host = this.requireApp();
     host.resetScrollDepthTracking();
     host.resetRecycleWindow();
+    // Dims rather than snapping straight to a blank feed for the
+    // duration of whatever async work this mode needs -- removed in
+    // markFeedSettled(), the single completion choke point every branch
+    // below (success, empty-collection, and the error path) already
+    // funnels through. A pure CSS opacity transition: doesn't touch
+    // slideRecords or DOM structure, so none of the record-index/DOM-
+    // index invariants above are at risk.
+    this.classList.add("feed-transitioning");
     this.innerHTML = "";
     this.showLoadingSkeleton();
     this.feedPager = null;
@@ -286,6 +294,13 @@ export class TranquiloFeed extends HTMLElement {
 
     if (state.storylineFilter) {
       params.has_storyline = "1";
+    }
+    // The Palette dropdown/a per-item swatch tap -- composes with
+    // whichever ordinary-feed mode is active above (search, a plain
+    // concept, category browsing, artist, a deep link). Excluded from
+    // fixedItems mode (collection), which doesn't read `params` at all.
+    if (!fixedItems && state.paletteBucket) {
+      params.palette_bucket = state.paletteBucket;
     }
 
     // Derived, never set by a branch. An intro is skipped only when one
@@ -408,6 +423,7 @@ export class TranquiloFeed extends HTMLElement {
   }
 
   private markFeedSettled(onSettled?: () => void): void {
+    this.classList.remove("feed-transitioning");
     this.feedRenderCount++;
     window.__tranquiloFeedRenders = this.feedRenderCount;
     // For page chrome that depends on how much feed there is (the scroll

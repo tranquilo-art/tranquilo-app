@@ -4,7 +4,9 @@
 // everything that decides what an interaction means stays app.js's job.
 export interface ITopbarHost {
   onCategorySelect(category: string): void;
-  onStorylineFilterToggle(): void;
+  // The Palette dropdown -- null means "All palettes" was picked,
+  // clearing that filter.
+  onPaletteSelect(bucket: string | null): void;
   onMusicToggle(): void;
   onSearchToggle(): void;
   onDiscoverToggle(): void;

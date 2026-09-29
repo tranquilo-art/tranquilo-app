@@ -91,6 +91,24 @@ import "./components/TranquiloFeed";
 import "./analytics/cloudflareBeacon";
 import "./analytics/posthog";
 
+// One representative color per palette_bucket value (the same 9
+// classify_palette_buckets() names artscroll-poc's ingestion pipeline
+// uses), for the Palette dropdown's custom swatch menu -- a bucket spans
+// a real hue range, not one exact color, so this is a legible stand-in
+// picked from roughly the middle of each bucket's own hue range, not a
+// value read back from any one item's actual pixels.
+const PALETTE_BUCKET_SWATCH: Record<string, string> = {
+  Red: "#d1453b",
+  Orange: "#d9822b",
+  "Gold/Yellow": "#d4b53f",
+  Green: "#5a9e52",
+  Teal: "#3aa69a",
+  Blue: "#4a80c4",
+  Purple: "#9163c4",
+  Pink: "#d073a8",
+  Neutral: "#9a958d",
+};
+
 class TranquiloApp {
   async start() {
     // First, so <html lang> names the language actually rendered (index.html
@@ -263,6 +281,13 @@ class TranquiloApp {
     const categories = ["All"].concat(
       (facets.categories ?? []).map((c) => c.value),
     );
+    // Only buckets the catalogue has items in, from the startup facets fetch.
+    const paletteBucketOptions = (facets.palette_bucket || []).map(
+      (c: { value: string }) => ({
+        value: c.value,
+        swatch: PALETTE_BUCKET_SWATCH[c.value] || "transparent",
+      }),
+    );
     const storylinesById: Record<string, StorylineIndexEntry> = {};
     storylineIndex.forEach((s) => {
       storylinesById[s.id] = s;
@@ -378,6 +403,12 @@ class TranquiloApp {
     });
     searchBarEl.addEventListener("search-close-request", () => {
       requestOverlayClose(closeSearch);
+    });
+    searchBarEl.addEventListener("storyline-filter-toggle", () => {
+      const on = filterState.toggleStorylineFilter();
+      trackEvent("storyline_filter_toggle", { on });
+      renderChips();
+      feedEl.render();
     });
     // Host methods below are wrapped in closures since several targets
     // (recycleWindow rebindings, createSlideShell, etc.) are assigned
@@ -666,11 +697,11 @@ class TranquiloApp {
         renderChips();
         feedEl.render();
       },
-      onStorylineFilterToggle: () => {
-        const on = filterState.toggleStorylineFilter();
-        trackEvent("storyline_filter_toggle", { on });
-        renderChips();
-        feedEl.render();
+      // Unlike every handler above, this deliberately leaves
+      // category/search/concept/collection alone -- the Palette dropdown
+      // is an independent, composable filter, not another exclusive mode.
+      onPaletteSelect: (bucket: string | null) => {
+        applyPaletteFilter(bucket);
       },
       onMusicToggle: () => {
         const on = musicToggleEl.toggle();
@@ -858,10 +889,26 @@ class TranquiloApp {
 
     function renderChips() {
       updateCollectionToggle();
-      topbarEl.setChips(categories, filterState.getCategory(), {
+      topbarEl.setFilters({
+        categories,
+        activeCategory: filterState.getCategory(),
+        paletteBuckets: paletteBucketOptions,
+        activePaletteBucket: filterState.getPaletteBucket(),
         collectionActive: filterState.getCollectionFilter(),
-        storylineActive: filterState.getStorylineFilter(),
       });
+      // Lives in the search panel now, not the chips row -- see
+      // TranquiloSearchBar.ts's header comment for why. renderChips()
+      // already runs after every filter-state change in this file, so
+      // piggybacking the checkbox's sync here (rather than a second
+      // call site) keeps it from ever drifting out of sync with reality.
+      searchBarEl.setStorylineActive(filterState.getStorylineFilter());
+    }
+
+    function applyPaletteFilter(bucket: string | null) {
+      filterState.setPaletteBucket(bucket);
+      trackEvent("palette_filter_select", { bucket });
+      renderChips();
+      feedEl.render();
     }
 
     function buildIntroSlideForFeed() {
@@ -1077,6 +1124,7 @@ class TranquiloApp {
 
       clearSuggestions: () => searchBarEl.clearSuggestions(),
       setResultsLine: (html: any) => searchBarEl.setResultsLine(html),
+      setSearchLoading: (loading: boolean) => searchBarEl.setLoading(loading),
       openSearchBar: (prefill: any) => searchBarEl.open(prefill),
       closeSearchBar: () => searchBarEl.close(),
       pushHistory: (q: any) => searchBarEl.pushHistory(q),

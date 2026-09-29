@@ -34,9 +34,9 @@ test.describe("a browser asking for pt-BR", () => {
   }) => {
     await gotoFeed(page);
     await expect(page.locator("html")).toHaveAttribute("lang", "pt-BR");
-    await expect(page.locator('button.chip[data-category="All"]')).toHaveText(
-      "Todos",
-    );
+    await expect(
+      page.locator('#categorySelect option[value="All"]'),
+    ).toHaveText("Todas as categorias");
   });
 
   test("still gets English after choosing it", async ({ page }) => {
@@ -74,9 +74,9 @@ test.describe("a ?lang=pt-BR link", () => {
     // evaluating (before start()) is pinned by the unit test "is honoured
     // by the very first lookup" -- chips render inside start(), so this
     // line alone can't tell the two apart.
-    await expect(page.locator('button.chip[data-category="All"]')).toHaveText(
-      "Todos",
-    );
+    await expect(
+      page.locator('#categorySelect option[value="All"]'),
+    ).toHaveText("Todas as categorias");
 
     // A later visit without the parameter keeps the choice.
     await gotoFeed(page);
@@ -182,9 +182,9 @@ test.describe("a ?lang=pt-BR link", () => {
     await gotoFeed(page, "?lang=pt-BR");
     await gotoFeed(page, "?lang=en");
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
-    await expect(page.locator('button.chip[data-category="All"]')).toHaveText(
-      "All",
-    );
+    await expect(
+      page.locator('#categorySelect option[value="All"]'),
+    ).toHaveText("All Categories");
   });
 });
 
@@ -221,25 +221,23 @@ test.describe("category labels with pt-BR opted in", () => {
     });
   });
 
-  test("chips show translated labels and still filter by value", async ({
+  test("filter dropdowns show translated labels and still filter by value", async ({
     page,
   }) => {
     await gotoFeed(page);
-    const allChip = page.locator('button.chip[data-category="All"]');
-    await expect(allChip).toHaveText("Todos");
-
-    const paintings = page.locator(
-      'button.chip[data-category="Paintings & Portraits"]',
+    const category = page.locator("#categorySelect");
+    await expect(category.locator('option[value="All"]')).toHaveText(
+      "Todas as categorias",
     );
-    await expect(paintings).toHaveText("Pinturas e retratos");
-    await paintings.click();
-
-    // The row is rebuilt on select; the stored value still identifies it.
     await expect(
-      page.locator('button.chip[data-category="Paintings & Portraits"]'),
-    ).toHaveClass(/active/);
-    // Every slide now on screen belongs to the filtered category and
-    // labels it in Portuguese.
+      category.locator('option[value="Paintings & Portraits"]'),
+    ).toHaveText("Pinturas e retratos");
+    await expect(page.locator("#paletteSelect")).toContainText(
+      "Todas as paletas",
+    );
+
+    await category.selectOption("Paintings & Portraits");
+    await expect(category).toHaveValue("Paintings & Portraits");
     const labels = page.locator("#feed .slide .cat-label");
     await expect(labels.first()).toHaveText("Pinturas e retratos");
     for (const text of await labels.allTextContents()) {
@@ -268,43 +266,6 @@ test.describe("category labels with pt-BR opted in", () => {
     expect(
       texts.some((t) => /Pinturas|Esculturas|Obras|Armas|Fotografia/.test(t)),
     ).toBe(true);
-  });
-
-  test("the reset chip stays in the row when the overflow menu collapses chips", async ({
-    page,
-  }) => {
-    // Worst case: chips so wide that every movable one overflows into the
-    // More menu. "All" must never be parked, whatever its label -- which
-    // only holds if the reflow identifies it by value, not by its text.
-    await page.setViewportSize({ width: 720, height: 800 });
-    await page.addInitScript(() => {
-      document.addEventListener("DOMContentLoaded", () => {
-        const style = document.createElement("style");
-        style.textContent = "#chips .chip { min-width: 400px; }";
-        document.head.appendChild(style);
-      });
-    });
-    await gotoFeed(page);
-    // While "All" is the active filter it's pinned for that reason alone,
-    // so select another category first: that's when "All" becomes movable.
-    await page.locator("#chipsMore").click();
-    await page
-      .locator('#chipsMoreMenu button.chip[data-category="Photography"]')
-      .click();
-    await expect(
-      page.locator('button.chip[data-category="Photography"]'),
-    ).toHaveClass(/active/);
-    // Sanity: the overflow really happened, so the assertion below means
-    // something.
-    await expect(
-      page.locator("#chipsMoreMenu button.chip").first(),
-    ).toBeAttached();
-    await expect(
-      page.locator('#chips button.chip[data-category="All"]'),
-    ).toHaveText("Todos");
-    await expect(
-      page.locator('#chipsMoreMenu button.chip[data-category="All"]'),
-    ).toHaveCount(0);
   });
 });
 

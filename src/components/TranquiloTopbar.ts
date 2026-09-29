@@ -1,5 +1,5 @@
 // The top bar (wordmark, the search/discover/collection/music button group, the
-// category chip row and its overflow menu, and the filter banner), as a
+// Category and Palette filter dropdowns, and the filter banner), as a
 // native custom element.
 //
 // app.ts hands it a plain object implementing ITopbarHost via a property
@@ -76,9 +76,11 @@ const topbarMarkup = () => `
 </div>
 <nav class="chips" id="chips"></nav>
 <div class="filter-banner" id="filterBanner" style="display:none;">
-  <span id="filterBannerLabel"></span>
+  <span class="filter-banner-pill">
+    <span id="filterBannerLabel"></span>
+    <button id="filterBannerClear" type="button" aria-label="${h(t("topbar.filter.clear"))}">&times;</button>
+  </span>
   <button id="filterBannerExport" type="button" style="display:none;">${h(t("topbar.filter.export"))}</button>
-  <button id="filterBannerClear" type="button">${h(t("topbar.filter.clear"))} &times;</button>
 </div>
 <div class="filter-banner-card" id="filterBannerCard" style="display:none;"></div>
 `;
@@ -124,13 +126,6 @@ export class TranquiloTopbar extends HTMLElement {
   private collectionToggleEl!: HTMLButtonElement;
   private collectionCountEl!: HTMLElement;
 
-  // The chips row's overflow ("More") menu. .chips is overflow-x:auto
-  // with the scrollbar suppressed, unreachable with a mouse, so past
-  // 720px wide this menu keeps the row one line tall instead of wrapping.
-  // Mobile is untouched, since swiping is correct on touch there.
-  private chipsMoreBtn: HTMLButtonElement | null = null;
-  private chipsMoreMenu: HTMLDivElement | null = null;
-  private chipsReflowTimer: ReturnType<typeof setTimeout> | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private filterBannerResizeObserver: ResizeObserver | null = null;
 
@@ -237,19 +232,19 @@ export class TranquiloTopbar extends HTMLElement {
       this.filterBannerResizeObserver.observe(this.filterBannerCardEl);
     }
 
-    on(window, "resize", () => {
-      if (this.chipsReflowTimer) clearTimeout(this.chipsReflowTimer);
-      this.chipsReflowTimer = setTimeout(() => {
-        this.reflowChips();
-        this.positionChipsMenu();
-      }, 120);
+    on(document, "click", (e) => {
+      if ((e.target as HTMLElement).closest(".filter-dropdown")) return;
+      this.closeAllFilterDropdowns();
+    });
+    on(document, "keydown", (e) => {
+      if ((e as KeyboardEvent).key === "Escape") this.closeAllFilterDropdowns();
     });
   }
 
   // ---- Language menu ----
 
   // Appended to the host rather than inside .topbar-icons, which clips its
-  // overflow -- same reason the chips' More menu lives here.
+  // overflow.
   private setUpLanguageMenu(): void {
     const toggle = this.querySelector<HTMLButtonElement>("#languageToggle");
     if (!toggle) return;
@@ -327,205 +322,143 @@ export class TranquiloTopbar extends HTMLElement {
     menu.style.right = `${bar.right - btn.right}px`;
   }
 
-  // ---- Chips ----
+  // ---- Filter dropdowns ----
 
-  // `categories` is passed in on every call and this rebuilds the whole
-  // row, which is why setCollectionCount() avoids calling this: rebuilding
-  // resets the row's horizontal scroll, and saving an item shouldn't snap
-  // a mid-browse chip row back to the start.
-  setChips(
-    categories: readonly string[],
-    activeCategory: string,
-    opts: { collectionActive: boolean; storylineActive: boolean },
-  ): void {
-    this.chipsEl.innerHTML = "";
-    // A full rebuild owns the More menu's contents too: chips parked there
-    // by the previous build are stale, and reflowChips() would otherwise
-    // move them back into the row next to their replacements. (reflowChips
-    // itself must not wipe the menu -- on a resize-only reflow the parked
-    // chips are the only copies.)
-    if (this.chipsMoreMenu) this.chipsMoreMenu.innerHTML = "";
-    categories.forEach((cat) => {
-      const chip = document.createElement("button");
-      chip.className = `chip${cat === activeCategory && !opts.collectionActive ? " active" : ""}`;
-      // The stored category value drives behaviour (dataset + the select
-      // handler); the visible text is only its translated label, so
-      // nothing below may compare against textContent.
-      chip.dataset.category = cat;
-      chip.textContent =
-        cat === "All" ? t("chips.all") : facetLabel("category", cat);
-      on(chip, () => this.app?.onCategorySelect(cat));
-      this.chipsEl.appendChild(chip);
+  private closeAllFilterDropdowns(): void {
+    this.querySelectorAll(".filter-dropdown-menu").forEach((menu) => {
+      (menu as HTMLElement).hidden = true;
     });
-
-    // The Storyline toggle sits at the end of the same row, singular to
-    // match the item-level chip's wording.
-    const storylineChip = document.createElement("button");
-    storylineChip.id = "storylineChip";
-    // No bespoke class: .chip.active already reads as related to the
-    // item-level chip's own active color without inventing a variant.
-    storylineChip.className = `chip${opts.storylineActive ? " active" : ""}`;
-    storylineChip.textContent = t("chips.storyline");
-    storylineChip.setAttribute(
-      "aria-pressed",
-      opts.storylineActive ? "true" : "false",
-    );
-    on(storylineChip, () => this.app?.onStorylineFilterToggle());
-    this.chipsEl.appendChild(storylineChip);
-    this.reflowChips();
+    this.querySelectorAll(".filter-dropdown-trigger").forEach((trigger) => {
+      trigger.setAttribute("aria-expanded", "false");
+    });
   }
 
-  private chipsOverflowEnabled(): boolean {
-    return window.matchMedia("(min-width: 720px)").matches;
-  }
+  // A native <select> cannot render a colour swatch inside its options.
+  private buildSwatchDropdown(config: {
+    ariaLabel: string;
+    defaultLabel: string;
+    options: { value: string; label: string; swatch: string }[];
+    activeValue: string | null;
+    onSelect: (value: string | null) => void;
+  }): HTMLElement {
+    const wrap = document.createElement("div");
+    wrap.className = "filter-dropdown";
 
-  private closeChipsMenu(): void {
-    if (this.chipsMoreMenu) this.chipsMoreMenu.hidden = true;
-    if (this.chipsMoreBtn)
-      this.chipsMoreBtn.setAttribute("aria-expanded", "false");
-  }
-
-  // Both nodes are always created together (first call only) -- returning
-  // them lets callers use a local, non-null reference instead of
-  // re-reading the nullable instance fields.
-  private ensureChipsMoreNodes(): {
-    btn: HTMLButtonElement;
-    menu: HTMLDivElement;
-  } {
-    if (this.chipsMoreBtn && this.chipsMoreMenu) {
-      return { btn: this.chipsMoreBtn, menu: this.chipsMoreMenu };
-    }
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "filter-select filter-dropdown-trigger";
+    trigger.setAttribute("aria-haspopup", "listbox");
+    trigger.setAttribute("aria-expanded", "false");
+    trigger.setAttribute("aria-label", config.ariaLabel);
 
     const menu = document.createElement("div");
-    menu.id = "chipsMoreMenu";
+    menu.className = "filter-dropdown-menu";
+    menu.setAttribute("role", "listbox");
     menu.hidden = true;
-    // Appended to the topbar host, not .chips: .chips is an overflow
-    // container and would clip a panel inside it.
-    this.appendChild(menu);
 
-    const btn = document.createElement("button");
-    btn.id = "chipsMore";
-    btn.type = "button";
-    btn.className = "chip chip-more";
-    btn.setAttribute("aria-haspopup", "true");
-    btn.setAttribute("aria-expanded", "false");
-    btn.textContent = t("chips.more");
-    on(btn, (e) => {
-      e.stopPropagation();
-      const open = menu.hidden;
-      menu.hidden = !open;
-      btn.setAttribute("aria-expanded", open ? "true" : "false");
-      if (open) this.positionChipsMenu();
-    });
-
-    on(document, (e) => {
-      if (menu.hidden) return;
-      if (menu.contains(e.target as Node) || btn.contains(e.target as Node))
-        return;
-      this.closeChipsMenu();
-    });
-    on(document, "keydown", (e) => {
-      if (e.key === "Escape") this.closeChipsMenu();
-    });
-
-    this.chipsMoreBtn = btn;
-    this.chipsMoreMenu = menu;
-    return { btn, menu };
-  }
-
-  // Anchors the panel under the button that summons it. Measured in JS
-  // since the panel can't live inside .chips, so there's no positioned
-  // ancestor that tracks the button.
-  private positionChipsMenu(): void {
-    if (!this.chipsMoreMenu || !this.chipsMoreBtn || this.chipsMoreMenu.hidden)
-      return;
-    const btn = this.chipsMoreBtn.getBoundingClientRect();
-    const bar = this.getBoundingClientRect();
-    this.chipsMoreMenu.style.right = "auto";
-    this.chipsMoreMenu.style.top = `${btn.bottom - bar.top + 6}px`;
-    this.chipsMoreMenu.style.left = `${btn.left - bar.left}px`;
-    // Clamp to the viewport: a menu from a button near the right edge
-    // would otherwise run off the screen.
-    const menu = this.chipsMoreMenu.getBoundingClientRect();
-    const overflowRight = menu.right - (window.innerWidth - 12);
-    if (overflowRight > 0) {
-      this.chipsMoreMenu.style.left = `${btn.left - bar.left - overflowRight}px`;
-    }
-  }
-
-  // Moves trailing category chips into the menu until the row fits on one
-  // line. "All" stays put, since it's the reset, and so does the
-  // Storyline toggle, a different kind of control.
-  private reflowChips(): void {
-    if (!this.chipsEl) return;
-    // Put everything back in the row before measuring. Never clear the
-    // menu by wiping innerHTML: this also runs on resize without a
-    // preceding setChips(), so parked chips are the only copies of themselves.
-    const returnChipsToRow = () => {
-      const menu = this.chipsMoreMenu;
-      if (!menu) return;
-      const parked = Array.from(menu.children);
-      const anchor = this.querySelector("#storylineChip");
-      for (const child of parked) {
-        this.chipsEl.insertBefore(child, anchor || this.chipsMoreBtn || null);
-      }
+    const paintTrigger = (swatch: string, label: string, active: boolean) => {
+      trigger.innerHTML = "";
+      const dot = document.createElement("span");
+      dot.className = "filter-dropdown-swatch";
+      dot.style.background = swatch;
+      const text = document.createElement("span");
+      text.className = "filter-dropdown-trigger-label";
+      text.textContent = label;
+      trigger.appendChild(dot);
+      trigger.appendChild(text);
+      trigger.classList.toggle("filter-select-active", active);
     };
 
-    if (!this.chipsOverflowEnabled()) {
-      returnChipsToRow();
-      if (this.chipsMoreBtn?.parentNode) this.chipsMoreBtn.remove();
-      this.closeChipsMenu();
-      return;
-    }
-    const { btn: moreBtn, menu: moreMenu } = this.ensureChipsMoreNodes();
-    returnChipsToRow();
-    this.closeChipsMenu();
-    this.chipsEl.appendChild(moreBtn);
-    moreBtn.hidden = false;
+    on(trigger, () => {
+      const wasOpen = !menu.hidden;
+      this.closeAllFilterDropdowns();
+      if (wasOpen) return;
+      menu.hidden = false;
+      trigger.setAttribute("aria-expanded", "true");
+    });
 
-    const movable = () =>
-      Array.from(this.chipsEl.children).filter((c) => {
-        // Never bury the active filter -- otherwise the only indication
-        // of what's filtering the page hides inside a closed menu, and
-        // picking from the menu would make the chosen chip vanish back
-        // into it.
-        return (
-          c !== moreBtn &&
-          c.id !== "storylineChip" &&
-          (c as HTMLElement).dataset.category !== "All" &&
-          !c.classList.contains("active")
-        );
+    const addOption = (value: string, label: string, swatch: string) => {
+      const option = document.createElement("button");
+      option.type = "button";
+      option.className = "filter-dropdown-option";
+      option.setAttribute("role", "option");
+      option.dataset.value = value;
+      const isActive = value === (config.activeValue || "");
+      option.setAttribute("aria-selected", isActive ? "true" : "false");
+      const dot = document.createElement("span");
+      dot.className = "filter-dropdown-swatch";
+      dot.style.background = swatch;
+      const text = document.createElement("span");
+      text.textContent = label;
+      option.appendChild(dot);
+      option.appendChild(text);
+      on(option, () => {
+        this.closeAllFilterDropdowns();
+        config.onSelect(value || null);
       });
-    // Guard against a pathological loop: at most one pass per chip.
-    let budget = movable().length;
-    while (
-      budget-- > 0 &&
-      this.chipsEl.scrollWidth > this.chipsEl.clientWidth + 1
-    ) {
-      const candidates = movable();
-      if (!candidates.length) break;
-      const last = candidates[candidates.length - 1];
-      moreMenu.insertBefore(last, moreMenu.firstChild);
-    }
+      menu.appendChild(option);
+      if (isActive) paintTrigger(swatch, label, !!value);
+    };
 
-    const overflowed = moreMenu.children.length > 0;
-    moreBtn.hidden = !overflowed;
-    if (!overflowed && moreBtn.parentNode) moreBtn.remove();
+    addOption("", config.defaultLabel, "transparent");
+    config.options.forEach((o) => {
+      addOption(o.value, o.label, o.swatch);
+    });
+
+    wrap.appendChild(trigger);
+    wrap.appendChild(menu);
+    return wrap;
+  }
+
+  // Rebuilds the whole row on every call.
+  setFilters(opts: {
+    categories: readonly string[];
+    activeCategory: string;
+    paletteBuckets: readonly { value: string; swatch: string }[];
+    activePaletteBucket: string | null;
+    collectionActive: boolean;
+  }): void {
+    this.chipsEl.innerHTML = "";
+
+    const categorySelect = document.createElement("select");
+    categorySelect.id = "categorySelect";
+    categorySelect.className = "filter-select";
+    categorySelect.setAttribute("aria-label", t("filters.category"));
+    opts.categories.forEach((cat) => {
+      const option = document.createElement("option");
+      option.value = cat;
+      option.textContent =
+        cat === "All"
+          ? t("filters.allCategories")
+          : facetLabel("category", cat);
+      categorySelect.appendChild(option);
+    });
+    categorySelect.value = opts.collectionActive ? "All" : opts.activeCategory;
+    categorySelect.classList.toggle(
+      "filter-select-active",
+      categorySelect.value !== "All",
+    );
+    on(categorySelect, "change", () =>
+      this.app?.onCategorySelect(categorySelect.value),
+    );
+    this.chipsEl.appendChild(categorySelect);
+
+    const paletteDropdown = this.buildSwatchDropdown({
+      ariaLabel: t("filters.palette"),
+      defaultLabel: t("filters.allPalettes"),
+      options: opts.paletteBuckets.map((bucket) => ({
+        value: bucket.value,
+        label: facetLabel("palette", bucket.value),
+        swatch: bucket.swatch,
+      })),
+      activeValue: opts.activePaletteBucket,
+      onSelect: (bucket) => this.app?.onPaletteSelect(bucket),
+    });
+    paletteDropdown.id = "paletteSelect";
+    this.chipsEl.appendChild(paletteDropdown);
   }
 
   // ---- Filter banner ----
-  // The chips row is suppressed while a filter banner is up, since the
-  // banner already says what the feed is showing. display:none (not
-  // visibility:hidden) collapses the row's height, and --topbar-h is
-  // written synchronously rather than waiting for the ResizeObserver, so
-  // whatever sits below moves up in the same frame.
-  private setChipsHidden(hidden: boolean): void {
-    this.chipsEl.style.display = hidden ? "none" : "";
-    document.documentElement.style.setProperty(
-      "--topbar-h",
-      `${this.offsetHeight}px`,
-    );
-  }
 
   // #filterBannerCard is a sibling of #filterBanner, not a child of it --
   // it has to render as its own full-width line at desktop widths (see its
@@ -545,22 +478,18 @@ export class TranquiloTopbar extends HTMLElement {
     );
   }
 
-  // Full show: label, layout, hides the chip row, sizes --filter-banner-h.
-  // app.js still owns the surrounding feed-scroll compensation; this only
-  // does the topbar's own part of that synchronous DOM write.
+  // The filter dropdowns stay visible while the banner is up.
   showFilterBanner(html: string): void {
     this.filterBannerLabelEl.innerHTML = html;
     this.filterBannerEl.style.display = "flex";
-    this.setChipsHidden(true);
     this.updateFilterBannerHeight();
   }
 
-  // Full hide: also resets the export button and restores the chip row.
+  // Full hide: also resets the export button and the artist card.
   hideFilterBanner(): void {
     this.filterBannerEl.style.display = "none";
     this.filterBannerExportEl.style.display = "none";
     this.setArtistProfile(null);
-    this.setChipsHidden(false);
   }
 
   // A raw display toggle, short of hideFilterBanner()'s full reset --

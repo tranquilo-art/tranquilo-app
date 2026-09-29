@@ -28,7 +28,11 @@ const GROUPS: Record<string, string[]> = {
     "topbar-icon-cluster.spec.mts",
     "discover-home-link.spec.mts",
   ],
-  search: ["search-filter.spec.mts", "search-status-in-header.spec.mts"],
+  search: [
+    "search-filter.spec.mts",
+    "search-status-in-header.spec.mts",
+    "filter-dropdowns.spec.mts",
+  ],
   collection: [
     "collection-keys.spec.mts",
     "collect-export.spec.mts",
@@ -49,6 +53,7 @@ const GROUPS: Record<string, string[]> = {
     "urls.spec.mts",
     "image-failure.spec.mts",
     "scroll-hint.spec.mts",
+    "visual-metadata.spec.mts",
   ],
   lightbox: ["lightbox-source-link.spec.mts", "link-underlines.spec.mts"],
   detail: ["ai-disclosure.spec.mts", "tea-sources.spec.mts"],

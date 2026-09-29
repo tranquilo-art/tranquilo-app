@@ -294,11 +294,10 @@ export const en = {
   "artistCard.wikipedia": "Read more on Wikipedia",
   "artistCard.wikidata": "View on Wikidata",
 
-  // Category chip row: the reset chip (its filter value stays "All"), the
-  // Storyline toggle, and the overflow menu button.
-  "chips.all": "All",
-  "chips.storyline": "Storyline",
-  "chips.more": "More",
+  "filters.category": "Category",
+  "filters.allCategories": "All Categories",
+  "filters.palette": "Palette",
+  "filters.allPalettes": "All palettes",
 
   // Display labels for controlled-vocabulary values, keyed by facetKey()
   // (src/i18n/facets.ts) and rendered with facetLabel(). Every term in

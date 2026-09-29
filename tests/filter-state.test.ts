@@ -14,6 +14,7 @@ describe("FilterState", () => {
     expect(state.getCollectionFilter()).toBe(false);
     expect(state.getStorylineFilter()).toBe(false);
     expect(state.getBannerHtml()).toBeNull();
+    expect(state.getPaletteBucket()).toBeNull();
   });
 
   it("round-trips each field through its own getter/setter", () => {
@@ -24,6 +25,7 @@ describe("FilterState", () => {
     state.setConcept({ label: "armor", filter: { category: "Arms & Armor" } });
     state.setCollectionFilter(true);
     state.setBannerHtml("<b>hi</b>");
+    state.setPaletteBucket("Blue");
 
     expect(state.getCategory()).toBe("Paintings");
     expect(state.getArtist()).toBe("Vincent van Gogh");
@@ -34,6 +36,7 @@ describe("FilterState", () => {
     });
     expect(state.getCollectionFilter()).toBe(true);
     expect(state.getBannerHtml()).toBe("<b>hi</b>");
+    expect(state.getPaletteBucket()).toBe("Blue");
   });
 
   it("toggleStorylineFilter flips and returns the new value each call", () => {
@@ -58,6 +61,7 @@ describe("FilterState", () => {
       concept: null,
       collectionFilter: true,
       storylineFilter: true,
+      paletteBucket: null,
     });
   });
 });

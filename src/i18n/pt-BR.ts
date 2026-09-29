@@ -251,9 +251,10 @@ export const ptBR: Dictionary = {
   "artistCard.wikipedia": "Leia mais na Wikipédia",
   "artistCard.wikidata": "Ver na Wikidata",
 
-  "chips.all": "Todos",
-  "chips.storyline": "Narrativa",
-  "chips.more": "Mais",
+  "filters.category": "Categoria",
+  "filters.allCategories": "Todas as categorias",
+  "filters.palette": "Paleta",
+  "filters.allPalettes": "Todas as paletas",
 
   "facet.category.paintings-portraits": "Pinturas e retratos",
   "facet.category.sculpture-objects": "Esculturas e objetos",

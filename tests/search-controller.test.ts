@@ -34,6 +34,7 @@ function makeHost(overrides: Partial<SearchControllerHost> = {}) {
     getFilterBannerHtml: vi.fn(() => filterBannerHtml),
     clearSuggestions: vi.fn(),
     setResultsLine: vi.fn(),
+    setSearchLoading: vi.fn(),
     openSearchBar: vi.fn(),
     closeSearchBar: vi.fn(),
     pushHistory: vi.fn(),
@@ -161,6 +162,8 @@ describe("run", () => {
     expect(host.renderFeed).toHaveBeenCalled();
     expect(host.openSearchBar).toHaveBeenCalledWith("");
     expect(host.countMatches).not.toHaveBeenCalled();
+    // The panel reopens over the feed, same as a fresh open().
+    expect(host.setFeedScrollLocked).toHaveBeenCalledWith(true);
   });
 
   it("sets the active search and hands off to the filter banner on a literal match", async () => {
@@ -173,6 +176,29 @@ describe("run", () => {
     expect(host.pushHistory).toHaveBeenCalledWith("wheat field");
     expect(host.showFilterBanner).toHaveBeenCalled();
     expect(host.findCorrection).not.toHaveBeenCalled();
+    // The panel closes and the feed becomes the real content -- this is
+    // the one branch (with the concept-match branch) that should unlock it.
+    expect(host.setFeedScrollLocked).toHaveBeenCalledWith(false);
+  });
+
+  it("shows loading feedback for the round trip and always clears it, even on a match", async () => {
+    const host = makeHost({ countMatches: vi.fn(async () => 3) });
+    const controller = new SearchController(host);
+    await controller.run("wheat field");
+    expect(host.setSearchLoading).toHaveBeenNthCalledWith(1, true);
+    expect(host.setSearchLoading).toHaveBeenNthCalledWith(2, false);
+  });
+
+  it("still clears the loading state if countMatches rejects", async () => {
+    const host = makeHost({
+      countMatches: vi.fn(async () => {
+        throw new Error("network down");
+      }),
+    });
+    const controller = new SearchController(host);
+    await expect(controller.run("wheat field")).rejects.toThrow("network down");
+    expect(host.setSearchLoading).toHaveBeenNthCalledWith(1, true);
+    expect(host.setSearchLoading).toHaveBeenNthCalledWith(2, false);
   });
 
   it("offers a did-you-mean correction when nothing matches literally", async () => {
@@ -188,6 +214,46 @@ describe("run", () => {
       expect.stringContaining("wheat field"),
     );
     expect(host.renderFeed).toHaveBeenCalled();
+    // The panel stays open (it holds the correction button) over an
+    // unfiltered feed -- that feed must not become scrollable behind it.
+    expect(host.setFeedScrollLocked).toHaveBeenCalledWith(true);
+    expect(host.setFeedScrollLocked).not.toHaveBeenCalledWith(false);
+  });
+
+  it("a curated exact concept word wins over a same-edit-distance spelling guess at an unrelated word", async () => {
+    // Regression: a curated color word ("red") probing successfully used
+    // to run AFTER spelling correction, so a same-edit-distance real word
+    // ("read") could win a "did you mean" over the curated match, which
+    // never got a chance to be consulted first.
+    const host = makeHost({
+      countMatches: vi.fn(async () => 0),
+      findCorrection: vi.fn(async () => "read"),
+      fetchJson: vi.fn(async () => ({ items: [{ id: "1" }] })),
+    });
+    const controller = new SearchController(host);
+    await controller.run("red");
+    expect(host.setActiveConcept).toHaveBeenCalledWith({
+      label: "red tones",
+      filter: { palette_bucket: "Red" },
+    });
+    expect(host.findCorrection).not.toHaveBeenCalled();
+    expect(host.setResultsLine).not.toHaveBeenCalledWith(
+      expect.stringContaining("read"),
+    );
+  });
+
+  it("still offers spelling correction when a curated concept exists but its own probe finds nothing", async () => {
+    const host = makeHost({
+      countMatches: vi.fn(async () => 0),
+      findCorrection: vi.fn(async () => "armory"),
+      fetchJson: vi.fn(async () => ({ items: [] })), // the concept probe
+    });
+    const controller = new SearchController(host);
+    await controller.run("armor");
+    expect(host.findCorrection).toHaveBeenCalledWith("armor");
+    expect(host.setResultsLine).toHaveBeenCalledWith(
+      expect.stringContaining("armory"),
+    );
   });
 
   it("falls back to a curated concept match when there is no literal or corrected result", async () => {
@@ -207,6 +273,7 @@ describe("run", () => {
       "search_zero_results",
       expect.anything(),
     );
+    expect(host.setFeedScrollLocked).toHaveBeenCalledWith(false);
   });
 
   it("a color word resolves to the real (array-contains) palette_bucket filter, not the categorical palette column", async () => {
@@ -252,5 +319,8 @@ describe("run", () => {
     });
     expect(host.setActiveSearch).toHaveBeenCalledWith(null);
     expect(host.hideFilterBanner).toHaveBeenCalled();
+    // The panel stays open over an unfiltered feed here too.
+    expect(host.setFeedScrollLocked).toHaveBeenCalledWith(true);
+    expect(host.setFeedScrollLocked).not.toHaveBeenCalledWith(false);
   });
 });
