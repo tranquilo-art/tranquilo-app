@@ -357,7 +357,7 @@ async function buildReportMarkdown(client: any, days: any, label: any) {
     { total: total, byType: byType, byCategory: byCategory },
     { total: prevTotal, byType: prevByType, byCategory: prevByCategory },
   )}\n`;
-  md += `**Neon database size:** ${dbSizeMB}MB (of 500MB free-tier cap)\n\n`;
+  md += `**Neon database size:** ${dbSizeMB}MB\n\n`;
   md += `**Per-source image reachability (live sample, this run)**\n\n${mdTable(
     latencySamples.map((r: any) => [r[0], r[1], `${r[2]}ms`]),
     ["source", "result", "latency"],
