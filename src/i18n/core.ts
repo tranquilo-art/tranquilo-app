@@ -6,6 +6,9 @@ import { DEFAULT_LOCALE, type LocaleInfo } from "./locales.ts";
 
 type Lookupable = Readonly<Record<string, string | undefined>>;
 
+/** Matches the {name} placeholders used by translations and interpolation. */
+export const PLACEHOLDER_PATTERN = /\{(\w+)\}/g;
+
 function canonical(tag: string): string | undefined {
   try {
     return Intl.getCanonicalLocales(tag)[0];
@@ -96,7 +99,7 @@ export function interpolate(
 ): string {
   // A replacer function, not a replacement string, so "$&"-style patterns
   // in a value are inserted literally.
-  return template.replace(/\{(\w+)\}/g, (match, name: string) =>
+  return template.replace(PLACEHOLDER_PATTERN, (match, name: string) =>
     Object.hasOwn(params, name) ? String(params[name]) : match,
   );
 }
