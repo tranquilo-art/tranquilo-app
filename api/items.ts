@@ -29,6 +29,12 @@ import { getShelves } from "../lib/shelves.ts";
 // this handler instead of dedicated endpoints -- Vercel Hobby's
 // 12-function cap.
 import { getStoryline, getStorylineIndex } from "../lib/storylines.ts";
+import {
+  parseLocaleParam,
+  translateItems,
+  translateShelves,
+  translateStoryline,
+} from "../lib/translations.ts";
 
 // A raw JSON string is handled defensively even though the driver
 // normally parses JSONB already -- fails soft instead of shipping a
@@ -651,6 +657,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const params = req.query || {};
 
+  // ?locale= asks for translated content; absent means source text only.
+  let locale: string | null;
+  try {
+    locale = parseLocaleParam(params.locale);
+  } catch (err) {
+    res.statusCode = 400;
+    res.json({ error: (err as Error).message });
+    return;
+  }
+
   // Storylines/set-of-works: different tables, dispatched before
   // buildQuery(). Each has an eager index shape (small, always fetched)
   // and a lazy detail shape (fetched only when opened).
@@ -678,6 +694,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         res.json({ error: "No such storyline" });
         return;
       }
+      if (locale) await translateStoryline(client, storyline, locale);
       res.setHeader("Cache-Control", "public, max-age=60, s-maxage=300");
       res.json(storyline);
     } catch (err) {
@@ -729,6 +746,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (params.shape === "shelves") {
     try {
       shelves = await getShelves(client);
+      if (locale) await translateShelves(client, shelves, locale);
       res.setHeader("Cache-Control", "public, max-age=60, s-maxage=300");
       res.json(shelves);
     } catch (err) {
@@ -832,19 +850,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       } else {
         nextCursor = null;
       }
+      items = rows.map(serializeManifestRow);
+      if (locale) await translateItems(client, rows, items, locale);
       res.json({
-        items: rows.map(serializeManifestRow),
+        items: items,
         next_cursor: nextCursor,
       });
       return;
     }
 
     if (query.manifest) {
-      res.json(rows.map(serializeManifestRow));
+      items = rows.map(serializeManifestRow);
+      if (locale) await translateItems(client, rows, items, locale);
+      res.json(items);
       return;
     }
 
     items = rows.map(serializeRow);
+    if (locale) await translateItems(client, rows, items, locale);
 
     // Bounded and ranked, not paginated -- no cursor, same shape as the
     // My Collection / storyline-chapter / set-of-works lookups, which are

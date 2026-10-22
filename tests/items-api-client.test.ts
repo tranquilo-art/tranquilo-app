@@ -34,6 +34,24 @@ describe("apiUrl", () => {
     const client = new ItemsApiClient(1, 40);
     expect(client.apiUrl({ q: "a b&c" })).toBe("/api/items?q=a%20b%26c&v=1");
   });
+
+  it("asks for content in the page's language, so the cache keys on it", () => {
+    const client = new ItemsApiClient(7, 40, "pt-BR");
+    expect(client.apiUrl({ shape: "shelves" })).toBe(
+      "/api/items?shape=shelves&locale=pt-BR&v=7",
+    );
+  });
+});
+
+describe("fetchItemsByIds", () => {
+  it("asks for content in the page's language", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ items: [], missing: [] }));
+    const client = new ItemsApiClient(7, 40, "pt-BR");
+    await client.fetchItemsByIds(["a", "b,c"]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/items?ids=a&ids=b%2Cc&locale=pt-BR&v=7",
+    );
+  });
 });
 
 describe("fetchJson", () => {
