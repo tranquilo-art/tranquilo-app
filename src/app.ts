@@ -32,7 +32,13 @@ import { renderErrorState } from "./errorState";
 import { buildEmptyCollectionSlide, buildIntroSlide } from "./feed/introSlides";
 import { createRecycleWindow } from "./feed/recycleWindow";
 import { createSlideBuilder } from "./feed/slideBuilder";
-import { applyDocumentLocale, formatNumber, t, tHtml } from "./i18n/index";
+import {
+  applyDocumentLocale,
+  currentLocale,
+  formatNumber,
+  t,
+  tHtml,
+} from "./i18n/index";
 import type { ITopbarHost } from "./types/ITopbarHost";
 import type { ITranquiloDetailModalHost } from "./types/ITranquiloDetailModalHost";
 import type { ITranquiloExportModalHost } from "./types/ITranquiloExportModalHost";
@@ -136,7 +142,11 @@ class TranquiloApp {
     // scans for a same-artist/category swap.
     const FEED_PAGE_SIZE = TRANQUILO_CONFIG.feed.page_size;
 
-    const itemsApi = new ItemsApiClient(CACHE_BUST_VERSION, FEED_PAGE_SIZE);
+    const itemsApi = new ItemsApiClient(
+      CACHE_BUST_VERSION,
+      FEED_PAGE_SIZE,
+      currentLocale(),
+    );
     function apiUrl(params: any) {
       return itemsApi.apiUrl(params);
     }

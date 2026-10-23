@@ -5,10 +5,20 @@
 // shelves, hero shelves), since moving only the feed wouldn't have
 // removed the full-catalogue download.
 export class ItemsApiClient {
+  // `locale` asks the API for translated content; the URL is the CDN cache
+  // key, so each language is cached separately.
   constructor(
     private cacheBustVersion: number,
     private feedPageSize: number,
+    private locale?: string,
   ) {}
+
+  private suffix(): string {
+    const locale = this.locale
+      ? `&locale=${encodeURIComponent(this.locale)}`
+      : "";
+    return `${locale}&v=${this.cacheBustVersion}`;
+  }
 
   apiUrl(params: Record<string, unknown>): string {
     const qs = Object.keys(params)
@@ -21,7 +31,7 @@ export class ItemsApiClient {
           `${encodeURIComponent(k)}=${encodeURIComponent(String(params[k]))}`,
       )
       .join("&");
-    return `/api/items?${qs}&v=${this.cacheBustVersion}`;
+    return `/api/items?${qs}${this.suffix()}`;
   }
 
   fetchJson(url: string, what: string): Promise<any> {
@@ -134,13 +144,11 @@ export class ItemsApiClient {
     // native_ids contain commas (real filenames), and comma-joining tore
     // those into ids matching nothing, rendering permanently blank slides.
     const query = ids.map((id) => `ids=${encodeURIComponent(id)}`).join("&");
-    return fetch(`/api/items?${query}&v=${this.cacheBustVersion}`).then(
-      (res) => {
-        if (!res.ok) {
-          throw new Error(`api/items lookup responded with ${res.status}`);
-        }
-        return res.json();
-      },
-    );
+    return fetch(`/api/items?${query}${this.suffix()}`).then((res) => {
+      if (!res.ok) {
+        throw new Error(`api/items lookup responded with ${res.status}`);
+      }
+      return res.json();
+    });
   }
 }

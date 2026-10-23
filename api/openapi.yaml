@@ -136,6 +136,18 @@ paths:
             Not valid together with `shape=manifest` (the plain,
             non-shuffled manifest is never paged).
           schema: { type: string }
+        - name: locale
+          in: query
+          description: >-
+            Language to return content in, as a code from the site's locale
+            registry (e.g. "pt-BR"), matched case-insensitively; an unknown
+            code is a 400. Applies to item rows (full and manifest),
+            `shape=storyline` and `shape=shelves`: each translatable field is
+            replaced by an approved translation of its current text, trying
+            the requested locale and then English, and keeps its source text
+            when there is none. Every replaced field is listed under the
+            object's `translated`. Without `locale`, no field is translated.
+          schema: { type: string }
       responses:
         "200":
           description: >-
@@ -632,6 +644,7 @@ components:
       description: A full catalogue row, as returned in a paged/lookup response.
       properties:
         id: { type: string, description: "native_id" }
+        translated: { $ref: "#/components/schemas/Translated" }
         source: { type: string, enum: [met, smithsonian, cleveland, commons, europeana, npm, wellcome, nga, tepapa, tainacan] }
         title: { type: string, nullable: true }
         artist: { type: string, nullable: true }
@@ -697,6 +710,7 @@ components:
         id: { type: string }
         source: { type: string }
         title: { type: string, nullable: true }
+        translated: { $ref: "#/components/schemas/Translated" }
         artist: { type: string, nullable: true }
         category: { type: string, nullable: true }
         timeframe: { type: string, nullable: true }
@@ -816,6 +830,7 @@ components:
         id: { type: string }
         title: { type: string }
         intro_caption: { type: string }
+        translated: { $ref: "#/components/schemas/Translated" }
         cover_item_id: { type: string }
         items:
           type: array
@@ -824,6 +839,7 @@ components:
             properties:
               item_id: { type: string }
               chapter_caption: { type: string, nullable: true }
+              translated: { $ref: "#/components/schemas/Translated" }
     Shelf:
       type: object
       description: 'One entry of `?shape=shelves`''s array response, in Discover display order.'
@@ -831,6 +847,7 @@ components:
       properties:
         id: { type: string }
         title: { type: string }
+        translated: { $ref: "#/components/schemas/Translated" }
         type: { type: string, enum: [hero, rule] }
         itemIds:
           type: array
@@ -902,6 +919,21 @@ components:
         context: { type: string, maxLength: 300 }
         email: { type: string, format: email, maxLength: 200, description: Optional -- anonymous feedback is allowed. }
         locale: { $ref: "#/components/schemas/RequestLocale" }
+    Translated:
+      type: object
+      description: >-
+        Present only when `locale` replaced at least one field: one entry per
+        replaced field, keyed by field name.
+      additionalProperties:
+        type: object
+        required: [origin, locale, original]
+        properties:
+          origin:
+            type: string
+            enum: [original, human]
+            description: '`original` is the source''s own text in that language; `human` is a reviewed translation.'
+          locale: { type: string, description: Locale of the text now in the field. }
+          original: { type: string, description: The source text it replaced. }
     RequestLocale:
       type: string
       description: >-
