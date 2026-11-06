@@ -53,7 +53,7 @@ test("Journey: homepage -> scroll -> details -> lightbox", async ({ page }) => {
 test("Journey: category -> scroll -> details -> lightbox", async ({ page }) => {
   const feed = await gotoFeed(page);
   // Pick the category with the most items to have something to scroll to.
-  const chipIndex = await page.evaluate(() => {
+  const best = await page.evaluate(() => {
     const counts: Record<string, number> = {};
     document
       .querySelectorAll<HTMLElement>("#feed .slide[data-category]")
@@ -61,16 +61,13 @@ test("Journey: category -> scroll -> details -> lightbox", async ({ page }) => {
         const cat = s.dataset.category || "";
         counts[cat] = (counts[cat] || 0) + 1;
       });
-    const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
-    return [...document.querySelectorAll("#chips button")].findIndex(
-      (b) => b.textContent.trim() === best,
-    );
+    return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
   });
   // A category selection re-renders asynchronously; without waiting, the
   // count below races the fetch and can catch the feed mid-clear.
-  await actAndSettle(page, () =>
-    page.locator("#chips button").nth(chipIndex).click(),
-  );
+  await actAndSettle(page, async () => {
+    await page.locator("#categorySelect").selectOption(best);
+  });
 
   const count = await feed.locator(".slide").count();
   expect(count).toBeGreaterThan(6);

@@ -508,6 +508,21 @@ export async function stubBackend(
           )
           .map(([value, count]) => ({ value, count }));
       };
+      // Array-valued, unlike every other field above -- one tally
+      // entry per distinct bucket an item's palette_buckets carries, an
+      // item counted once per value it has (mirrors the real backend's
+      // unnest(palette_buckets) groupArray(), not a plain tally()).
+      const tallyArray = (field: string) => {
+        const counts = new Map<string, number>();
+        for (const i of keyed) {
+          const values = i[field];
+          if (!Array.isArray(values)) continue;
+          for (const v of values) counts.set(v, (counts.get(v) || 0) + 1);
+        }
+        return [...counts.entries()]
+          .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(b[0]))
+          .map(([value, count]) => ({ value, count }));
+      };
       return json({
         categories: tally("category"),
         sources: tally("source"),
@@ -516,6 +531,7 @@ export async function stubBackend(
         era: tally("timeframe", 10),
         type: tally("media_type", 10),
         color: tally("palette", 10),
+        palette_bucket: tallyArray("palette_buckets"),
         total: keyed.length,
       });
     }
@@ -645,6 +661,18 @@ export async function stubBackend(
     if (artist) rows = rows.filter((i) => i.artist === artist);
     if (url.searchParams.get("has_storyline") === "1") {
       rows = rows.filter((i) => i.storyline_ids && i.storyline_ids.length > 0);
+    }
+    // Array-contains, same as the real palette_buckets @>
+    // ARRAY[...] filter -- composes with every other filter above on the
+    // ordinary feed (the Palette dropdown, or a per-item swatch tap when
+    // no vibe search is active).
+    const paletteBucket = url.searchParams.get("palette_bucket");
+    if (paletteBucket) {
+      rows = rows.filter(
+        (i) =>
+          Array.isArray(i.palette_buckets) &&
+          i.palette_buckets.includes(paletteBucket),
+      );
     }
 
     // The shuffle-ordered feed page: seek past the cursor (or the session's

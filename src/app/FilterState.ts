@@ -1,9 +1,11 @@
 import type { ActiveConcept } from "./SearchController";
 
-// The feed's current filter. Exactly one of category/artist/search/concept/
+// The feed's current filter. Exactly one of artist/search/concept/
 // collectionFilter is the "mode" driving renderFeed() at a time;
-// storylineFilter composes with whichever mode is active rather than
-// replacing it. bannerHtml is the one-line summary of the active mode,
+// category/paletteBucket/storylineFilter each compose with whichever
+// mode is active rather than replacing it -- category and paletteBucket
+// are what the Category/Palette dropdowns drive, each independently
+// settable. bannerHtml is the one-line summary of the active mode,
 // updated or cleared on every filter transition.
 //
 // A plain state container, not a decision-maker: app.ts owns which fields
@@ -16,12 +18,23 @@ export class FilterState {
   private collectionFilter = false;
   private storylineFilter = false;
   private bannerHtml: string | null = null;
+  // The Palette dropdown's own selection (also settable per-item
+  // via a palette swatch) -- independent of category, composed into
+  // the ordinary feed's palette_bucket facet.
+  private paletteBucket: string | null = null;
 
   getCategory(): string {
     return this.category;
   }
   setCategory(v: string): void {
     this.category = v;
+  }
+
+  getPaletteBucket(): string | null {
+    return this.paletteBucket;
+  }
+  setPaletteBucket(v: string | null): void {
+    this.paletteBucket = v;
   }
 
   getArtist(): string | null {
@@ -75,6 +88,7 @@ export class FilterState {
       concept: this.concept,
       collectionFilter: this.collectionFilter,
       storylineFilter: this.storylineFilter,
+      paletteBucket: this.paletteBucket,
     };
   }
 }

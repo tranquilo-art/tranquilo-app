@@ -55,9 +55,9 @@ test.describe("on a ?lang=pt-BR preview", () => {
     await page.locator("#languageMenu [lang=en]").click();
 
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
-    await expect(page.locator('button.chip[data-category="All"]')).toHaveText(
-      "All",
-    );
+    await expect(
+      page.locator('#categorySelect option[value="All"]'),
+    ).toHaveText("All Categories");
     // The preview link's ?lang= must not survive the switch, or it would
     // undo the choice on the next reload.
     expect(new URL(page.url()).searchParams.has("lang")).toBe(false);

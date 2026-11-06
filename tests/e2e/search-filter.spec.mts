@@ -26,7 +26,9 @@ test("Search: narrows the feed to matching items", async ({ page }) => {
 
   // Chosen from the fixture rather than hardcoded, so this can't silently
   // become a no-op if the fixture is recaptured.
-  const term = ITEMS.find((i: any) => i.artist && i.artist.length > 4)
+  const term = ITEMS.find(
+    (i: { artist?: string }) => i.artist && i.artist.length > 4,
+  )
     .artist.split(" ")
     .pop();
   await search(page, term);
@@ -133,21 +135,26 @@ test("Search: submitting an empty query is what restores the full feed", async (
   await expect(page.locator("#filterBanner")).toBeHidden();
 });
 
-test("Search: the chips row yields to the banner, and comes back", async ({
+test("Search: the filter dropdowns and the banner coexist, and the banner still clears", async ({
   page,
 }) => {
-  // The banner and the chips are alternatives, not neighbours -- the
-  // banner moved inside the topbar, into the slot the chips vacate, so the
-  // header keeps its height with no layout jump on searching. What's still
-  // worth pinning: no dead space between the header and the feed. Pinned to
-  // a phone viewport since the topbar only stacks into two rows there.
+  // The category-chip row (which the banner used to have to
+  // swap out for -- "alternatives, not neighbours") became two
+  // always-visible, independently composable dropdowns (Category/
+  // Palette); those keep showing/controlling their own filters
+  // regardless of whether a literal search or word concept is also
+  // active, so the banner now stacks with them rather than replacing
+  // them. What's still worth pinning: no dead space between the header
+  // and the feed, and clearing the banner leaves the dropdowns exactly
+  // as they were. Pinned to a phone viewport since the topbar only
+  // stacks into two rows there.
   await page.setViewportSize({ width: 390, height: 844 });
   await gotoFeed(page);
   const chips = page.locator("#chips");
   await expect(chips).toBeVisible();
 
   await search(page, "portrait");
-  await expect(chips).toBeHidden();
+  await expect(chips).toBeVisible();
 
   const banner = page.locator("#filterBanner");
   await expect(banner).toBeVisible();
@@ -193,10 +200,13 @@ test("Search: the banner survives scrolling through the results", async ({
 test("Filter: a category chip shows only that category", async ({ page }) => {
   const feed = await gotoFeed(page);
 
-  // Skip "All"; take the first real category chip.
-  const chip = page.locator("#chips button").nth(1);
-  const label = (await chip.textContent())!.trim();
-  await actAndSettle(page, () => chip.click());
+  // Category chips became a Category dropdown. Skip "All
+  // Categories"; take the first real option.
+  const select = page.locator("#categorySelect");
+  const label = (await select.locator("option").nth(1).textContent())!.trim();
+  await actAndSettle(page, async () => {
+    await select.selectOption({ index: 1 });
+  });
 
   const categories = await feed
     .locator(".slide[data-category]")
@@ -207,16 +217,20 @@ test("Filter: a category chip shows only that category", async ({ page }) => {
 
 test("Filter: switching back to All restores every item", async ({ page }) => {
   const feed = await gotoFeed(page);
-  const chip = page.locator("#chips button").nth(1);
-  const label = (await chip.textContent())!.trim();
+  const select = page.locator("#categorySelect");
+  const label = (await select.locator("option").nth(1).textContent())!.trim();
 
-  await actAndSettle(page, () => chip.click());
+  await actAndSettle(page, async () => {
+    await select.selectOption({ index: 1 });
+  });
   const filtered = await feed
     .locator(".slide[data-category]")
     .evaluateAll((els) => [...new Set(els.map((e) => e.dataset.category))]);
   expect(filtered).toEqual([label]);
 
-  await actAndSettle(page, () => page.locator("#chips button").nth(0).click());
+  await actAndSettle(page, async () => {
+    await select.selectOption({ index: 0 });
+  });
   const restored = await feed
     .locator(".slide[data-category]")
     .evaluateAll((els) => [...new Set(els.map((e) => e.dataset.category))]);
@@ -232,7 +246,9 @@ test("Filter: the recycling window still bounds a filtered feed", async ({
   // resetRecycleWindow() were missed, the stale hydrated band would leak
   // across the re-render.
   const _feed = await gotoFeed(page);
-  await actAndSettle(page, () => page.locator("#chips button").nth(1).click());
+  await actAndSettle(page, async () => {
+    await page.locator("#categorySelect").selectOption({ index: 1 });
+  });
   // Waits for the window to have built something first, since it fills on
   // requestAnimationFrame after the render settles.
   await expect

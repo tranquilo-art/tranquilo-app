@@ -15,9 +15,16 @@ export interface FeedFilterState {
   category: string;
   artist: string | null;
   search: string | null;
-  concept: { label: string; filter: Record<string, unknown> } | null;
+  concept: {
+    label: string;
+    filter: Record<string, unknown>;
+  } | null;
   collectionFilter: boolean;
   storylineFilter: boolean;
+  // The Palette dropdown's own selection, or one set by tapping a
+  // per-item palette swatch -- composes with whichever mode above is
+  // active, merged into the ordinary feed's params.
+  paletteBucket: string | null;
 }
 
 export interface ITranquiloFeedHost {

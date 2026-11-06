@@ -103,8 +103,8 @@ test("a legacy save still reads as collected and can be un-collected", async ({
     ([k, v]) => localStorage.setItem(k, JSON.stringify([v])),
     [COLLECTION_KEY, bareId],
   );
-  await page.locator("#chips button").nth(1).click();
-  await page.locator("#chips button").nth(0).click();
+  await page.locator("#categorySelect").selectOption({ index: 1 });
+  await page.locator("#categorySelect").selectOption({ index: 0 });
 
   const target = page.locator(`#feed .slide[data-slug="${slug}"]`);
   await target.scrollIntoViewIfNeeded();

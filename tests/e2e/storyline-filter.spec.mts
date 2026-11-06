@@ -1,18 +1,35 @@
-// A Storyline chip, so storyline art can be looked for rather than
-// stumbled upon. Usage data (category_filter: 238 events vs search_submit's
-// 37) shows filtering is the primary navigation method in this UI, not a
-// power-user fallback. The predicate runs client-side safely only because
-// storyline_ids is already in the manifest, and it applies after the
-// existing filter chain so it ANDs with whatever is already active.
+// The "Has storyline" filter, so storyline art can be looked for rather
+// than stumbled upon. Lives inside the search panel now, not a topbar
+// chip -- the chips row and the filter banner are alternatives, never
+// both visible at once, so a chip there disappeared (with no way to
+// toggle it) the moment any search or concept was active, exactly the
+// combination this filter exists for. The predicate runs client-side
+// safely only because storyline_ids is already in the manifest, and it
+// applies after the existing filter chain so it ANDs with whatever is
+// already active.
+import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 import { actAndSettle, gotoFeed, ITEMS } from "./harness.mts";
 
-const STORYLINE_CHIP = "#storylineChip";
+const STORYLINE_CHECKBOX = "#storylineFilterCheckbox";
 
-function taggedInFixture() {
+interface FixtureItem {
+  id: string | number;
+  source?: string;
+  artist: string;
+  category: string;
+  storyline_ids?: unknown[] | null;
+}
+
+function taggedInFixture(): FixtureItem[] {
   return ITEMS.filter(
-    (i: any) => i.storyline_ids && i.storyline_ids.length > 0,
+    (i: FixtureItem) => i.storyline_ids && i.storyline_ids.length > 0,
   );
+}
+
+async function openSearchPanel(page: Page) {
+  await page.locator("#searchToggle").click();
+  await expect(page.locator("#searchBar")).toBeVisible();
 }
 
 test("the fixture actually has storyline items to filter to", async () => {
@@ -20,15 +37,14 @@ test("the fixture actually has storyline items to filter to", async () => {
   expect(taggedInFixture().length).toBeGreaterThan(0);
 });
 
-test("the chip narrows the feed to items that have a storyline", async ({
+test("checking it narrows the feed to items that have a storyline, with no query typed", async ({
   page,
 }) => {
   const feed = await gotoFeed(page);
   const all = await feed.locator(".slide").count();
+  await openSearchPanel(page);
 
-  // renderFeed() is asynchronous, so the click must be awaited to
-  // completion, or reading straight after races the fetch.
-  await actAndSettle(page, () => page.locator(STORYLINE_CHIP).click());
+  await actAndSettle(page, () => page.locator(STORYLINE_CHECKBOX).check());
 
   // data-slug counts real item slides; `.slide` also matches the intro slide.
   const after = await feed.locator(".slide[data-slug]").count();
@@ -41,34 +57,36 @@ test("every slide left really carries a storyline", async ({ page }) => {
   // Counting isn't enough: the right number of the wrong items would pass
   // the test above.
   const feed = await gotoFeed(page);
-  await actAndSettle(page, () => page.locator(STORYLINE_CHIP).click());
+  await openSearchPanel(page);
+  await actAndSettle(page, () => page.locator(STORYLINE_CHECKBOX).check());
 
   const slugs = await feed
     .locator(".slide[data-slug]")
     .evaluateAll((els) => els.map((e) => e.dataset.slug));
-  const tagged = new Set(
-    taggedInFixture().map((i: any) => `${i.source || "met"}-${i.id}`),
+  const tagged = new Set<string | undefined>(
+    taggedInFixture().map((i) => `${i.source || "met"}-${i.id}`),
   );
   for (const slug of slugs) expect(tagged.has(slug)).toBe(true);
 });
 
-test("toggling it off restores the whole feed", async ({ page }) => {
+test("unchecking it restores the whole feed", async ({ page }) => {
   // Asserts membership rather than a slide count, since each paged render
   // begins at a new random offset and two renders legitimately differ in
   // length.
   const feed = await gotoFeed(page);
-  const tagged = new Set(
-    taggedInFixture().map((i: any) => `${i.source || "met"}-${i.id}`),
+  const tagged = new Set<string | undefined>(
+    taggedInFixture().map((i) => `${i.source || "met"}-${i.id}`),
   );
+  await openSearchPanel(page);
 
-  await actAndSettle(page, () => page.locator(STORYLINE_CHIP).click());
+  await actAndSettle(page, () => page.locator(STORYLINE_CHECKBOX).check());
   const filtered = await feed
     .locator(".slide[data-slug]")
     .evaluateAll((els) => els.map((e) => e.dataset.slug));
   expect(filtered.length).toBeGreaterThan(0);
   for (const slug of filtered) expect(tagged.has(slug)).toBe(true);
 
-  await actAndSettle(page, () => page.locator(STORYLINE_CHIP).click());
+  await actAndSettle(page, () => page.locator(STORYLINE_CHECKBOX).uncheck());
   const restored = await feed
     .locator(".slide[data-slug]")
     .evaluateAll((els) => els.map((e) => e.dataset.slug));
@@ -79,11 +97,13 @@ test("it ANDs with a category rather than replacing it", async ({ page }) => {
   const feed = await gotoFeed(page);
 
   const category = taggedInFixture()[0].category;
-  const chip = page.locator("#chips button", { hasText: category }).first();
-  await actAndSettle(page, () => chip.click());
+  await actAndSettle(page, async () => {
+    await page.locator("#categorySelect").selectOption(category);
+  });
   const inCategory = await feed.locator(".slide").count();
 
-  await actAndSettle(page, () => page.locator(STORYLINE_CHIP).click());
+  await openSearchPanel(page);
+  await actAndSettle(page, () => page.locator(STORYLINE_CHECKBOX).check());
   const both = await feed.locator(".slide").count();
 
   expect(both).toBeGreaterThan(0);
@@ -95,20 +115,59 @@ test("it ANDs with a category rather than replacing it", async ({ page }) => {
   expect(categories).toEqual([category]);
 });
 
-test("the chip reads as active when it is on", async ({ page }) => {
-  const _feed = await gotoFeed(page);
-  const chip = page.locator(STORYLINE_CHIP);
-  await expect(chip).not.toHaveClass(/active/);
-  await chip.click();
-  await expect(chip).toHaveClass(/active/);
-  await chip.click();
-  await expect(chip).not.toHaveClass(/active/);
+test("it also ANDs with a live search, unlike the old topbar chip it replaced", async ({
+  page,
+}) => {
+  // The whole reason this moved into the search panel: a topbar chip
+  // living in the same row as the category chips vanished (with no way
+  // to toggle it) the moment a search/concept made the filter banner
+  // take over from the chips row -- this combination was previously
+  // unreachable through the UI at all.
+  const feed = await gotoFeed(page);
+  const term = ITEMS.find((i: FixtureItem) => i.artist && i.artist.length > 4)
+    .artist.split(" ")
+    .pop();
+
+  await openSearchPanel(page);
+  await page.locator("#searchInput").fill(term);
+  await actAndSettle(page, () => page.locator("#searchSubmit").click());
+
+  await openSearchPanel(page);
+  await expect(page.locator(STORYLINE_CHECKBOX)).toBeVisible();
+  await actAndSettle(page, () => page.locator(STORYLINE_CHECKBOX).check());
+
+  const slugs = await feed
+    .locator(".slide[data-slug]")
+    .evaluateAll((els) => els.map((e) => e.dataset.slug));
+  const tagged = new Set<string | undefined>(
+    taggedInFixture().map((i) => `${i.source || "met"}-${i.id}`),
+  );
+  for (const slug of slugs) expect(tagged.has(slug)).toBe(true);
 });
 
-test("it uses the same word as the item-level chip", async ({ page }) => {
-  // Singular, deliberately: "Storyline" is what the item-level chip already says.
+test("it reads as checked when it is on", async ({ page }) => {
   await gotoFeed(page);
-  await expect(page.locator(STORYLINE_CHIP)).toHaveText(/^Storyline$/);
+  await openSearchPanel(page);
+  const checkbox = page.locator(STORYLINE_CHECKBOX);
+  await expect(checkbox).not.toBeChecked();
+  await checkbox.check();
+  await expect(checkbox).toBeChecked();
+  await checkbox.uncheck();
+  await expect(checkbox).not.toBeChecked();
+});
+
+test("stays in sync with reality even after the panel is closed and reopened", async ({
+  page,
+}) => {
+  await gotoFeed(page);
+  await openSearchPanel(page);
+  await actAndSettle(page, () => page.locator(STORYLINE_CHECKBOX).check());
+
+  await page.locator("#searchClose").click();
+  await expect(page.locator("#searchBar")).toBeHidden();
+
+  await openSearchPanel(page);
+  await expect(page.locator(STORYLINE_CHECKBOX)).toBeChecked();
 });
 
 test("toggling it reports one analytics event", async ({ page }) => {
@@ -121,7 +180,8 @@ test("toggling it reports one analytics event", async ({ page }) => {
     return route.fulfill({ status: 204, body: "" });
   });
 
-  await page.locator(STORYLINE_CHIP).click();
+  await openSearchPanel(page);
+  await page.locator(STORYLINE_CHECKBOX).check();
 
   await expect
     .poll(

@@ -67,13 +67,18 @@ test("it reflects the query and the result count", async ({ page }) => {
   expect(text).toContain("a");
 });
 
-test("the category chips are hidden while it is up", async ({ page }) => {
+test("the filter dropdowns stay visible alongside it", async ({ page }) => {
+  // The category-chip row became two always-visible,
+  // independently composable dropdowns (Category/Palette) that
+  // keep controlling their own filters regardless of whether a search is
+  // also active -- unlike the chip row they replaced, they no longer
+  // vacate for the banner.
   await gotoFeed(page);
   await search(page, "a");
   const display = await page.evaluate(
     () => getComputedStyle(document.querySelector(".chips")!).display,
   );
-  expect(display).toBe("none");
+  expect(display).not.toBe("none");
 });
 
 test("the icons stay clustered, now held by the banner instead of the chips", async ({

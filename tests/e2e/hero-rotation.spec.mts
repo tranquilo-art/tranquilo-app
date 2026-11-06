@@ -96,27 +96,16 @@ test("the same session keeps its opening across a category round-trip", async ({
   const before = await openingTitles(page, 3);
   expect(before.length).toBeGreaterThan(0);
 
-  const chips = page.locator("#chips .chip, .chips .chip");
-  const count = await chips.count();
-  expect(count, "category chips should render").toBeGreaterThan(1);
+  // Category chips became a single Category dropdown.
+  const categorySelect = page.locator("#categorySelect");
+  const options = await categorySelect.locator("option").allTextContents();
+  const label = options.find((o) => o !== "All Categories");
+  expect(label, "a real category option should exist").toBeTruthy();
 
-  let clicked = false;
-  for (let i = 0; i < count; i++) {
-    const label = ((await chips.nth(i).textContent()) || "").trim();
-    if (label && label !== "All" && label !== "Storyline") {
-      await chips.nth(i).click();
-      clicked = true;
-      break;
-    }
-  }
-  expect(clicked, "found a category chip to filter by").toBe(true);
+  await categorySelect.selectOption({ label: label! });
   await page.waitForFunction(() => (window.__tranquiloFeedRenders || 0) > 1);
 
-  await page
-    .locator("#chips .chip, .chips .chip")
-    .filter({ hasText: /^All$/ })
-    .first()
-    .click();
+  await categorySelect.selectOption({ label: "All Categories" });
   await page.waitForFunction(() => (window.__tranquiloFeedRenders || 0) > 2);
 
   expect((await openingTitles(page, 3)).join("|")).toBe(before.join("|"));

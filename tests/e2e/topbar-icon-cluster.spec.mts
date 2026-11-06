@@ -31,18 +31,21 @@ test("the icons sit together before a search", async ({ page }) => {
   expect(await iconSpread(page)).toBeLessThan(CLUSTERED_MAX_PX);
 });
 
-test("they stay together once the chips are hidden by a search", async ({
+test("they stay together once a search hands off to the filter banner", async ({
   page,
 }) => {
-  // The chips row is what used to hold them in place; nothing should
-  // depend on a sibling being present.
+  // The chip row that used to hold them in place (and hide
+  // itself for the banner) became three always-visible dropdowns that
+  // never hide -- so this now checks the same clustering with the
+  // banner showing ALONGSIDE the dropdowns, not replacing them.
   await gotoFeed(page);
   await page.locator("#searchToggle").click();
   await page.locator("#searchInput").fill("a");
   await page.keyboard.press("Enter");
   await page.waitForFunction(
     () =>
-      getComputedStyle(document.querySelector(".chips")!).display === "none",
+      getComputedStyle(document.querySelector("#filterBanner")!).display !==
+      "none",
     null,
     { timeout: 5000 },
   );
@@ -58,10 +61,12 @@ test("they stay together once the chips are hidden by a search", async ({
 test("they stay together while the search PANEL is still open", async ({
   page,
 }) => {
-  // .filter-banner takes the chips' slot with flex:1 so the row always has
-  // a growing element, but openSearch() hides the banner too while the
-  // panel covers that space -- with both hidden, space-between scatters
-  // the icons. Measured before the fix: 980px spread at a 1440px viewport.
+  // openSearch() hides the banner while the panel covers that space --
+  // The chip row that used to also hide in this state (leaving
+  // NOTHING to occupy the middle flex slot, scattering the icons under
+  // space-between; measured before that fix: 980px spread at a 1440px
+  // viewport) is now three dropdowns that stay visible throughout, so
+  // they're what occupies that slot here instead.
   await gotoFeed(page);
   await page.locator("#searchToggle").click();
   await page.locator("#searchInput").fill("play");
@@ -71,7 +76,7 @@ test("they stay together while the search PANEL is still open", async ({
     () => {
       const vis = (s: string) =>
         getComputedStyle(document.querySelector(s)!).display !== "none";
-      return vis("#searchBar") && !vis(".chips") && !vis(".filter-banner");
+      return vis("#searchBar") && vis(".chips") && !vis(".filter-banner");
     },
     null,
     { timeout: 5000 },
