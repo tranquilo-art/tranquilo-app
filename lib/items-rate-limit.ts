@@ -59,11 +59,12 @@ export const ACQUIRE_SQL =
   "      * visitor_fetch_state.refill_per_sec) >= $2::real " +
   "RETURNING tokens";
 
-type BudgetKind = "items" | "detail";
+type BudgetKind = "items" | "detail" | "quote";
 
 const configured = (): Limits => TRANQUILO_CONFIG.items_visitor_rate_limit;
 const configuredDetail = (): Limits =>
   TRANQUILO_CONFIG.detail_visitor_rate_limit;
+const configuredQuote = (): Limits => TRANQUILO_CONFIG.quote_visitor_rate_limit;
 
 // One token for an aggregate answer, one per row for anything that returns
 // items.
@@ -152,6 +153,16 @@ export async function detailRateLimitOrRespond(
   limits: Limits = configuredDetail(),
 ): Promise<boolean> {
   return rateLimitOrRespond(sql, req, res, 1, limits, "detail");
+}
+
+// One Gelato quote costs one token from a bucket of its own.
+export async function quoteRateLimitOrRespond(
+  sql: QuerySql | null | undefined,
+  req: RequestWithHeaders,
+  res: RateLimitResponse,
+  limits: Limits = configuredQuote(),
+): Promise<boolean> {
+  return rateLimitOrRespond(sql, req, res, 1, limits, "quote");
 }
 
 async function rateLimitOrRespond(

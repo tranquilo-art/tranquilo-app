@@ -6,6 +6,32 @@ type FixtureItem = { id: string | number; title?: string; img?: string };
 
 const BASE = ITEMS.find((i: FixtureItem) => i.title && i.img);
 
+const COUNTRY_OF_REGION: Record<string, string> = {
+  uk: "GB",
+  us: "US",
+  br: "BR",
+  eu: "DE",
+  ca: "CA",
+  au: "AU",
+};
+
+let quoteRequests: URL[] = [];
+
+function quoteBody(product: string, country: string) {
+  const reais = country === "BR";
+  return {
+    available: true,
+    total: reais ? 120.5 : 24.5,
+    item: reais ? 90.5 : 19.6,
+    delivery: reais ? 30 : 4.9,
+    currency: reais ? "BRL" : "USD",
+    minDays: 5,
+    maxDays: 9,
+    madeIn: "DE",
+    product,
+  };
+}
+
 async function openDetail(
   page: Page,
   {
@@ -13,11 +39,13 @@ async function openDetail(
     region,
     search = "?print=preview",
     extra = {},
+    quote,
   }: {
     master: [number, number] | null;
     region: string | null;
     search?: string;
     extra?: Record<string, unknown>;
+    quote?: (product: string, country: string) => Record<string, unknown> | 502;
   },
 ) {
   const item = {
@@ -35,7 +63,26 @@ async function openDetail(
     return route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ country: region ? "US" : "BR", region }),
+      body: JSON.stringify({
+        country: region ? COUNTRY_OF_REGION[region] : "JP",
+        region,
+      }),
+    });
+  });
+  quoteRequests = [];
+  await page.route("**/api/items?shape=print_quote**", (route: Route) => {
+    const url = new URL(route.request().url());
+    quoteRequests.push(url);
+    const product = url.searchParams.get("product") ?? "";
+    const country = url.searchParams.get("country") ?? "";
+    const answer = quote
+      ? quote(product, country)
+      : quoteBody(product, country);
+    if (answer === 502) return route.fulfill({ status: 502, body: "{}" });
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(answer),
     });
   });
   await page.goto(
@@ -178,31 +225,87 @@ test("mock-ups stay blurred while the artwork is behind the nudity gate", async 
   await expect.poll(filter).toBe("none");
 });
 
-test("shows an estimated price in the region's currency", async ({ page }) => {
+test("shows the live price with approximate delivery", async ({ page }) => {
   await openDetail(page, { master: [3192, 4000], region: "uk" });
   await page.locator("#detailModal .btn-print").click();
-  await expect(
-    page.locator('#detailModal [data-product="poster"] .print-price'),
-  ).toHaveText(/£24/);
+  const poster = page.locator('#detailModal [data-product="poster"]');
+  await expect(poster.locator(".print-price")).toHaveText("$24.50");
+  await expect(poster.locator(".print-delivery")).toContainText("$4.90");
+  await expect(poster.locator(".print-delivery")).toContainText("5–9 days");
   await expect(page.locator("#detailModal .print-panel")).toContainText(
-    /delivery included/i,
+    /delivery.*approximate/i,
   );
+  expect(
+    quoteRequests.map((u) => u.searchParams.get("product")).sort(),
+  ).toEqual(["framed", "mini_print", "poster", "tote"]);
+  const sent = quoteRequests[0].searchParams;
+  expect(sent.get("country")).toBe("GB");
+  expect(sent.get("key")).toMatch(/:/);
 });
 
-test("tells a Brazilian buyer they owe import taxes", async ({ page }) => {
+test("quotes Brazil in reais and tells the buyer they owe import taxes", async ({
+  page,
+}) => {
   await openDetail(page, { master: [3192, 4000], region: "br" });
   await page.locator("#detailModal .btn-print").click();
   await expect(page.locator("#detailModal .print-option")).toHaveCount(2);
   await expect(
-    page.locator('#detailModal [data-product="poster"] .print-price'),
-  ).toHaveCount(0);
-  await expect(
     page.locator('#detailModal [data-product="mug"] .print-price'),
-  ).toHaveText("R$66.00 +");
+  ).toHaveText("R$120.50");
   const panel = page.locator("#detailModal .print-panel");
   await expect(panel).toContainText(/import taxes in Brazil/i);
-  await expect(panel).toContainText(/delivery not included/i);
-  await expect(panel).not.toContainText(/delivery included/i);
+});
+
+test("marks a product Gelato cannot deliver there as unavailable", async ({
+  page,
+}) => {
+  await openDetail(page, {
+    master: [3192, 4000],
+    region: "uk",
+    quote: (product, country) =>
+      product === "tote" ? { available: false } : quoteBody(product, country),
+  });
+  await page.locator("#detailModal .btn-print").click();
+  await expect(
+    page.locator('#detailModal [data-product="tote"] .print-price'),
+  ).toHaveText(/not available/i);
+  await expect(
+    page.locator('#detailModal [data-product="poster"] .print-price'),
+  ).toHaveText("$24.50");
+});
+
+test("says the price is unavailable when the quote fails", async ({ page }) => {
+  await openDetail(page, {
+    master: [3192, 4000],
+    region: "uk",
+    quote: () => 502,
+  });
+  await page.locator("#detailModal .btn-print").click();
+  await expect(
+    page.locator('#detailModal [data-product="poster"] .print-price'),
+  ).toHaveText(/unavailable/i);
+});
+
+test("lets the buyer ship to another country and re-quotes", async ({
+  page,
+}) => {
+  await openDetail(page, { master: [3192, 4000], region: "uk" });
+  await page.locator("#detailModal .btn-print").click();
+  const select = page.locator("#detailModal .print-ship-to select");
+  await expect(select).toHaveValue("GB");
+  await expect(page.locator("#detailModal .print-option")).toHaveCount(4);
+
+  await select.selectOption("BR");
+  await expect(page.locator("#detailModal .print-option")).toHaveCount(2);
+  await expect(
+    page.locator('#detailModal [data-product="mug"] .print-price'),
+  ).toHaveText("R$120.50");
+  await expect(page.locator("#detailModal .print-panel")).toContainText(
+    /import taxes in Brazil/i,
+  );
+  expect(
+    quoteRequests.some((u) => u.searchParams.get("country") === "BR"),
+  ).toBe(true);
 });
 
 test("does not mention import taxes outside Brazil", async ({ page }) => {

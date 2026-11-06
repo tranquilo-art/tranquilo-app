@@ -448,6 +448,12 @@
   flex-wrap:wrap;
   gap:8px;
 }
+@media (max-width:480px){
+  .detail-modal-inner .detail-actions-row{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+}
 /* The pill's border is its only line: no text underline on top of it
    (see tests/e2e/link-underlines.spec.mts). */
 .detail-modal-inner .detail-actions a.source-link,
@@ -679,9 +685,61 @@
   min-width:0;
 }
 .detail-modal-inner .print-name{ font-size:0.9rem; }
-.detail-modal-inner .print-price{
+.detail-modal-inner .print-quote{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:2px;
+  min-width:0;
+  max-width:11rem;
+  text-align:right;
+}
+.detail-modal-inner .print-price{ font-size:0.85rem; }
+.detail-modal-inner .print-delivery{
+  font-size:0.72rem;
+  color:rgba(255,255,255,0.6);
+  white-space:pre-line;
+}
+@media (max-width:480px){
+  .detail-modal-inner .print-option{
+    grid-template-columns:56px 1fr;
+    gap:2px 12px;
+    padding:8px;
+  }
+  .detail-modal-inner .print-option > .print-thumb{
+    grid-row:1 / span 2;
+    align-self:center;
+  }
+  .detail-modal-inner .print-label{
+    flex-direction:row;
+    flex-wrap:wrap;
+    align-items:baseline;
+    gap:2px 8px;
+  }
+  .detail-modal-inner .print-quote{
+    grid-column:2;
+    align-items:flex-start;
+    gap:0;
+    max-width:none;
+    text-align:left;
+  }
+}
+.detail-modal-inner .print-delivery:empty{ display:none; }
+.detail-modal-inner .print-ship-to{
+  display:flex;
+  align-items:center;
+  gap:8px;
   font-size:0.85rem;
-  white-space:nowrap;
+}
+.detail-modal-inner .print-ship-to select{
+  min-width:0;
+  flex:1;
+  font:inherit;
+  color:inherit;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.2);
+  border-radius:6px;
+  padding:4px 8px;
 }
 .detail-modal-inner .print-size{
   font-family:var(--sans);

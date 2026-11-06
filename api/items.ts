@@ -27,6 +27,7 @@ import {
 import { TRANQUILO_CONFIG } from "../lib/config.generated.ts";
 import { signCursor, verifyCursor } from "../lib/cursor-signature.ts";
 import { getSql } from "../lib/db.ts";
+import { quotePrint } from "../lib/gelato-quote.ts";
 import { getHeroPool } from "../lib/hero-items.ts";
 import { FACETS, facetClauses } from "../lib/item-facets.ts";
 import {
@@ -36,6 +37,7 @@ import {
 } from "../lib/items-rate-limit.ts";
 import { LIVE_ITEMS_PREDICATE } from "../lib/items-sql.ts";
 import { getMusicBuckets } from "../lib/music.ts";
+import { handlePrintQuote } from "../lib/print-quote-api.ts";
 import { printRegionFromHeaders } from "../lib/print-region.ts";
 import { safeHttpUrl } from "../lib/safe-url.ts";
 import { reportError } from "../lib/sentry.ts";
@@ -892,6 +894,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.query?.shape === "print_region") {
     res.setHeader("Cache-Control", "private, no-store");
     res.json(printRegionFromHeaders(req.headers || {}));
+    return;
+  }
+
+  if (req.query?.shape === "print_quote") {
+    const apiKey = process.env.GELATO_KEY;
+    await handlePrintQuote(req, res, {
+      sql: getSql(),
+      apiKey,
+      quote: (args) => quotePrint({ ...args, apiKey: apiKey ?? "" }),
+    });
     return;
   }
 

@@ -8,8 +8,8 @@
 // (storyline-handoff-open/storyline-handoff-restore), since neither
 // component owns the other.
 import type { ImageState } from "../feed/slideBuilder";
-import type { PrintOffer } from "../logic/printOptions";
 import type { Item, ItemDetail } from "./Item";
+import type { PrintQuoteResult } from "./PrintQuote";
 import type { SetOfWorkIndexEntry } from "./SetOfWork";
 import type { StorylineIndexEntry } from "./Storyline";
 
@@ -55,6 +55,12 @@ export interface ITranquiloDetailModalHost {
   // opens since its z-index sits above it.
   reopenShelvesMode(): void;
   showToast(msg: string): void;
-  // Empty unless the print link is enabled and the item qualifies.
-  printOffersFor(item: Item): Promise<PrintOffer[]>;
+  // The visitor's country; null unless the print link is enabled and the
+  // item has a known master size.
+  printCountry(item: Item): Promise<string | null>;
+  printQuote(
+    item: Item,
+    product: string,
+    country: string,
+  ): Promise<PrintQuoteResult>;
 }

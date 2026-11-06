@@ -40,12 +40,7 @@ import {
   t,
   tHtml,
 } from "./i18n/index";
-import {
-  hasMasterSize,
-  type PrintOffer,
-  printLinkEnabled,
-  printOffersFor,
-} from "./logic/printOptions";
+import { hasMasterSize, printLinkEnabled } from "./logic/printOptions";
 import type { ITopbarHost } from "./types/ITopbarHost";
 import type { ITranquiloDetailModalHost } from "./types/ITranquiloDetailModalHost";
 import type { ITranquiloExportModalHost } from "./types/ITranquiloExportModalHost";
@@ -57,6 +52,7 @@ import type { ITranquiloShelvesModeHost } from "./types/ITranquiloShelvesModeHos
 import type { ITranquiloStorylineModeHost } from "./types/ITranquiloStorylineModeHost";
 import type { Category, Item } from "./types/Item";
 import type { MusicBucketKey } from "./types/MusicBucket";
+import type { PrintQuoteResult } from "./types/PrintQuote";
 import type { SetOfWork, SetOfWorkIndexEntry } from "./types/SetOfWork";
 import type { HeroShelf } from "./types/Shelf";
 import type { Storyline, StorylineIndexEntry } from "./types/Storyline";
@@ -182,16 +178,31 @@ class TranquiloApp {
     function fetchFeedPage(params: Record<string, unknown>) {
       return itemsApi.fetchFeedPage(params);
     }
-    let printRegion: Promise<string | null> | null = null;
-    function itemPrintOffers(item: Item): Promise<PrintOffer[]> {
-      if (!printLinkEnabled(location.search) || !hasMasterSize(item)) {
-        return Promise.resolve([]);
+    const printQuotes = new Map<string, Promise<PrintQuoteResult>>();
+    function itemPrintQuote(item: Item, product: string, country: string) {
+      const key = `${item.source}:${item.id}|${product}|${country}`;
+      let quote = printQuotes.get(key);
+      if (!quote) {
+        quote = itemsApi.fetchPrintQuote(
+          `${item.source}:${item.id}`,
+          product,
+          country,
+        );
+        quote.catch(() => printQuotes.delete(key));
+        printQuotes.set(key, quote);
       }
-      printRegion ??= itemsApi.fetchPrintRegion().then(
-        (r) => r.region,
+      return quote;
+    }
+    let printCountry: Promise<string | null> | null = null;
+    function itemPrintCountry(item: Item): Promise<string | null> {
+      if (!printLinkEnabled(location.search) || !hasMasterSize(item)) {
+        return Promise.resolve(null);
+      }
+      printCountry ??= itemsApi.fetchPrintRegion().then(
+        (r) => r.country,
         () => null,
       );
-      return printRegion.then((region) => printOffersFor(item, region));
+      return printCountry;
     }
     function fetchFacets() {
       return itemsApi.fetchFacets();
@@ -493,7 +504,8 @@ class TranquiloApp {
       showToast: (msg) => {
         showToast(msg);
       },
-      printOffersFor: (item: Item) => itemPrintOffers(item),
+      printCountry: (item: Item) => itemPrintCountry(item),
+      printQuote: itemPrintQuote,
     };
     detailModalEl.app = detailModalHost;
     detailModalEl.addEventListener("storyline-handoff-restore", (e) => {

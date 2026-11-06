@@ -64,10 +64,16 @@ paths:
             parameter; see `VocabularyLabels`. `detail` returns one item's
             curated text (caption, grounding sources, cast, plot twist) and
             requires `key`; see `ItemDetail`. It has a per-visitor request
-            budget of its own, apart from the page budget.
+            budget of its own, apart from the page budget. `print_quote`
+            returns the price and approximate delivery of one print for an
+            artwork shipped to a country, as `{ available, total, item,
+            delivery, currency, minDays, maxDays, madeIn }`, or
+            `{ available: false }` where it cannot be delivered. It requires
+            `key`, `product` and `country`, has a per-visitor request budget
+            of its own, and is never cached at the edge.
           schema:
             type: string
-            enum: [manifest, facets, suggest, correction, count, storylines, storyline, shelves, music, heroes, print_region, vocabulary, detail]
+            enum: [manifest, facets, suggest, correction, count, storylines, storyline, shelves, music, heroes, print_region, print_quote, vocabulary, detail]
         - name: keys
           in: query
           description: >-
@@ -98,8 +104,19 @@ paths:
         - name: key
           in: query
           description: >-
-            Required with `shape=detail` -- one `source:native_id`, split on
-            the first colon.
+            Required with `shape=detail` and `shape=print_quote` -- one
+            `source:native_id`, split on the first colon.
+          schema: { type: string }
+        - name: product
+          in: query
+          description: Required with `shape=print_quote`.
+          schema:
+            type: string
+            enum: [mini_print, poster, framed, tote, mug]
+        - name: country
+          in: query
+          description: >-
+            Required with `shape=print_quote` -- a two-letter country code.
           schema: { type: string }
         - name: id
           in: query

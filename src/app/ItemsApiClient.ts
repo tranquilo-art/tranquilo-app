@@ -4,6 +4,7 @@ import type { FeedPageResponse } from "../feed/recycleWindow";
 import type { HeroPoolEntry } from "../types/HeroPoolEntry";
 import type { Item, ItemDetail } from "../types/Item";
 import type { MusicBucket } from "../types/MusicBucket";
+import type { PrintQuoteResult } from "../types/PrintQuote";
 import type { SetOfWork, SetOfWorkIndexEntry } from "../types/SetOfWork";
 import type { Shelf } from "../types/Shelf";
 import type { Storyline, StorylineIndexEntry } from "../types/Storyline";
@@ -93,6 +94,17 @@ export class ItemsApiClient {
     return this.fetchJson(
       this.apiUrl({ shape: "print_region" }),
       "print region",
+    );
+  }
+
+  fetchPrintQuote(
+    key: string,
+    product: string,
+    country: string,
+  ): Promise<PrintQuoteResult> {
+    return this.fetchJson<PrintQuoteResult>(
+      this.apiUrl({ shape: "print_quote", key, product, country }),
+      "print quote",
     );
   }
 

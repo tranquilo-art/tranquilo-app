@@ -28,8 +28,15 @@ import {
 import { licenseLabel } from "../app/licenseLabels";
 import { currentLocale, facetLabel, type MessageKey, t } from "../i18n/index";
 import { isNamedMaker } from "../logic/logic";
+import {
+  importTaxApplies,
+  PRINT_COUNTRIES,
+  printOptionsFor,
+  regionForCountry,
+} from "../logic/printOptions";
 import type { ITranquiloDetailModalHost } from "../types/ITranquiloDetailModalHost";
 import type { Item, TeaVoiceSource } from "../types/Item";
+import type { PrintQuoteResult } from "../types/PrintQuote";
 import { on } from "../utils/on";
 
 // Built when the element mounts, with text from src/i18n escaped on the way
@@ -477,58 +484,101 @@ function wirePrint(
   const btn = container.querySelector<HTMLButtonElement>(".btn-print");
   const panel = container.querySelector<HTMLElement>(".print-panel");
   if (!btn || !panel) return;
+  const panelEl: HTMLElement = panel;
   const orientation =
     (item.master_width ?? 0) > (item.master_height ?? 0) ? "hor" : "ver";
   const mockup = (p: string) =>
     `<div class="mockup mockup-${p}" data-orientation="${orientation}">` +
     `<div class="mockup-surface"><img src="${escapeHtml(item.img)}" alt="" loading="lazy" decoding="async"></div></div>`;
-  const priceText = (price: {
-    amount: number;
-    currency: string;
-    startingAt?: true;
-  }) => {
-    const formatted = new Intl.NumberFormat(currentLocale(), {
+  const countryName = (code: string) =>
+    new Intl.DisplayNames([currentLocale()], { type: "region" }).of(code) ??
+    code;
+  const money = (amount: number, currency: string) =>
+    new Intl.NumberFormat(currentLocale(), {
       style: "currency",
-      currency: price.currency,
-      maximumFractionDigits: price.startingAt ? 2 : 0,
-    }).format(price.amount);
-    return price.startingAt
-      ? t("detail.print.priceFrom", { price: formatted })
-      : t("detail.print.price", { price: formatted });
-  };
-  host.printOffersFor(item).then((offers) => {
-    if (!offers.length) return;
-    panel.innerHTML =
-      offers
-        .map(({ product: p, price }) => {
+      currency,
+    }).format(amount);
+  let renderId = 0;
+
+  function fillQuote(
+    row: HTMLElement,
+    country: string,
+    result: PrintQuoteResult | null,
+  ) {
+    const price = row.querySelector<HTMLElement>(".print-price");
+    const delivery = row.querySelector<HTMLElement>(".print-delivery");
+    if (!price || !delivery) return;
+    if (!result) {
+      price.textContent = t("detail.print.priceUnavailable");
+    } else if (!result.available) {
+      price.textContent = t("detail.print.notAvailable", {
+        country: countryName(country),
+      });
+    } else {
+      price.textContent = money(result.total, result.currency);
+      const days =
+        result.minDays !== null && result.maxDays !== null
+          ? t("detail.print.deliveryDays", {
+              min: String(result.minDays),
+              max: String(result.maxDays),
+            })
+          : "";
+      delivery.textContent = [
+        t("detail.print.deliveryIncluded", {
+          price: money(result.delivery, result.currency),
+        }),
+        days,
+      ]
+        .filter(Boolean)
+        .join("\n");
+    }
+  }
+
+  function render(country: string, refocus = false) {
+    const id = ++renderId;
+    const region = regionForCountry(country);
+    const products = printOptionsFor(item, region);
+    const countries = [...PRINT_COUNTRIES].sort((a, b) =>
+      countryName(a).localeCompare(countryName(b), currentLocale()),
+    );
+    panelEl.innerHTML =
+      `<label class="print-ship-to"><span>${escapeHtml(t("detail.print.shipTo"))}</span><select>${countries
+        .map(
+          (code) =>
+            `<option value="${code}"${code === country ? " selected" : ""}>${escapeHtml(countryName(code))}</option>`,
+        )
+        .join("")}</select></label>` +
+      products
+        .map((p) => {
           const name = t(`print.product.${p}` as MessageKey);
           return (
             `<div class="print-option" data-product="${p}">` +
             `<button class="print-thumb" type="button" aria-expanded="false" aria-label="${escapeHtml(t("detail.print.showMockup", { product: name }))}">${mockup(p)}</button>` +
             `<span class="print-label"><span class="print-name">${escapeHtml(name)}</span>` +
             `<span class="print-size">${escapeHtml(t(`print.size.${p}` as MessageKey))}</span></span>` +
-            (price
-              ? `<span class="print-price">${escapeHtml(priceText(price))}</span>`
-              : "") +
+            `<span class="print-quote"><span class="print-price" aria-live="polite">${escapeHtml(t("detail.print.priceLoading"))}</span>` +
+            `<span class="print-delivery"></span></span>` +
             `<div class="print-mockup-large" hidden>${mockup(p)}` +
             `<p class="print-mockup-note">${escapeHtml(t("detail.print.mockupNote"))}</p></div></div>`
           );
         })
         .join("") +
       `<p class="print-soon">${[
-        offers.some((o) => o.price) &&
-          t(
-            offers.some((o) => o.price?.startingAt)
-              ? "detail.print.startingPrice"
-              : "detail.print.estimate",
-          ),
-        offers.some((o) => o.buyerPaysImportTax) && t("detail.print.importTax"),
+        t("detail.print.approximate"),
+        importTaxApplies(region) && t("detail.print.importTax"),
         t("detail.print.soon"),
       ]
         .filter(Boolean)
         .map((text) => escapeHtml(text as string))
         .join(" ")}</p>`;
-    const rows = [...panel.querySelectorAll<HTMLElement>(".print-option")];
+    const select = panelEl.querySelector<HTMLSelectElement>(
+      ".print-ship-to select",
+    );
+    if (select) {
+      on(select, "change", () => render(select.value, true));
+      if (refocus) select.focus();
+    }
+    const rows = [...panelEl.querySelectorAll<HTMLElement>(".print-option")];
     for (const row of rows) {
       const thumb = row.querySelector<HTMLButtonElement>(".print-thumb");
       const large = row.querySelector<HTMLElement>(".print-mockup-large");
@@ -547,7 +597,22 @@ function wirePrint(
         large.hidden = !opening;
         thumb.setAttribute("aria-expanded", String(opening));
       });
+      host
+        .printQuote(item, row.dataset.product ?? "", country)
+        .then(
+          (result) => result,
+          () => null,
+        )
+        .then((result) => {
+          if (id === renderId) fillQuote(row, country, result);
+        });
     }
+  }
+
+  host.printCountry(item).then((detected) => {
+    if (!detected) return;
+    if (!printOptionsFor(item, regionForCountry(detected)).length) return;
+    render(detected.toUpperCase());
     btn.hidden = false;
   });
   on(btn, () => {
