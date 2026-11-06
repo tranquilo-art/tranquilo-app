@@ -770,12 +770,12 @@ paths:
   /api/cron/db-backup:
     get:
       tags: [cron]
-      summary: Daily `items` table backup to GitHub, or a partial shuffle-key reshuffle
+      summary: Monthly `items` table backup to S3, or a partial shuffle-key reshuffle
       operationId: cronDbBackup
       description: >-
         Vercel Cron only, two schedule entries hitting this one function
         (Vercel Hobby's 12-function cap). The plain path exports `items` to
-        the `db-backups` branch; `?task=reshuffle` re-randomizes a fraction
+        a dedicated S3 bucket; `?task=reshuffle` re-randomizes a fraction
         of `shuffle_key` and rebuilds the search vocabulary instead.
       security: [{ cronSecret: [] }]
       parameters:
@@ -790,7 +790,7 @@ paths:
         "401":
           $ref: "#/components/responses/CronUnauthorized"
         "500":
-          description: DATABASE_URL/GITHUB_BACKUP_TOKEN not configured, or the export/GitHub API call failed.
+          description: DATABASE_URL or DB_BACKUP_S3_* not configured, or the export/S3 call failed.
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 

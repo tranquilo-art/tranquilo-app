@@ -1,26 +1,17 @@
-// Monthly backup of the `items` table to GitHub, since Neon's free tier
-// offers no scheduled backups -- only a 6-hour PITR window and one
-// manual snapshot. Was daily until the full-table pull's egress started
-// eating too much of the free tier's public network transfer allowance
-// as `items` grew; monthly trades recovery granularity for staying
-// under that cap.
+// Monthly backup of the `items` table to a dedicated S3 bucket.
 //
-// Exports `items` only, not `analytics_events` (anonymous, low-value,
-// already expected to stay tiny).
+// Exports `items` only, not `analytics_events`.
 //
-// Writes two files to a dedicated `db-backups` branch (kept separate
-// from `main`) via GitHub's Contents API, plain fetch:
-//   backups/items/YYYY-MM-DD.json.gz  -- dated, retained 30 days
+// Writes two gzip objects (plain fetch + SigV4, lib/img-s3.ts):
+//   backups/items/YYYY-MM-DD.json.gz  -- dated, retained RETENTION_DAYS
 //   backups/items/latest.json.gz      -- always-current
 //
-// Registered as a Sentry Cron Monitor -- a missed or failed run creates
-// a Sentry issue independent of this function's own alert code.
-//
+// Registered as a Sentry Cron Monitor; a missed run opens a Sentry issue.
 // Silent on a healthy run. On any failure, sendAlertEmail() (Resend) fires.
 //
-// Required env vars: DATABASE_URL, CRON_SECRET, GITHUB_BACKUP_TOKEN (a
-// fine-grained PAT scoped to Contents read/write on this repo only),
-// plus RESEND_API_KEY/OPS_ALERT_EMAIL.
+// Required env vars: DATABASE_URL, CRON_SECRET, DB_BACKUP_S3_BUCKET,
+// DB_BACKUP_S3_REGION, DB_BACKUP_S3_ACCESS_KEY_ID,
+// DB_BACKUP_S3_SECRET_ACCESS_KEY, plus RESEND_API_KEY/OPS_ALERT_EMAIL.
 
 import { neonConfig, Pool } from "@neondatabase/serverless";
 import ws from "ws";
@@ -28,12 +19,14 @@ import {
   applyMicrosecondColumns,
   backupFilename,
   backupSelectSql,
-  decodeBackupBody,
-  encodeBackupBody,
+  gunzipBackupBody,
+  gzipBackupBody,
   isDatedBackupName,
 } from "../backup-format.ts";
 import type { CronRequest, CronResponse } from "../cron-types.ts";
 import { getSql } from "../db.ts";
+import type { S3Credentials } from "../img-s3.ts";
+import * as s3 from "../img-s3.ts";
 import { refreshVocabSql, refreshWordsSql, sweepSql } from "../items-vocab.ts";
 import { refreshLocaleSearch } from "../search-locale.ts";
 import { reportError, Sentry } from "../sentry.ts";
@@ -46,8 +39,6 @@ function errorMessage(err: unknown): string {
 // runtime, so this uses the documented `ws` path rather than assuming one.
 neonConfig.webSocketConstructor = ws;
 
-const GITHUB_REPO = "loveycakes/artscroll";
-const BACKUP_BRANCH = "db-backups";
 const BACKUP_DIR = "backups/items";
 // 30 days made sense at daily cadence (keeping ~30 snapshots); at
 // monthly cadence that would prune the previous dated file the same
@@ -68,26 +59,11 @@ interface FetchAllRowsOptions {
   PoolCtor?: new (config: { connectionString?: string }) => PoolLike;
 }
 
-interface GithubRequestOptions {
-  method?: string;
-  body?: unknown;
-}
-
-interface GithubContentEntry {
-  name: string;
-  sha: string;
-}
-
-interface GithubFileJson {
-  sha?: string;
-  content?: string;
-}
-
 interface VerifyOptions {
-  request?: (
-    path: string,
-  ) => Promise<{ ok?: boolean; json(): Promise<unknown> }>;
+  getObject?: typeof s3.getObject;
 }
+
+type BackupS3Config = S3Credentials & { enabled: boolean };
 
 interface VerifyResult {
   ok: boolean;
@@ -131,123 +107,61 @@ async function fetchAllRows(opts?: FetchAllRowsOptions) {
   }
 }
 
-async function githubRequest(path: string, options?: GithubRequestOptions) {
-  const opts = options || {};
-  const resp = await fetch(`https://api.github.com${path}`, {
-    method: opts.method || "GET",
-    headers: {
-      Authorization: `Bearer ${process.env.GITHUB_BACKUP_TOKEN}`,
-      Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-      "Content-Type": "application/json",
-    },
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
+// The secret is non-enumerable so config objects never leak it into logs.
+function backupS3ConfigFromEnv(
+  env: Record<string, string | undefined> = process.env,
+): BackupS3Config {
+  const bucket = env.DB_BACKUP_S3_BUCKET || "";
+  const region = env.DB_BACKUP_S3_REGION || "";
+  const accessKeyId = env.DB_BACKUP_S3_ACCESS_KEY_ID || "";
+  const secretValue = env.DB_BACKUP_S3_SECRET_ACCESS_KEY || "";
+
+  const config = {
+    bucket: bucket,
+    region: region,
+    accessKeyId: accessKeyId,
+    enabled: !!(bucket && region && accessKeyId && secretValue),
+  } as BackupS3Config;
+  Object.defineProperty(config, "secret", {
+    enumerable: false,
+    value: () => secretValue,
   });
-  return resp;
+  return config;
 }
 
-// One-time bootstrap per repo -- the Contents API can write to an
-// existing branch but can't implicitly create one.
-async function ensureBackupBranchExists() {
-  const check = await githubRequest(
-    `/repos/${GITHUB_REPO}/git/ref/heads/${BACKUP_BRANCH}`,
-  );
-  if (check.status === 200) return;
-  if (check.status !== 404) {
+async function putBackupObject(
+  config: S3Credentials,
+  key: string,
+  body: Buffer,
+) {
+  const result = await s3.putObject(config, key, body, "application/gzip");
+  if (!result.ok) {
     throw new Error(
-      `GitHub API error checking for ${BACKUP_BRANCH} branch: HTTP ${check.status}`,
-    );
-  }
-
-  const mainRef = await githubRequest(
-    `/repos/${GITHUB_REPO}/git/ref/heads/main`,
-  );
-  if (!mainRef.ok) {
-    throw new Error(
-      `GitHub API error reading main branch ref: HTTP ${mainRef.status}`,
-    );
-  }
-  const mainJson = (await mainRef.json()) as { object: { sha: string } };
-
-  const create = await githubRequest(`/repos/${GITHUB_REPO}/git/refs`, {
-    method: "POST",
-    body: { ref: `refs/heads/${BACKUP_BRANCH}`, sha: mainJson.object.sha },
-  });
-  if (!create.ok) {
-    throw new Error(
-      `GitHub API error creating ${BACKUP_BRANCH} branch: HTTP ${create.status}`,
+      `S3 error writing ${key}: HTTP ${result.status}` +
+        (result.error ? ` (${result.error})` : ""),
     );
   }
 }
 
-// Returns null (not an error) for a 404: "doesn't exist yet" is normal
-// for a brand-new dated file.
-async function getFileSha(path: string) {
-  const resp = await githubRequest(
-    `/repos/${GITHUB_REPO}/contents/${path}?ref=${BACKUP_BRANCH}`,
-  );
-  if (resp.status === 404) return null;
-  if (!resp.ok)
-    throw new Error(`GitHub API error reading ${path}: HTTP ${resp.status}`);
-  const json = (await resp.json()) as GithubFileJson;
-  return json.sha;
-}
-
-async function putFile(path: string, contentString: string, message: string) {
-  const sha = await getFileSha(path);
-  const body: Record<string, unknown> = {
-    message: message,
-    content: encodeBackupBody(contentString),
-    branch: BACKUP_BRANCH,
-  };
-  if (sha) body.sha = sha;
-
-  const resp = await githubRequest(`/repos/${GITHUB_REPO}/contents/${path}`, {
-    method: "PUT",
-    body: body,
-  });
-  if (!resp.ok) {
-    throw new Error(`GitHub API error writing ${path}: HTTP ${resp.status}`);
+// latest.json.gz never matches isDatedBackupName, so it is never pruned.
+async function pruneOldBackups(config: S3Credentials) {
+  const listed = await s3.listObjects(config, `${BACKUP_DIR}/`);
+  if (!listed.ok) {
+    throw new Error(`S3 error listing ${BACKUP_DIR}: HTTP ${listed.status}`);
   }
-}
-
-// Doesn't shrink git history -- an accepted tradeoff at this dataset
-// size. latest.json is never touched here.
-async function pruneOldBackups() {
-  const resp = await githubRequest(
-    `/repos/${GITHUB_REPO}/contents/${BACKUP_DIR}?ref=${BACKUP_BRANCH}`,
-  );
-  if (resp.status === 404) return; // first run ever
-  if (!resp.ok)
-    throw new Error(
-      `GitHub API error listing ${BACKUP_DIR}: HTTP ${resp.status}`,
-    );
-  const entries = (await resp.json()) as GithubContentEntry[];
 
   const cutoff = new Date();
   cutoff.setUTCDate(cutoff.getUTCDate() - RETENTION_DAYS);
   const cutoffStr = cutoff.toISOString().slice(0, 10);
 
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i];
-    if (!isDatedBackupName(entry.name)) continue; // skips latest.json/.json.gz
-    const fileDate = entry.name.slice(0, 10);
-    if (fileDate < cutoffStr) {
-      const del = await githubRequest(
-        `/repos/${GITHUB_REPO}/contents/${BACKUP_DIR}/${entry.name}`,
-        {
-          method: "DELETE",
-          body: {
-            message: `Prune backup older than ${RETENTION_DAYS} days: ${entry.name}`,
-            sha: entry.sha,
-            branch: BACKUP_BRANCH,
-          },
-        },
-      );
-      if (!del.ok)
-        throw new Error(
-          `GitHub API error pruning ${entry.name}: HTTP ${del.status}`,
-        );
+  for (const key of listed.keys ?? []) {
+    const name = key.slice(BACKUP_DIR.length + 1);
+    if (!isDatedBackupName(name)) continue;
+    if (name.slice(0, 10) < cutoffStr) {
+      const del = await s3.deleteObject(config, key);
+      if (!del.ok) {
+        throw new Error(`S3 error pruning ${key}: HTTP ${del.status}`);
+      }
     }
   }
 }
@@ -281,51 +195,26 @@ async function alertOnFailure(message: string) {
   await sendAlertEmail(alerts);
 }
 
-// Re-reads the backup just written through the GitHub API (not the
-// PUT's own response) to confirm the stored object is readable and
-// complete.
-//
-// GitHub's Contents API only inlines file content under 1MB -- past
-// that it still returns 200, with encoding "none" and an empty string.
-// Our gzipped backup crossed 1MB, so this reads through the Git Blobs
-// API instead, which returns base64 up to 100MB (the same ceiling the
-// write path already uses).
+// Re-reads the written object, not the PUT response, to confirm it decodes
+// and matches. A failed GET is inconclusive; undecodable bytes are bad.
 async function verifyWrittenBackup(
+  config: S3Credentials,
   expectedRows: number,
   opts?: VerifyOptions,
 ): Promise<VerifyResult> {
-  const options = opts || {};
-  const request = options.request || githubRequest;
+  const getObject = opts?.getObject || s3.getObject;
+  const key = `${BACKUP_DIR}/${backupFilename(null)}`;
 
-  async function getJson(path: string): Promise<GithubFileJson | null> {
-    const resp = await request(path);
-    if (!resp?.ok) return null;
-    return (await resp.json()) as GithubFileJson;
+  const got = await getObject(config, key);
+  if (!got.ok || !got.body) {
+    return inconclusive(
+      `could not read ${key} from S3: HTTP ${got.status}` +
+        (got.error ? ` (${got.error})` : ""),
+    );
   }
 
   try {
-    const path = `${BACKUP_DIR}/${backupFilename(null)}`;
-    const meta = await getJson(
-      `/repos/${GITHUB_REPO}/contents/${path}?ref=${BACKUP_BRANCH}`,
-    );
-    if (!meta)
-      return inconclusive(`could not read ${path} from the Contents API`);
-
-    let content = meta.content;
-    if (!content && meta.sha) {
-      const blob = await getJson(`/repos/${GITHUB_REPO}/git/blobs/${meta.sha}`);
-      if (!blob?.content) {
-        return inconclusive(`blob ${meta.sha} for ${path} returned no content`);
-      }
-      content = blob.content;
-    }
-    if (!content) {
-      return inconclusive(
-        `Contents API returned neither content nor a sha for ${path}`,
-      );
-    }
-
-    const parsed = JSON.parse(decodeBackupBody(content));
+    const parsed = JSON.parse(gunzipBackupBody(got.body));
     if (!Array.isArray(parsed)) return bad("backup is not an array");
     if (parsed.length !== expectedRows) {
       return bad(
@@ -339,14 +228,12 @@ async function verifyWrittenBackup(
     }
     return { ok: true, rows: parsed.length };
   } catch (err) {
-    // A throw here is almost always decode/parse -- we have the bytes
-    // and they aren't what we wrote.
     return bad(errorMessage(err));
   }
 }
 
-// "inconclusive": the check itself couldn't run (unexpected API shape,
-// token problem, network failure) -- says nothing about the backup.
+// "inconclusive": the check itself couldn't run (credentials, network)
+// -- says nothing about the backup.
 // "bad": the file was read and isn't what we wrote -- the alert that
 // must never be ignored.
 function inconclusive(reason: string): VerifyResult {
@@ -377,8 +264,8 @@ export default async function handler(req: CronRequest, res: CronResponse) {
 
   // Re-randomise shuffle_key -- a second cron ENTRY on this same
   // function, not a second function, since api/ is at Vercel Hobby's
-  // 12-function cap. Branches above the GITHUB_BACKUP_TOKEN check since
-  // a reshuffle needs nothing from GitHub.
+  // 12-function cap. Branches above the S3 config check; a reshuffle
+  // needs nothing from S3.
   //
   // Only a FRACTION of the table: rewriting every row's shuffle_key
   // each night writes one dead tuple per row (~360MB/night at the 200k
@@ -439,17 +326,18 @@ export default async function handler(req: CronRequest, res: CronResponse) {
     return;
   }
 
-  if (!process.env.GITHUB_BACKUP_TOKEN) {
-    console.error("db-backup: missing GITHUB_BACKUP_TOKEN env var");
+  const s3Config = backupS3ConfigFromEnv();
+  if (!s3Config.enabled) {
+    console.error("db-backup: missing one or more DB_BACKUP_S3_* env vars");
     Sentry.captureCheckIn(
       { monitorSlug: MONITOR_SLUG, status: "error" },
       monitorConfig(),
     );
     await alertOnFailure(
-      "Database backup didn't run: GITHUB_BACKUP_TOKEN isn't configured in Vercel.",
+      "Database backup didn't run: the DB_BACKUP_S3_* env vars aren't all configured in Vercel.",
     );
     res.statusCode = 500;
-    res.json({ error: "GitHub isn't configured" });
+    res.json({ error: "S3 isn't configured" });
     return;
   }
 
@@ -475,27 +363,23 @@ export default async function handler(req: CronRequest, res: CronResponse) {
     const today = new Date().toISOString().slice(0, 10);
     const megabytes = (Buffer.byteLength(content, "utf8") / 1048576).toFixed(2);
 
-    // Size and duration ride in the commit message since Vercel Hobby
-    // only retains runtime logs for an hour -- `git log db-backups`
-    // becomes a durable performance history for free.
     t = Date.now();
-    await ensureBackupBranchExists();
-    stage.branch = Date.now() - t;
+    const gzipped = gzipBackupBody(content);
+    stage.gzip = Date.now() - t;
 
-    const summary = `${today} (${rows.length} items, ${megabytes} MB`;
     t = Date.now();
-    await putFile(
+    await putBackupObject(
+      s3Config,
       `${BACKUP_DIR}/${backupFilename(null)}`,
-      content,
-      `Database backup ${summary})`,
+      gzipped,
     );
     stage.writeLatest = Date.now() - t;
 
     t = Date.now();
-    await putFile(
+    await putBackupObject(
+      s3Config,
       `${BACKUP_DIR}/${backupFilename(today)}`,
-      content,
-      `Database backup ${summary}, write ${(stage.writeLatest / 1000).toFixed(1)}s)`,
+      gzipped,
     );
     stage.writeDated = Date.now() - t;
 
@@ -503,7 +387,7 @@ export default async function handler(req: CronRequest, res: CronResponse) {
     // backup on the strength of today's broken one would turn a bad
     // night into a lost catalogue.
     t = Date.now();
-    const verified = await verifyWrittenBackup(rows.length);
+    const verified = await verifyWrittenBackup(s3Config, rows.length);
     stage.verify = Date.now() - t;
     if (!verified.ok) {
       Sentry.captureCheckIn(
@@ -514,7 +398,7 @@ export default async function handler(req: CronRequest, res: CronResponse) {
         ? `Database backup wrote successfully (${rows.length} rows), but the ` +
           `nightly verification COULD NOT BE COMPLETED: ${verified.reason}. ` +
           `This is a problem with the check, not evidence of a problem with the ` +
-          `backup -- today's file is probably fine and is still on the branch. ` +
+          `backup -- today's file is probably fine and is still in the bucket. ` +
           `Older snapshots were not pruned. Worth fixing promptly, because while ` +
           `this is broken nothing is confirming the backups are restorable.`
         : `Database backup wrote successfully but FAILED VERIFICATION: ${
@@ -534,14 +418,14 @@ export default async function handler(req: CronRequest, res: CronResponse) {
     }
 
     t = Date.now();
-    await pruneOldBackups();
+    await pruneOldBackups(s3Config);
     stage.prune = Date.now() - t;
 
     const elapsed = Date.now() - startedAt;
     const timing = {
       total_s: +(elapsed / 1000).toFixed(1),
       query_s: +(stage.query / 1000).toFixed(1),
-      branch_s: +(stage.branch / 1000).toFixed(1),
+      gzip_s: +(stage.gzip / 1000).toFixed(1),
       write_latest_s: +(stage.writeLatest / 1000).toFixed(1),
       write_dated_s: +(stage.writeDated / 1000).toFixed(1),
       prune_s: +(stage.prune / 1000).toFixed(1),
@@ -600,4 +484,9 @@ function monitorConfig() {
 }
 
 // Exported for tests.
-export { fetchAllRows, verifyWrittenBackup };
+export {
+  backupS3ConfigFromEnv,
+  fetchAllRows,
+  pruneOldBackups,
+  verifyWrittenBackup,
+};

@@ -231,3 +231,137 @@ describe("getObject", () => {
     expect(out.status).toBe(0);
   });
 });
+
+describe("deleteObject", () => {
+  const config = {
+    bucket: "tranquilo-db-backups",
+    region: "us-east-1",
+    accessKeyId: "AKIAEXAMPLE",
+    secret: () => "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+  };
+
+  it("addresses the path-style endpoint with DELETE", async () => {
+    const calls: { url: string; init: RequestInit }[] = [];
+    await s3.deleteObject(config, "backups/items/2026-01-01.json.gz", {
+      fetch: async (url: string, init: RequestInit) => {
+        calls.push({ url, init });
+        return { ok: true, status: 204 };
+      },
+    });
+    const seen = calls[0];
+    expect(seen.url).toBe(
+      "https://s3.us-east-1.amazonaws.com/tranquilo-db-backups/backups/items/2026-01-01.json.gz",
+    );
+    expect(seen.init.method).toBe("DELETE");
+    expect((seen.init.headers as Record<string, string>).authorization).toMatch(
+      /^AWS4-HMAC-SHA256 /,
+    );
+  });
+
+  it("reports an HTTP failure instead of throwing", async () => {
+    const out = await s3.deleteObject(config, "k", {
+      fetch: async () => ({ ok: false, status: 403 }),
+    });
+    expect(out).toMatchObject({ ok: false, status: 403 });
+  });
+
+  it("reports a network failure instead of throwing", async () => {
+    const out = await s3.deleteObject(config, "k", {
+      fetch: async () => {
+        throw new Error("ECONNRESET");
+      },
+    });
+    expect(out.ok).toBe(false);
+    expect(out.status).toBe(0);
+  });
+});
+
+describe("listObjects", () => {
+  const config = {
+    bucket: "tranquilo-db-backups",
+    region: "us-east-1",
+    accessKeyId: "AKIAEXAMPLE",
+    secret: () => "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+  };
+
+  it("addresses the bucket root with the list-type/prefix query, sorted", async () => {
+    const calls: { url: string; init: RequestInit }[] = [];
+    await s3.listObjects(config, "backups/items/", {
+      fetch: async (url: string, init: RequestInit) => {
+        calls.push({ url, init });
+        return {
+          ok: true,
+          status: 200,
+          text: async () => "<ListBucketResult></ListBucketResult>",
+        };
+      },
+    });
+    // SigV4 needs sorted query params; the sent URL must match the signed one.
+    const seen = calls[0];
+    expect(seen.url).toBe(
+      "https://s3.us-east-1.amazonaws.com/tranquilo-db-backups?list-type=2&prefix=backups%2Fitems%2F",
+    );
+    expect(seen.init.method).toBe("GET");
+    expect((seen.init.headers as Record<string, string>).authorization).toMatch(
+      /^AWS4-HMAC-SHA256 /,
+    );
+  });
+
+  it("parses every <Contents><Key> out of the XML body", async () => {
+    const xml = `<?xml version="1.0"?>
+<ListBucketResult>
+  <Contents><Key>backups/items/2026-01-01.json.gz</Key><Size>123</Size></Contents>
+  <Contents><Key>backups/items/latest.json.gz</Key><Size>456</Size></Contents>
+</ListBucketResult>`;
+    const out = await s3.listObjects(config, "backups/items/", {
+      fetch: async () => ({ ok: true, status: 200, text: async () => xml }),
+    });
+    expect(out.ok).toBe(true);
+    expect(out.keys).toEqual([
+      "backups/items/2026-01-01.json.gz",
+      "backups/items/latest.json.gz",
+    ]);
+  });
+
+  it("returns an empty key list rather than failing when nothing matches the prefix", async () => {
+    const out = await s3.listObjects(config, "backups/items/", {
+      fetch: async () => ({
+        ok: true,
+        status: 200,
+        text: async () => "<ListBucketResult></ListBucketResult>",
+      }),
+    });
+    expect(out).toMatchObject({ ok: true, keys: [] });
+  });
+
+  it("reports an HTTP failure instead of throwing", async () => {
+    const out = await s3.listObjects(config, "backups/items/", {
+      fetch: async () => ({ ok: false, status: 403 }),
+    });
+    expect(out).toMatchObject({ ok: false, status: 403 });
+  });
+
+  it("reports a network failure instead of throwing", async () => {
+    const out = await s3.listObjects(config, "backups/items/", {
+      fetch: async () => {
+        throw new Error("ECONNRESET");
+      },
+    });
+    expect(out.ok).toBe(false);
+    expect(out.status).toBe(0);
+  });
+});
+
+describe("parseListKeys", () => {
+  it("decodes XML entities that can legally appear in a Key", () => {
+    const xml =
+      "<ListBucketResult><Contents><Key>a &amp; b &lt;c&gt;</Key></Contents></ListBucketResult>";
+    expect(s3.parseListKeys(xml)).toEqual(["a & b <c>"]);
+  });
+
+  it("returns an empty array for no matches", () => {
+    expect(s3.parseListKeys("<ListBucketResult></ListBucketResult>")).toEqual(
+      [],
+    );
+  });
+});

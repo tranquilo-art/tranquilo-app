@@ -1,6 +1,8 @@
-// Writing an object to S3. Plain fetch + SigV4, no SDK -- this codebase's
-// stated convention (see lib/cron/db-backup.ts), avoiding a large dependency
-// in the single hottest function in the project for one signed request.
+// Reading and writing objects in S3. Plain fetch + SigV4, no SDK -- this
+// codebase's stated convention, avoiding a large dependency in the single
+// hottest function in the project for one signed request.
+//
+// Generic over `config`; db-backup uses it with its own bucket and credentials.
 //
 // Path-style addressing, not virtual-hosted: the bucket name
 // `cdn.prod.tranquilo.art` contains dots, so the virtual-hosted host
@@ -28,6 +30,7 @@ interface SignRequestOptions {
   method: string;
   host: string;
   canonicalUri: string;
+  canonicalQueryString?: string;
   payloadHash: string;
   contentType?: string;
   amzDate: string;
@@ -47,6 +50,7 @@ interface S3FetchResponse {
   status: number;
   headers?: { get(name: string): string | null };
   arrayBuffer?(): Promise<ArrayBuffer>;
+  text?(): Promise<string>;
 }
 
 interface S3FetchOptions {
@@ -66,6 +70,19 @@ interface GetResult {
   status: number;
   body?: Buffer;
   contentType?: string | null;
+  error?: string;
+}
+
+interface DeleteResult {
+  ok: boolean;
+  status: number;
+  error?: string;
+}
+
+interface ListResult {
+  ok: boolean;
+  status: number;
+  keys?: string[];
   error?: string;
 }
 
@@ -89,6 +106,21 @@ function canonicalUriFor(bucket: string, key: string): string {
   return `/${bucket}/${String(key).split("/").map(encodeURIComponent).join("/")}`;
 }
 
+// Bucket-root requests (list) address the bucket itself, not a key under it.
+function canonicalUriForBucket(bucket: string): string {
+  return `/${bucket}`;
+}
+
+// SigV4 requires params sorted by name, each name and value percent-encoded
+// per RFC 3986 -- encodeURIComponent already matches that for the characters
+// S3 param names/values here can contain.
+function canonicalQueryStringFor(params: Record<string, string>): string {
+  return Object.keys(params)
+    .sort()
+    .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
+    .join("&");
+}
+
 // Exported for testing: the signature has to be reproducible from fixed inputs,
 // or there is no way to tell a correct implementation from one that merely
 // happens to be accepted today.
@@ -96,6 +128,7 @@ function signRequest(opts: SignRequestOptions): SignedRequest {
   const method = opts.method;
   const host = opts.host;
   const canonicalUri = opts.canonicalUri;
+  const canonicalQueryString = opts.canonicalQueryString || "";
   const payloadHash = opts.payloadHash;
   const contentType = opts.contentType;
   const amzDate = opts.amzDate; // YYYYMMDDTHHMMSSZ
@@ -113,7 +146,7 @@ function signRequest(opts: SignRequestOptions): SignedRequest {
   const canonicalRequest = [
     method,
     canonicalUri,
-    "",
+    canonicalQueryString,
     canonicalHeaders,
     signedHeaders,
     payloadHash,
@@ -259,5 +292,117 @@ async function getObject(
   }
 }
 
+// S3 answers 204 whether or not the key existed.
+async function deleteObject(
+  config: S3Credentials,
+  key: string,
+  opts?: S3FetchOptions,
+): Promise<DeleteResult> {
+  const options = opts || {};
+  const host = `s3.${config.region}.amazonaws.com`;
+  const canonicalUri = canonicalUriFor(config.bucket, key);
+  const payloadHash = sha256hex(Buffer.alloc(0));
+  const amzDate = amzDateNow(options.now);
+
+  const signed = signRequest({
+    method: "DELETE",
+    host: host,
+    canonicalUri: canonicalUri,
+    payloadHash: payloadHash,
+    amzDate: amzDate,
+    region: config.region,
+    accessKeyId: config.accessKeyId,
+    secretAccessKey: config.secret(),
+  });
+
+  try {
+    const res = await (options.fetch || fetch)(
+      `https://${host}${canonicalUri}`,
+      {
+        method: "DELETE",
+        headers: {
+          "x-amz-content-sha256": payloadHash,
+          "x-amz-date": amzDate,
+          authorization: signed.authorization,
+        },
+      },
+    );
+    return { ok: res.ok, status: res.status };
+  } catch (err) {
+    return { ok: false, status: 0, error: errorMessage(err) };
+  }
+}
+
+// Flat <Contents><Key> scan; avoids an XML parser dependency.
+function parseListKeys(xml: string): string[] {
+  const re = /<Contents>[\s\S]*?<Key>([^<]*)<\/Key>[\s\S]*?<\/Contents>/g;
+  const matches = xml.matchAll(re);
+  return Array.from(matches, (m) =>
+    m[1]
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'"),
+  );
+}
+
+// First page only (up to 1000 keys); no continuation-token handling.
+async function listObjects(
+  config: S3Credentials,
+  prefix: string,
+  opts?: S3FetchOptions,
+): Promise<ListResult> {
+  const options = opts || {};
+  const host = `s3.${config.region}.amazonaws.com`;
+  const canonicalUri = canonicalUriForBucket(config.bucket);
+  const query = { "list-type": "2", prefix: String(prefix || "") };
+  const canonicalQueryString = canonicalQueryStringFor(query);
+  const payloadHash = sha256hex(Buffer.alloc(0));
+  const amzDate = amzDateNow(options.now);
+
+  const signed = signRequest({
+    method: "GET",
+    host: host,
+    canonicalUri: canonicalUri,
+    canonicalQueryString: canonicalQueryString,
+    payloadHash: payloadHash,
+    amzDate: amzDate,
+    region: config.region,
+    accessKeyId: config.accessKeyId,
+    secretAccessKey: config.secret(),
+  });
+
+  try {
+    const res = await (options.fetch || fetch)(
+      `https://${host}${canonicalUri}?${canonicalQueryString}`,
+      {
+        method: "GET",
+        headers: {
+          "x-amz-content-sha256": payloadHash,
+          "x-amz-date": amzDate,
+          authorization: signed.authorization,
+        },
+      },
+    );
+    if (!res.ok) {
+      return { ok: false, status: res.status };
+    }
+    const xml = (await res.text?.()) ?? "";
+    return { ok: true, status: res.status, keys: parseListKeys(xml) };
+  } catch (err) {
+    return { ok: false, status: 0, error: errorMessage(err) };
+  }
+}
+
 export type { S3Credentials };
-export { amzDateNow, canonicalUriFor, getObject, putObject, signRequest };
+export {
+  amzDateNow,
+  canonicalUriFor,
+  deleteObject,
+  getObject,
+  listObjects,
+  parseListKeys,
+  putObject,
+  signRequest,
+};

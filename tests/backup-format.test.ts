@@ -11,6 +11,8 @@ import {
   backupFilename,
   decodeBackupBody,
   encodeBackupBody,
+  gunzipBackupBody,
+  gzipBackupBody,
   isDatedBackupName,
 } from "../lib/backup-format.ts";
 
@@ -73,6 +75,35 @@ describe("backup encoding", () => {
       .gzipSync(Buffer.from(SAMPLE, "utf-8"))
       .toString("base64");
     expect(decodeBackupBody(byHand)).toBe(SAMPLE);
+  });
+});
+
+// S3 takes a binary PUT body directly -- no base64 detour needed the way
+// GitHub's Contents API (a JSON request body) required.
+describe("raw gzip body, for S3", () => {
+  it("round-trips exactly", () => {
+    expect(gunzipBackupBody(gzipBackupBody(SAMPLE))).toBe(SAMPLE);
+  });
+
+  it("round-trips unicode without mangling it", () => {
+    const tricky = JSON.stringify([
+      { title: "四季花卉棋盤" },
+      { artist: "Кузьма Петров-Водкин" },
+    ]);
+    expect(gunzipBackupBody(gzipBackupBody(tricky))).toBe(tricky);
+  });
+
+  it("produces a real gzip buffer, not base64 text", () => {
+    const out = gzipBackupBody(SAMPLE);
+    expect(Buffer.isBuffer(out)).toBe(true);
+    // gzip's magic number: 0x1f 0x8b.
+    expect(out[0]).toBe(0x1f);
+    expect(out[1]).toBe(0x8b);
+  });
+
+  it("reads what gzip produced by hand, with no base64 layer", () => {
+    const byHand = zlib.gzipSync(Buffer.from(SAMPLE, "utf-8"));
+    expect(gunzipBackupBody(byHand)).toBe(SAMPLE);
   });
 });
 

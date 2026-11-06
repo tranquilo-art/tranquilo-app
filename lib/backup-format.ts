@@ -20,6 +20,18 @@ function decodeBackupBody(base64String: string): string {
   return zlib.gunzipSync(Buffer.from(base64String, "base64")).toString("utf-8");
 }
 
+// S3 takes a binary body directly -- no base64 detour needed the way
+// GitHub's Contents API required (its `content` field is JSON, which can't
+// carry raw bytes). encodeBackupBody/decodeBackupBody above stay in place
+// for reading backups already written in the old format.
+function gzipBackupBody(contentString: string): Buffer {
+  return zlib.gzipSync(Buffer.from(contentString, "utf-8"));
+}
+
+function gunzipBackupBody(buffer: Buffer): string {
+  return zlib.gunzipSync(buffer).toString("utf-8");
+}
+
 // `date` null means the always-current snapshot, which a restore reaches for
 // when it does not care which night it came from.
 function backupFilename(date?: string | null): string {
@@ -92,6 +104,8 @@ export {
   DATED_BACKUP_RE,
   decodeBackupBody,
   encodeBackupBody,
+  gunzipBackupBody,
+  gzipBackupBody,
   isDatedBackupName,
   MICROSECOND_COLUMNS,
 };
