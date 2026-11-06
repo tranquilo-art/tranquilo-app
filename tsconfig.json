@@ -24,6 +24,7 @@
     "scripts",
     "vite.config.mts",
     "vite-plugins",
-    "prisma.config.ts"
+    "prisma.config.ts",
+    "setup.ts"
   ]
 }
