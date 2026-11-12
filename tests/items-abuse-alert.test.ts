@@ -29,7 +29,9 @@ let sql: Sql;
 let fetchMock: ReturnType<typeof vi.fn>;
 
 const emails = () =>
-  fetchMock.mock.calls.filter(([url]) => String(url).includes("resend.com"));
+  fetchMock.mock.calls.filter(
+    ([url]) => url === "https://api.resend.com/emails",
+  );
 const lastEmailText = () =>
   JSON.parse(emails().at(-1)?.[1].body as string).text as string;
 
