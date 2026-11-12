@@ -2999,5 +2999,25 @@
     "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Maurice%20Quentin%20de%20La%20Tour%2C%20Hubert-Fran%C3%A7ois%20Gravelot%2C%201769%2C%20MBA%20Bordeaux%20RF%201943.47.JPG",
     "found": true,
     "fetched_at": "2026-10-17T20:27:43.846Z"
+  },
+  "William Hogarth": {
+    "name": "William Hogarth",
+    "label": "William Hogarth",
+    "wikidata": "http://www.wikidata.org/entity/Q171344",
+    "description": "English painter, printmaker, pictorial satirist, social critic and editorial cartoonist (1697-1764)",
+    "birth": "1697",
+    "death": "1764",
+    "nationality": [
+      "Kingdom of Great Britain"
+    ],
+    "movement": [
+      "Georgian art",
+      "British satire",
+      "Rococo"
+    ],
+    "article": "https://en.wikipedia.org/wiki/William_Hogarth",
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/The%20Painter%20and%20His%20Pug%20by%20William%20Hogarth.jpg",
+    "found": true,
+    "fetched_at": "2026-11-12T19:29:47.225Z"
   }
 }
