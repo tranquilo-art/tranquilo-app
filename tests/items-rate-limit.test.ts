@@ -218,7 +218,11 @@ describe("detailRateLimitOrRespond", () => {
 });
 
 describe("against a real database", () => {
-  const files = ["035_visitor_rate_state.sql", "060_visitor_budget_events.sql"];
+  const files = [
+    "035_visitor_rate_state.sql",
+    "060_visitor_budget_events.sql",
+    "065_visitor_spent.sql",
+  ];
 
   it("counts denials per visitor and day, and keeps them apart by budget", async () => {
     const sql = await makeSql(files);
@@ -247,6 +251,19 @@ describe("against a real database", () => {
     expect((await acquireItemsBudget(sql, "abc", 80, LIMITS)).allowed).toBe(
       true,
     );
+    await sql.$close();
+  });
+
+  it("totals what a visitor was served, and not what was refused", async () => {
+    const sql = await makeSql(files);
+    await acquireItemsBudget(sql, "abc", 60, LIMITS);
+    await acquireItemsBudget(sql, "abc", 30, LIMITS);
+    const refused = await acquireItemsBudget(sql, "abc", 60, LIMITS);
+    expect(refused.allowed).toBe(false);
+    const [row] = (await sql.query(
+      "SELECT spent FROM visitor_fetch_state WHERE ip = 'items:abc'",
+    )) as { spent: string | number }[];
+    expect(Number(row.spent)).toBe(90);
     await sql.$close();
   });
 });

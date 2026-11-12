@@ -13,7 +13,11 @@ import {
 } from "../lib/api-keys.ts";
 import { makeSql } from "./helpers/pg.ts";
 
-const FILES = ["035_visitor_rate_state.sql", "062_api_keys.sql"];
+const FILES = [
+  "035_visitor_rate_state.sql",
+  "062_api_keys.sql",
+  "065_visitor_spent.sql",
+];
 
 function fakeRes() {
   return {

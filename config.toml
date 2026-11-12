@@ -139,6 +139,27 @@ thrash_min_keys = 10
 # and the alert fires about a store that is working fine today.
 thrash_window_days = 7
 
+[items_budget_alerts]
+# Real-time email when one visitor crosses a line on /api/items, so a scrape
+# can be blocked while it runs (lib/items-abuse-alert.ts).
+# Items refused to one visitor in a UTC day. A feed page is 60 items, so 3000
+# is about 50 refused page requests: well past a reload after a 429.
+visitor_denied_cost_min = 3000
+# Several visitors refused on the same day, in the daily health-check digest:
+# a spread-out scrape, or a budget set too tight for real use.
+visitors_denied_min = 5
+# Items served to one visitor in a UTC day. The budget allows at most about
+# 92,000 a day (6000 burst plus 3,600 an hour), so 20,000 is a client reading
+# steadily, not browsing.
+visitor_daily_items_min = 20000
+# Reading across many hours is how a paced scraper looks. Span alone would
+# flag a morning visit plus an evening one, so it only counts with real volume.
+visitor_active_hours_min = 6
+visitor_active_min_items = 5000
+# At most this many alert emails per hour in total, so a scrape spread over
+# many addresses cannot flood the inbox.
+alert_emails_per_hour = 3
+
 [source_health]
 # Asymmetric on purpose -- see lib/source-health.ts's own comment. Five
 # consecutive failures degrade a source; a single success clears it,

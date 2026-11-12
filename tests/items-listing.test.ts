@@ -49,6 +49,7 @@ beforeAll(async () => {
     "060_visitor_budget_events.sql",
     "061_visitor_state_hashed_keys.sql",
     "062_api_keys.sql",
+    "065_visitor_spent.sql",
   ]);
   await sql.$db.exec(
     readFileSync(
