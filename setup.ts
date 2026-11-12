@@ -9,17 +9,19 @@ import { FunctionRouter, VercelResponse } from "@cloudgear/functions";
    const dns = new DNS(
     "gandi",
     "web.tranquilo.art",
-    { zone: "tranquilo.art" }
+    { zone: "tranquilo.art" },
   );
   const cert = new Cert("aws", dns);
   const bucket = new BlobStore(
     "aws",
-    "s3://web.tranquilo.art"
+    "s3://web.tranquilo.art",
   );
   const cdn = new CDN(
     "aws",
     cert,
-    { bucket }
+    { webAcl: true, bucket, options: {
+      default_root_object: ""
+    } }
   );
   await cdn.url();
 }
@@ -29,7 +31,7 @@ import { FunctionRouter, VercelResponse } from "@cloudgear/functions";
   const env = secrets.path("/cloudgear/tranquilo-app");
   const dns = new DNS(
     "gandi",
-    "api.prod.tranquilo.art",
+    "api.tranquilo.art",
     { zone: "tranquilo.art" }
   );
   const cert = new Cert("aws", dns);
@@ -38,14 +40,23 @@ import { FunctionRouter, VercelResponse } from "@cloudgear/functions";
     authenticated: "iam",
     mode: "remote",
     region: "us-east-1",
+    optionalEnv: [
+      "BLOB_USAGE_SOFT_CAP_BYTES",
+      "IMG_ADMIT_FASTPATH_REQUESTS",
+      "IMG_ADMIT_FASTPATH_WINDOW_SECONDS",
+      "ITEMS_CURSOR_SECRET",
+      "OPS_ALERT_EMAIL",
+      "PRINT_REGION_DEV_COUNTRY",
+      "RESEND_FROM_EMAIL",
+      "VERCEL_TEAM_ID",
+      "SENTRY_DSN",
+    ],
   })
     .url("GET", "/api/items", "./api/items.ts", {
       request: true,
       response: VercelResponse,
       env: env({
         DATABASE_URL: "DATABASE_URL",
-        ITEMS_CURSOR_SECRET: "ITEMS_CURSOR_SECRET",
-        PRINT_REGION_DEV_COUNTRY: "PRINT_REGION_DEV_COUNTRY",
         SENTRY_DSN: "SENTRY_DSN",
         SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
         VERCEL_ENV: "VERCEL_ENV",
@@ -56,10 +67,9 @@ import { FunctionRouter, VercelResponse } from "@cloudgear/functions";
       response: VercelResponse,
       env: env({
         RESEND_API_KEY: "RESEND_API_KEY",
-        SUBMIT_NOTIFY_EMAIL: "SUBMIT_NOTIFY_EMAIL",
-        RESEND_FROM_EMAIL: "RESEND_FROM_EMAIL",
         SENTRY_DSN: "SENTRY_DSN",
         SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
+        SUBMIT_NOTIFY_EMAIL: "SUBMIT_NOTIFY_EMAIL",
         VERCEL_ENV: "VERCEL_ENV",
       }),
     })
@@ -88,12 +98,10 @@ import { FunctionRouter, VercelResponse } from "@cloudgear/functions";
       response: VercelResponse,
       env: env({
         RESEND_API_KEY: "RESEND_API_KEY",
-        SUBMIT_NOTIFY_EMAIL: "SUBMIT_NOTIFY_EMAIL",
         RESEND_WEBHOOK_SECRET: "RESEND_WEBHOOK_SECRET",
-        OPS_ALERT_EMAIL: "OPS_ALERT_EMAIL",
-        RESEND_FROM_EMAIL: "RESEND_FROM_EMAIL",
         SENTRY_DSN: "SENTRY_DSN",
         SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
+        SUBMIT_NOTIFY_EMAIL: "SUBMIT_NOTIFY_EMAIL",
         VERCEL_ENV: "VERCEL_ENV",
       }),
     })
@@ -144,12 +152,8 @@ import { FunctionRouter, VercelResponse } from "@cloudgear/functions";
       request: true,
       response: VercelResponse,
       env: env({
-        DATABASE_URL: "DATABASE_URL",
         BLOB_READ_WRITE_TOKEN: "BLOB_READ_WRITE_TOKEN",
-        BLOB_USAGE_SOFT_CAP_BYTES: "BLOB_USAGE_SOFT_CAP_BYTES",
-        IMG_ADMIT_FASTPATH_REQUESTS: "IMG_ADMIT_FASTPATH_REQUESTS",
-        IMG_ADMIT_FASTPATH_WINDOW_SECONDS: "IMG_ADMIT_FASTPATH_WINDOW_SECONDS",
-        ITEMS_CURSOR_SECRET: "ITEMS_CURSOR_SECRET",
+        DATABASE_URL: "DATABASE_URL",
         SENTRY_DSN: "SENTRY_DSN",
         SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
         VERCEL_ENV: "VERCEL_ENV",
@@ -160,10 +164,9 @@ import { FunctionRouter, VercelResponse } from "@cloudgear/functions";
       response: VercelResponse,
       env: env({
         DATABASE_URL: "DATABASE_URL",
-        ITEMS_CURSOR_SECRET: "DATABASE_URL",
-        SENTRY_DSN: "DATABASE_URL",
-        SENTRY_TRACES_SAMPLE_RATE: "DATABASE_URL",
-        VERCEL_ENV: "VERCEL_ENV"
+        SENTRY_DSN: "SENTRY_DSN",
+        SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
+        VERCEL_ENV: "VERCEL_ENV",
       }),
     })
     // cron jobs
@@ -171,13 +174,11 @@ import { FunctionRouter, VercelResponse } from "@cloudgear/functions";
       request: true,
       response: VercelResponse,
       env: env({
-        DATABASE_URL: "DATABASE_URL",
         BLOB_READ_WRITE_TOKEN: "BLOB_READ_WRITE_TOKEN",
         CRON_SECRET: "CRON_SECRET",
+        DATABASE_URL: "DATABASE_URL",
         GITHUB_BACKUP_TOKEN: "GITHUB_BACKUP_TOKEN",
-        OPS_ALERT_EMAIL: "OPS_ALERT_EMAIL",
         RESEND_API_KEY: "RESEND_API_KEY",
-        RESEND_FROM_EMAIL: "RESEND_FROM_EMAIL",
         SENTRY_DSN: "SENTRY_DSN",
         SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
         SUBMIT_NOTIFY_EMAIL: "SUBMIT_NOTIFY_EMAIL",
@@ -185,7 +186,6 @@ import { FunctionRouter, VercelResponse } from "@cloudgear/functions";
         VERCEL_ENV: "VERCEL_ENV",
         VERCEL_ORG_ID: "VERCEL_ORG_ID",
         VERCEL_PROJECT_ID: "VERCEL_PROJECT_ID",
-        VERCEL_TEAM_ID: "VERCEL_TEAM_ID",
       }),
       schedule: [
         { cron: cron`11 9 1 1,4,7,10 *`, query: { job: "analytics-report", days: "92", label: "Quarterly" } },
@@ -201,7 +201,7 @@ import { FunctionRouter, VercelResponse } from "@cloudgear/functions";
   const cdn = new CDN(
     "aws",
     cert,
-    { router }
+    { webAcl: true, router }
   );
 
   await cdn.url();
@@ -221,7 +221,9 @@ import { FunctionRouter, VercelResponse } from "@cloudgear/functions";
   const cdn = new CDN(
     "aws",
     cert,
-    { bucket }
+    { webAcl: true, bucket, options: {
+      default_root_object: "",
+    } }
   );
   await cdn.url();
 }

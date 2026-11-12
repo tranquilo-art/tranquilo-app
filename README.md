@@ -139,3 +139,100 @@ Found a security issue? Please see [SECURITY.md](SECURITY.md) rather than openin
 | [SECURITY.md](SECURITY.md) | What this project handles, and how to report a vulnerability |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to propose and submit changes |
 | [AGENTS.md](AGENTS.md) | Conventions for AI coding agents working in this repo |
+
+## Provisioning infrastructure
+
+0. Prerequisites: Bun 1.x, AWS CLI v2, jq
+```
+bun --version && aws --version && jq --version
+```
+
+1. Install cloudgear (not published to a registry yet)
+```
+git clone https://github.com/elaous/cloudgear.git ~/cloudgear
+cd ~/cloudgear
+bun install
+bun run link          # links the cloudgear CLI and the @cloudgear/* packages
+```
+
+if you cloned it before: git pull origin main && bun install
+
+2. Link cloudgear into the app, from the app's directory
+```
+cd <path to tranquilo-app>
+bun link cloudgear @cloudgear/dns @cloudgear/secrets @cloudgear/core @cloudgear/blob @cloudgear/cdn @cloudgear/functions
+cloudgear --help
+```
+
+3. AWS credentials (SSO), us-east-1 for CloudFront, ACM and your buckets
+```
+aws sso login --profile <your-sso-profile>
+export AWS_PROFILE=<your-sso-profile>
+export AWS_REGION=us-east-1
+aws sts get-caller-identity        # confirm the right account (920042984913)
+```
+
+4. Gandi token for the DNS records (not stored anywhere by cloudgear)
+```
+read -rs GANDI_TOKEN && export GANDI_TOKEN
+```
+
+5. Store the app's secrets in SSM under `/cloudgear/tranquilo-app`
+```
+cloudgear secrets set --from-envfile .env.prod
+cloudgear secrets list             # every declared name should be "ok"
+```
+
+the env file MUST be git-ignored; cloudgear refuses a tracked one
+
+6. Generate the config from `setup.ts`
+```
+cloudgear generate setup.ts --project tranquilo-app
+git add cloudgear.prototxt cloudgear.env.json   # commit these two together
+```
+
+7. Import what already exists (distributions, certificates, buckets).
+```
+cp .cloudgear/state.json .cloudgear/state.json.bak 2>/dev/null
+cloudgear import --all
+```
+
+skip it if `.cloudgear/state.json` already has them.
+
+8. Review: read-only, no AWS calls
+```
+cloudgear plan
+# expected: new Lambdas and schedules (+), api.tranquilo.art (~), everything else no change
+cloudgear check-dns                # optional; apply runs it anyway
+```
+
+9. Dry run: apply WITHOUT --auto-approve prints the plan, runs the checks,
+```
+cloudgear apply --env prod
+```
+
+then asks "Do you want to apply?". Answer n to cancel.
+
+10. Apply for real, once the plan is what you expect
+```
+cloudgear apply --env prod --auto-approve
+```
+
+optional: `CG_DEBUG=true cloudgear apply --env prod --auto-approve` (logs every call)
+
+11. Check the result
+```
+cloudgear plan                     # should now show no changes
+cat .cloudgear/endpoints.json      # deployed URLs
+curl -i https://api.tranquilo.art/sitemap.xml
+```
+
+check a POST route too; through CloudFront a POST needs the x-amz-content-sha256 header
+(router.fetch("name", { method: "POST", body }) adds it)
+
+**Notes:**
+
+* Step 7: it only reads from AWS and records state, and never changes cloud resources. If you already imported, import --all skips what is in state.
+* `apply` refuses on: a missing required secret or env variable (step 5), a DNS conflict, or a cloudgear.env.json that doesn’t match the config (re-run step 6). --skip-env-check and --skip-dns-check bypass those; use them only if you know why.
+* Step 10: if it stops partway, run the same command again, and it resumes.
+* Keep `.cloudgear/state.json` safe (it’s git-ignored by default); back it up before every apply.

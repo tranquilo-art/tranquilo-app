@@ -3,6 +3,7 @@ temp/
 Temp/
 .mcp.json
 .env
+*.env
 .env.local
 .env.*.local
 .vercel
