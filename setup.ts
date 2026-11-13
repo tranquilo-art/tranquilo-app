@@ -55,17 +55,6 @@ const $functions = async () => {
     .url("*", "/",  "./api/index.ts", {
       include: [
         "./dist/index.html",
-        "./api/items.ts",
-        "./api/submit-collection.ts",
-        "./api/subscribe.ts",
-        "./api/track.ts",
-        "./api/webhooks/resend.ts",
-        "./api/webhooks/patreon.ts",
-        "./api/sitemap.ts",
-        "./api/v/[slug].ts",
-        "./api/v/[slug].ts",
-        "./api/img/[source]/[id]/[tier].ts",
-        "./api/og/[slug].ts",
       ],
       request: true,
       response: VercelResponse,

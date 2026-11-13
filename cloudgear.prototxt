@@ -16,7 +16,7 @@ resource {
   type: "@aws.S3"
   physical_name: "cdn.prod.tranquilo.art"
   dry: false
-  source: "setup.ts:132"
+  source: "setup.ts:121"
 }
 function {
   name: "api-index"
@@ -36,19 +36,9 @@ function {
   }
   bundle {
     path: ".cloudgear/build/api-index/index.mjs"
-    sha256: "209724bc105c7c408f38528be085863c987916af4b6e98ec57cba44326eb9e66"
+    sha256: "d6db9c636b9fe5a8bc7f353c582a3a518fef3dd6d423eb5ad3e60d1dbb23e440"
   }
   reserved_concurrency: 0
-  include: "api/img/[source]/[id]/[tier].ts"
-  include: "api/items.ts"
-  include: "api/og/[slug].ts"
-  include: "api/sitemap.ts"
-  include: "api/submit-collection.ts"
-  include: "api/subscribe.ts"
-  include: "api/track.ts"
-  include: "api/v/[slug].ts"
-  include: "api/webhooks/patreon.ts"
-  include: "api/webhooks/resend.ts"
   include: "dist/index.html"
   pass_request: true
   response_arg: "writer"

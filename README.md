@@ -169,6 +169,7 @@ cloudgear --help
 aws sso login --profile <your-sso-profile>
 export AWS_PROFILE=<your-sso-profile>
 export AWS_REGION=us-east-1
+export GANDI_TOKEN=<gandi PAT>
 aws sts get-caller-identity        # confirm the right account (920042984913)
 ```
 
@@ -224,7 +225,7 @@ optional: `CG_DEBUG=true cloudgear apply --env prod --auto-approve` (logs every 
 ```
 cloudgear plan                     # should now show no changes
 cat .cloudgear/endpoints.json      # deployed URLs
-curl -i https://api.tranquilo.art/sitemap.xml
+curl -i "https://api.tranquilo.art/?path=/sitemap.xml"
 ```
 
 check a POST route too; through CloudFront a POST needs the x-amz-content-sha256 header
