@@ -16,31 +16,39 @@ resource {
   type: "@aws.S3"
   physical_name: "cdn.prod.tranquilo.art"
   dry: false
-  source: "setup.ts:217"
+  source: "setup.ts:119"
 }
 function {
-  name: "api-items"
+  name: "api-index"
   type: "@aws.Lambda"
-  physical_name: "tranquilo-app-api-items"
+  physical_name: "tranquilo-app-api-index"
   runtime: "nodejs22.x"
   memory_mb: 256
   timeout_s: 10
   source {
-    file: "api/items.ts"
+    file: "api/index.ts"
     export: "default"
   }
   route {
-    method: "GET"
-    path: "/api/items"
-    name: "GET /api/items"
+    method: "*"
+    path: "/"
+    name: "* /"
   }
   bundle {
-    path: ".cloudgear/build/api-items/index.mjs"
-    sha256: "89cf7803ab04467b2c973ac4333a2381b7f4c2c3a5003685575dd6a36d3d7357"
+    path: ".cloudgear/build/api-index/index.mjs"
+    sha256: "02d4efd334a9c552c8f28f9822c6df224dce1ff02e665476f36558904562374d"
   }
   reserved_concurrency: 0
+  include: "dist/index.html"
   pass_request: true
   response_arg: "writer"
+  secret {
+    provider: "aws"
+    service: "ssm"
+    path: "/cloudgear/tranquilo-app"
+    name: "BLOB_READ_WRITE_TOKEN"
+    env: "BLOB_READ_WRITE_TOKEN"
+  }
   secret {
     provider: "aws"
     service: "ssm"
@@ -52,210 +60,9 @@ function {
     provider: "aws"
     service: "ssm"
     path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_DSN"
-    env: "SENTRY_DSN"
+    name: "PATREON_WEBHOOK_SECRET"
+    env: "PATREON_WEBHOOK_SECRET"
   }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_TRACES_SAMPLE_RATE"
-    env: "SENTRY_TRACES_SAMPLE_RATE"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "VERCEL_ENV"
-    env: "VERCEL_ENV"
-  }
-}
-function {
-  name: "api-submit-collection"
-  type: "@aws.Lambda"
-  physical_name: "tranquilo-app-api-submit-collection"
-  runtime: "nodejs22.x"
-  memory_mb: 256
-  timeout_s: 10
-  source {
-    file: "api/submit-collection.ts"
-    export: "default"
-  }
-  route {
-    method: "POST"
-    path: "/api/submit-collection"
-    name: "POST /api/submit-collection"
-  }
-  bundle {
-    path: ".cloudgear/build/api-submit-collection/index.mjs"
-    sha256: "611fe93926d16971ccd2ab1c99028addf8bb572ce23bfef2f848b452d81b46e2"
-  }
-  reserved_concurrency: 0
-  pass_request: true
-  response_arg: "writer"
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "RESEND_API_KEY"
-    env: "RESEND_API_KEY"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_DSN"
-    env: "SENTRY_DSN"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_TRACES_SAMPLE_RATE"
-    env: "SENTRY_TRACES_SAMPLE_RATE"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SUBMIT_NOTIFY_EMAIL"
-    env: "SUBMIT_NOTIFY_EMAIL"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "VERCEL_ENV"
-    env: "VERCEL_ENV"
-  }
-}
-function {
-  name: "api-subscribe"
-  type: "@aws.Lambda"
-  physical_name: "tranquilo-app-api-subscribe"
-  runtime: "nodejs22.x"
-  memory_mb: 256
-  timeout_s: 10
-  source {
-    file: "api/subscribe.ts"
-    export: "default"
-  }
-  route {
-    method: "POST"
-    path: "/api/subscribe"
-    name: "POST /api/subscribe"
-  }
-  bundle {
-    path: ".cloudgear/build/api-subscribe/index.mjs"
-    sha256: "e9866b5dbc599f5ca2428dab582470a7e51d929497e3986fb386055a8243fd35"
-  }
-  reserved_concurrency: 0
-  pass_request: true
-  response_arg: "writer"
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "RESEND_API_KEY"
-    env: "RESEND_API_KEY"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_DSN"
-    env: "SENTRY_DSN"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_TRACES_SAMPLE_RATE"
-    env: "SENTRY_TRACES_SAMPLE_RATE"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "VERCEL_ENV"
-    env: "VERCEL_ENV"
-  }
-}
-function {
-  name: "api-track"
-  type: "@aws.Lambda"
-  physical_name: "tranquilo-app-api-track"
-  runtime: "nodejs22.x"
-  memory_mb: 256
-  timeout_s: 10
-  source {
-    file: "api/track.ts"
-    export: "default"
-  }
-  route {
-    method: "POST"
-    path: "/api/track"
-    name: "POST /api/track"
-  }
-  bundle {
-    path: ".cloudgear/build/api-track/index.mjs"
-    sha256: "0c513d894434ea47cc05673cdc66129b8885ce7ea162db5c6423b9b1ed60833a"
-  }
-  reserved_concurrency: 0
-  pass_request: true
-  response_arg: "writer"
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "DATABASE_URL"
-    env: "DATABASE_URL"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_DSN"
-    env: "SENTRY_DSN"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_TRACES_SAMPLE_RATE"
-    env: "SENTRY_TRACES_SAMPLE_RATE"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "VERCEL_ENV"
-    env: "VERCEL_ENV"
-  }
-}
-function {
-  name: "api-webhooks-resend"
-  type: "@aws.Lambda"
-  physical_name: "tranquilo-app-api-webhooks-resend"
-  runtime: "nodejs22.x"
-  memory_mb: 256
-  timeout_s: 10
-  source {
-    file: "api/webhooks/resend.ts"
-    export: "default"
-  }
-  route {
-    method: "POST"
-    path: "/api/webhooks/resend"
-    name: "POST /api/webhooks/resend"
-  }
-  bundle {
-    path: ".cloudgear/build/api-webhooks-resend/index.mjs"
-    sha256: "e436b873d818760837b0d630a449eec529a75ada0d893f6419008376f6743e59"
-  }
-  reserved_concurrency: 0
-  pass_request: true
-  response_arg: "writer"
   secret {
     provider: "aws"
     service: "ssm"
@@ -300,286 +107,6 @@ function {
   }
 }
 function {
-  name: "api-webhooks-patreon"
-  type: "@aws.Lambda"
-  physical_name: "tranquilo-app-api-webhooks-patreon"
-  runtime: "nodejs22.x"
-  memory_mb: 256
-  timeout_s: 10
-  source {
-    file: "api/webhooks/patreon.ts"
-    export: "default"
-  }
-  route {
-    method: "POST"
-    path: "/api/webhooks/patreon"
-    name: "POST /api/webhooks/patreon"
-  }
-  bundle {
-    path: ".cloudgear/build/api-webhooks-patreon/index.mjs"
-    sha256: "704df3c43d66c089dc55eb3ca17ec015dee1a10a98f3b58be7747c2d18bb82b8"
-  }
-  reserved_concurrency: 0
-  pass_request: true
-  response_arg: "writer"
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "DATABASE_URL"
-    env: "DATABASE_URL"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "PATREON_WEBHOOK_SECRET"
-    env: "PATREON_WEBHOOK_SECRET"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_DSN"
-    env: "SENTRY_DSN"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_TRACES_SAMPLE_RATE"
-    env: "SENTRY_TRACES_SAMPLE_RATE"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "VERCEL_ENV"
-    env: "VERCEL_ENV"
-  }
-}
-function {
-  name: "api-sitemap"
-  type: "@aws.Lambda"
-  physical_name: "tranquilo-app-api-sitemap"
-  runtime: "nodejs22.x"
-  memory_mb: 256
-  timeout_s: 10
-  source {
-    file: "api/sitemap.ts"
-    export: "default"
-  }
-  route {
-    method: "GET"
-    path: "/sitemap.xml"
-    name: "GET /sitemap.xml"
-  }
-  bundle {
-    path: ".cloudgear/build/api-sitemap/index.mjs"
-    sha256: "8cdea482f0593d41ed97e1a3df6ace2acb6097957c3b8715d83f581b93a452cf"
-  }
-  reserved_concurrency: 0
-  pass_request: true
-  response_arg: "writer"
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "DATABASE_URL"
-    env: "DATABASE_URL"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_DSN"
-    env: "SENTRY_DSN"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_TRACES_SAMPLE_RATE"
-    env: "SENTRY_TRACES_SAMPLE_RATE"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "VERCEL_ENV"
-    env: "VERCEL_ENV"
-  }
-}
-function {
-  name: "api-v-slug"
-  type: "@aws.Lambda"
-  physical_name: "tranquilo-app-api-v-slug"
-  runtime: "nodejs22.x"
-  memory_mb: 256
-  timeout_s: 10
-  source {
-    file: "api/v/[slug].ts"
-    export: "default"
-  }
-  route {
-    method: "GET"
-    path: "/v/{slug}"
-    name: "GET /v/{slug}"
-  }
-  route {
-    method: "GET"
-    path: "/s/{slug}"
-    name: "GET /s/{slug}"
-  }
-  bundle {
-    path: ".cloudgear/build/api-v-slug/index.mjs"
-    sha256: "16ec88fceda70b47b9ab737f9b12d0f0f4e0bef0a3be34d8cdb54da2e9a5f53f"
-  }
-  reserved_concurrency: 0
-  include: "dist/index.html"
-  pass_request: true
-  response_arg: "writer"
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "DATABASE_URL"
-    env: "DATABASE_URL"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_DSN"
-    env: "SENTRY_DSN"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_TRACES_SAMPLE_RATE"
-    env: "SENTRY_TRACES_SAMPLE_RATE"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "VERCEL_ENV"
-    env: "VERCEL_ENV"
-  }
-}
-function {
-  name: "api-img-source-id-tier"
-  type: "@aws.Lambda"
-  physical_name: "tranquilo-app-api-img-source-id-tier"
-  runtime: "nodejs22.x"
-  memory_mb: 256
-  timeout_s: 10
-  source {
-    file: "api/img/[source]/[id]/[tier].ts"
-    export: "default"
-  }
-  route {
-    method: "GET"
-    path: "/img/{source}/{id}/{tier}"
-    name: "GET /img/{source}/{id}/{tier}"
-  }
-  bundle {
-    path: ".cloudgear/build/api-img-source-id-tier/index.mjs"
-    sha256: "61e92e8c87ec1fb185048eec8a58344d85fc82aad0f5e9ee7919eab953ef7c0d"
-  }
-  reserved_concurrency: 0
-  pass_request: true
-  response_arg: "writer"
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "BLOB_READ_WRITE_TOKEN"
-    env: "BLOB_READ_WRITE_TOKEN"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "DATABASE_URL"
-    env: "DATABASE_URL"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_DSN"
-    env: "SENTRY_DSN"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_TRACES_SAMPLE_RATE"
-    env: "SENTRY_TRACES_SAMPLE_RATE"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "VERCEL_ENV"
-    env: "VERCEL_ENV"
-  }
-}
-function {
-  name: "api-og-slug"
-  type: "@aws.Lambda"
-  physical_name: "tranquilo-app-api-og-slug"
-  runtime: "nodejs22.x"
-  memory_mb: 256
-  timeout_s: 10
-  source {
-    file: "api/og/[slug].ts"
-    export: "default"
-  }
-  route {
-    method: "GET"
-    path: "/og/{slug}.png"
-    name: "GET /og/{slug}.png"
-  }
-  bundle {
-    path: ".cloudgear/build/api-og-slug/index.mjs"
-    sha256: "b2e08c7caa365d2e489bcdbdcb5a051b0f9b3a4064ed50e9e9e4e4fb7402da25"
-  }
-  reserved_concurrency: 0
-  pass_request: true
-  response_arg: "writer"
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "DATABASE_URL"
-    env: "DATABASE_URL"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_DSN"
-    env: "SENTRY_DSN"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "SENTRY_TRACES_SAMPLE_RATE"
-    env: "SENTRY_TRACES_SAMPLE_RATE"
-  }
-  secret {
-    provider: "aws"
-    service: "ssm"
-    path: "/cloudgear/tranquilo-app"
-    name: "VERCEL_ENV"
-    env: "VERCEL_ENV"
-  }
-}
-function {
   name: "api-cron-index"
   type: "@aws.Lambda"
   physical_name: "tranquilo-app-api-cron-index"
@@ -597,7 +124,7 @@ function {
   }
   bundle {
     path: ".cloudgear/build/api-cron-index/index.mjs"
-    sha256: "90e260e358d0eb2bf41b3781c19d79dee4c325f7935997d0aa9f8e1ae2ee5d65"
+    sha256: "512e1fd1bd0c05959f969d669961dd8ce638423c32e302d4be9f68cb946dd36d"
   }
   reserved_concurrency: 0
   query_schedule {

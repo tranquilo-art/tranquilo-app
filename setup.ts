@@ -26,7 +26,7 @@ import { FunctionRouter, VercelResponse } from "@cloudgear/functions";
   await cdn.url();
 }
 
-{ // api
+const $functions = async () => {
   const secrets = new SecretStore("aws", { service: "ssm" });
   const env = secrets.path("/cloudgear/tranquilo-app");
   const dns = new DNS(
@@ -52,121 +52,21 @@ import { FunctionRouter, VercelResponse } from "@cloudgear/functions";
       "SENTRY_DSN",
     ],
   })
-    .url("GET", "/api/items", "./api/items.ts", {
+    .url("*", "/",  "./api/index.ts", {
+      include: "./dist/index.html",
       request: true,
       response: VercelResponse,
       env: env({
+        BLOB_READ_WRITE_TOKEN: "BLOB_READ_WRITE_TOKEN",
         DATABASE_URL: "DATABASE_URL",
-        SENTRY_DSN: "SENTRY_DSN",
-        SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
-        VERCEL_ENV: "VERCEL_ENV",
-      }),
-    })
-    .url("POST", "/api/submit-collection", "./api/submit-collection.ts", {
-      request: true,
-      response: VercelResponse,
-      env: env({
-        RESEND_API_KEY: "RESEND_API_KEY",
-        SENTRY_DSN: "SENTRY_DSN",
-        SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
-        SUBMIT_NOTIFY_EMAIL: "SUBMIT_NOTIFY_EMAIL",
-        VERCEL_ENV: "VERCEL_ENV",
-      }),
-    })
-    .url("POST", "/api/subscribe", "./api/subscribe.ts", {
-      request: true,
-      response: VercelResponse,
-      env: env({
-        RESEND_API_KEY: "RESEND_API_KEY",
-        SENTRY_DSN: "SENTRY_DSN",
-        SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
-        VERCEL_ENV: "VERCEL_ENV",
-      }),
-    })
-    .url("POST", "/api/track", "./api/track.ts", {
-      request: true,
-      response: VercelResponse,
-      env: env({
-        DATABASE_URL: "DATABASE_URL",
-        SENTRY_DSN: "SENTRY_DSN",
-        SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
-        VERCEL_ENV: "VERCEL_ENV",
-      }),
-    })
-    .url("POST", "/api/webhooks/resend", "./api/webhooks/resend.ts", {
-      request: true,
-      response: VercelResponse,
-      env: env({
+        PATREON_WEBHOOK_SECRET: "PATREON_WEBHOOK_SECRET",
         RESEND_API_KEY: "RESEND_API_KEY",
         RESEND_WEBHOOK_SECRET: "RESEND_WEBHOOK_SECRET",
         SENTRY_DSN: "SENTRY_DSN",
         SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
         SUBMIT_NOTIFY_EMAIL: "SUBMIT_NOTIFY_EMAIL",
         VERCEL_ENV: "VERCEL_ENV",
-      }),
-    })
-    .url("POST", "/api/webhooks/patreon", "/api/webhooks/patreon.ts", {
-      request: true,
-      response: VercelResponse,
-      env: env({
-        DATABASE_URL: "DATABASE_URL",
-        PATREON_WEBHOOK_SECRET: "PATREON_WEBHOOK_SECRET",
-        SENTRY_DSN: "SENTRY_DSN",
-        SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
-        VERCEL_ENV: "VERCEL_ENV",
-      }),
-    })
-    .url("GET", "/sitemap.xml", "./api/sitemap.ts", {
-      request: true,
-      response: VercelResponse,
-      env: env({
-        DATABASE_URL: "DATABASE_URL",
-        SENTRY_DSN: "SENTRY_DSN",
-        SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
-        VERCEL_ENV: "VERCEL_ENV",
-      }),
-    })
-    .url("GET", "/v/{slug}", "./api/v/[slug].ts", {
-      include: "./dist/index.html",
-      request: true,
-      response: VercelResponse,
-      env: env({
-        DATABASE_URL: "DATABASE_URL",
-        SENTRY_DSN: "SENTRY_DSN",
-        SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
-        VERCEL_ENV: "VERCEL_ENV",
-      }),
-    })
-    .url("GET", "/s/{slug}", "./api/v/[slug].ts", {
-      include: "./dist/index.html",
-      request: true,
-      response: VercelResponse,
-      env: env({
-        DATABASE_URL: "DATABASE_URL",
-        SENTRY_DSN: "SENTRY_DSN",
-        SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
-        VERCEL_ENV: "VERCEL_ENV",
-      }),
-    })
-    .url("GET", "/img/{source}/{id}/{tier}", "./api/img/[source]/[id]/[tier].ts", {
-      request: true,
-      response: VercelResponse,
-      env: env({
-        BLOB_READ_WRITE_TOKEN: "BLOB_READ_WRITE_TOKEN",
-        DATABASE_URL: "DATABASE_URL",
-        SENTRY_DSN: "SENTRY_DSN",
-        SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
-        VERCEL_ENV: "VERCEL_ENV",
-      }),
-    })
-    .url("GET", "/og/{slug}.png", "./api/og/[slug].ts", {
-      request: true,
-      response: VercelResponse,
-      env: env({
-        DATABASE_URL: "DATABASE_URL",
-        SENTRY_DSN: "SENTRY_DSN",
-        SENTRY_TRACES_SAMPLE_RATE: "SENTRY_TRACES_SAMPLE_RATE",
-        VERCEL_ENV: "VERCEL_ENV",
+
       }),
     })
     // cron jobs
@@ -205,9 +105,11 @@ import { FunctionRouter, VercelResponse } from "@cloudgear/functions";
   );
 
   await cdn.url();
+
+  return cdn;
 }
 
-{ // cdn
+const $cdn = async () => {
   const dns = new DNS(
     "gandi",
     "cdn.prod.tranquilo.art",
@@ -226,4 +128,28 @@ import { FunctionRouter, VercelResponse } from "@cloudgear/functions";
     } }
   );
   await cdn.url();
+
+  return cdn;
+}
+
+export {
+  /**
+   * import { $cdn } from "./setup.ts";
+   *
+   * const cdn = await $cdn();
+   * const response = await cdn.fetch("xyz");
+   */
+  $cdn,
+
+  /**
+   * import { $functions } from "./setup.ts";
+   *
+   * const functions = await $functions();
+   * const response = await functions.fetch("/?path=api/items", {
+   *   headers: {},
+   *   body: JSON.stringify({}),
+   *   method: "POST",
+   * });
+   */
+  $functions,
 }
