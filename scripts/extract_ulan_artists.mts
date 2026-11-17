@@ -24,6 +24,21 @@ const TERM_FILE = path.join(ROOT, "data/reference/raw/TERM.out");
 const OUT = path.join(ROOT, "data/reference/ulan-artists.json");
 const DRY = process.argv.includes("--dry-run");
 
+interface AmbiguousEntry {
+  name: string;
+  ambiguous: true;
+  subjectIds?: string[];
+  items?: number;
+}
+
+interface MatchedEntry {
+  name: string;
+  ulan_id?: string;
+  preferred_name?: string | null;
+  variants?: string[];
+  items?: number;
+}
+
 async function ourArtists() {
   const env = fs.readFileSync(path.join(ROOT, ".env.local"), "utf8");
   for (const line of env.split("\n")) {
@@ -49,7 +64,7 @@ async function main() {
     );
   }
   const artists = await ourArtists();
-  const counts = new Map(artists.map((a) => [a.artist, a.n]));
+  const counts = new Map<string, number>(artists.map((a) => [a.artist, a.n]));
   console.log(`${counts.size} attributed artist names in the catalogue`);
   // A merge renames rows to a spelling ULAN may lack; the old name keeps
   // the subject in the subset.
@@ -95,7 +110,7 @@ async function main() {
   );
 
   const index = ulan.buildIndex(allTerms);
-  const out: Record<string, any> = {};
+  const out: Record<string, AmbiguousEntry | MatchedEntry> = {};
   let matched = 0,
     ambiguous = 0,
     missing = 0;
@@ -136,17 +151,14 @@ async function main() {
   );
   for (const g of groups
     .sort(
-      (a: any, b: any) =>
-        b.ourNames.reduce((s: number, n: any) => s + (counts.get(n) || 0), 0) -
-        a.ourNames.reduce((s: number, n: any) => s + (counts.get(n) || 0), 0),
+      (a, b) =>
+        b.ourNames.reduce((s, n) => s + (counts.get(n) || 0), 0) -
+        a.ourNames.reduce((s, n) => s + (counts.get(n) || 0), 0),
     )
     .slice(0, 25)) {
-    const total = g.ourNames.reduce(
-      (s: number, n: any) => s + (counts.get(n) || 0),
-      0,
-    );
+    const total = g.ourNames.reduce((s, n) => s + (counts.get(n) || 0), 0);
     console.log(`  ${g.preferredName || g.subjectId}  (${total} items)`);
-    g.ourNames.forEach((n: any) => {
+    g.ourNames.forEach((n) => {
       console.log(`      ${String(counts.get(n)).padStart(3)}  ${n}`);
     });
   }
@@ -173,7 +185,7 @@ async function main() {
   console.log(`\nwritten to ${path.relative(ROOT, OUT)}`);
 }
 
-main().catch((e) => {
-  console.error("FATAL", e?.message || e);
+main().catch((e: unknown) => {
+  console.error("FATAL", e instanceof Error ? e.message : e);
   process.exit(1);
 });
