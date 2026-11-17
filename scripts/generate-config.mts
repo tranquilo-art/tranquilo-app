@@ -22,6 +22,13 @@ const BROWSER_OUTPUT_PATH = path.join(
 );
 const NODE_OUTPUT_PATH = path.join(ROOT, "lib", "config.generated.ts");
 
+const BOOT_URLS_OUTPUT_PATH = path.join(
+  ROOT,
+  "src",
+  "data",
+  "boot-preload-urls.generated.json",
+);
+
 const VOCABULARY_PATH = path.join(ROOT, "shared", "vocabulary.json");
 const VOCABULARY_OUTPUT_PATH = path.join(
   ROOT,
@@ -43,7 +50,7 @@ const BANNER =
   "// GENERATED FILE -- do not edit directly.\n" +
   "// Source: config.toml. Regenerate with `bun run generate-config`.\n\n";
 
-function main() {
+async function main() {
   const source = fs.readFileSync(CONFIG_TOML_PATH, "utf8");
   const config = parseToml(source);
   const serialized = JSON.stringify(config, null, 2);
@@ -78,9 +85,24 @@ function main() {
       `export const VOCABULARY_LISTS: Record<string, string[]> = ${JSON.stringify(lists, null, 2)};\n`,
   );
 
+  // Imported only now: these modules read the config file written above.
+  const { ItemsApiClient } = await import("../src/app/ItemsApiClient.ts");
+  const { bootDataUrls } = await import("../src/app/bootDataUrls.ts");
+  const { DEFAULT_LOCALE } = await import("../src/i18n/locales.ts");
+  const { TRANQUILO_CONFIG } = await import("../src/data/config.generated.ts");
+  const bootClient = new ItemsApiClient(
+    TRANQUILO_CONFIG.cache.bust_version,
+    TRANQUILO_CONFIG.feed.page_size,
+    DEFAULT_LOCALE,
+  );
+  fs.writeFileSync(
+    BOOT_URLS_OUTPUT_PATH,
+    `${JSON.stringify(bootDataUrls(bootClient), null, 2)}\n`,
+  );
+
   console.log(
     `generate-config: wrote ${path.relative(ROOT, BROWSER_OUTPUT_PATH)}, ${path.relative(ROOT, NODE_OUTPUT_PATH)} and ${path.relative(ROOT, VOCABULARY_OUTPUT_PATH)}`,
   );
 }
 
-main();
+await main();

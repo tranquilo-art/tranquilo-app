@@ -25,6 +25,7 @@ Temp/
 /src/data/config.generated.ts
 /lib/config.generated.ts
 /lib/vocabulary.generated.ts
+/src/data/boot-preload-urls.generated.json
 
 # Internal-only docs -- operational/business detail not meant for the public
 # repo (org names, provider account specifics, restore runbooks, the full

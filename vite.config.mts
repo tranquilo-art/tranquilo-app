@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { defineConfig } from "vite";
 import { TRANSLATED_PAGES } from "./src/i18n/pages.ts";
 import baseTemplate from "./vite-plugins/base-template.mts";
+import bootPreload from "./vite-plugins/boot-preload.mts";
 import communityPartial from "./vite-plugins/community-partial.mts";
 import headPartial from "./vite-plugins/head-partial.mts";
 import imgCdnPreconnect from "./vite-plugins/img-cdn-preconnect.mts";
@@ -38,6 +39,7 @@ export default defineConfig({
     baseTemplate(import.meta.dirname),
     headPartial(import.meta.dirname),
     imgCdnPreconnect(),
+    bootPreload(import.meta.dirname),
     pageChromePartial(import.meta.dirname),
     communityPartial(import.meta.dirname),
   ],
