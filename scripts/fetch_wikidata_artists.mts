@@ -30,7 +30,7 @@ const STORE = path.join(ROOT, "data/reference/wikidata-artists.json");
 const BATCH = 20; // names per query: one request answers a whole cluster tier
 
 const args = process.argv.slice(2);
-const opt = (n: string, d: any = null) => {
+const opt = (n: string, d: string | null = null) => {
   const i = args.indexOf(`--${n}`);
   return i === -1 ? d : args[i + 1];
 };
@@ -38,14 +38,14 @@ const DRY = args.includes("--dry-run");
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-function loadStore() {
+function loadStore(): wd.ArtistStore {
   try {
     return JSON.parse(fs.readFileSync(STORE, "utf8"));
   } catch {
     return {};
   }
 }
-function saveStore(store: any) {
+function saveStore(store: wd.ArtistStore) {
   fs.mkdirSync(path.dirname(STORE), { recursive: true });
   fs.writeFileSync(STORE, `${JSON.stringify(store, null, 2)}\n`);
 }
@@ -70,13 +70,13 @@ async function namesFromClusters(limit: number) {
   return rows.map((r) => r.artist);
 }
 
-async function runQuery(names: string[], breaker: any) {
+async function runQuery(names: string[], breaker: wd.Breaker) {
   const query = wd.artistQuery(names);
   // POST, not a GET query string, per Wikimedia's own guidance for
   // anything substantial. A network failure must count against the
   // breaker too, caught here rather than left to bubble -- an uncaught
   // throw would skip the error budget.
-  let res: any;
+  let res: Response;
   try {
     res = await fetch(wd.ENDPOINT, {
       method: "POST",
@@ -117,14 +117,15 @@ async function runQuery(names: string[], breaker: any) {
 }
 
 async function main() {
-  let names: any;
-  if (opt("names", null)) {
-    names = opt("names")
+  let names: string[];
+  const namesArg = opt("names");
+  if (namesArg) {
+    names = namesArg
       .split(",")
-      .map((s: string) => s.trim())
+      .map((s) => s.trim())
       .filter(Boolean);
   } else {
-    names = await namesFromClusters(Number(opt("clusters", 10)));
+    names = await namesFromClusters(Number(opt("clusters", "10")));
   }
 
   const store = loadStore();
@@ -135,7 +136,7 @@ async function main() {
   // --recheck-misses asks stored misses once more. Alias matching was
   // added after many were recorded, so a "not in Wikidata" from before it
   // may just have been a spelling Wikidata keeps as an alias.
-  const todo: any[] = args.includes("--refresh")
+  const todo: string[] = args.includes("--refresh")
     ? names
     : wd.namesToFetch(names, store, {
         recheckMisses: args.includes("--recheck-misses"),
@@ -185,7 +186,7 @@ async function main() {
   );
 }
 
-main().catch((e) => {
-  console.error("FATAL", e?.message || e);
+main().catch((e: unknown) => {
+  console.error("FATAL", e instanceof Error ? e.message : e);
   process.exit(1);
 });
