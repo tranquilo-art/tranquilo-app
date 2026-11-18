@@ -3,12 +3,42 @@
 // language the form was sent in, so a reply can be written in it.
 // Requires RESEND_API_KEY and SUBMIT_NOTIFY_EMAIL.
 
+import { randomUUID } from "node:crypto";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { getSql } from "../lib/db.ts";
 import { escapeHtml } from "../lib/html-escape.ts";
 import { isValidEmail } from "../lib/is-valid-email.ts";
-import { redactEmails } from "../lib/redact.ts";
 import { requestLocale } from "../lib/request-locale.ts";
 import { reportError, reportProblem } from "../lib/sentry.ts";
+import {
+  rejectOverlongField,
+  rejectOversizedBody,
+  writeRateLimited,
+} from "../lib/write-guard.ts";
+
+const MAX_BODY_BYTES = 32768;
+const COLLECTION_FIELD_MAX = {
+  collectionName: 200,
+  submitterName: 200,
+  submitterEmail: 254,
+  collectionLink: 2000,
+  licenseType: 100,
+  licenseOther: 200,
+  licenseVerificationLink: 2000,
+  estimatedSize: 100,
+  description: 4000,
+  locale: 20,
+  kind: 20,
+  feedbackType: 40,
+  email: 254,
+  message: 4000,
+  context: 300,
+  itemSource: 100,
+  itemNativeId: 500,
+  itemUrl: 2000,
+  comment: 2000,
+};
+const MAX_REPORT_CATEGORIES = 10;
 
 const REQUIRED_FIELDS = [
   "collectionName",
@@ -102,7 +132,8 @@ async function sendNotification(
   // malformed reply_to.
   if (replyTo) payload.reply_to = replyTo;
 
-  let resendRes: Response, errText: string;
+  const requestId = randomUUID();
+  let resendRes: Response;
   try {
     resendRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -114,16 +145,15 @@ async function sendNotification(
     });
 
     if (!resendRes.ok) {
-      errText = await resendRes.text();
       console.error(
         "submit-collection: Resend API error",
         resendRes.status,
-        errText,
+        requestId,
       );
       await reportProblem(
         "submit.resend_failed",
         `submit-collection: Resend refused the email (${resendRes.status})`,
-        { status: resendRes.status, body: redactEmails(errText) },
+        { status: resendRes.status, requestId },
       );
       res.statusCode = 502;
       res.json({ error: "Couldn't send the submission email" });
@@ -297,7 +327,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const body: FormBody = req.body || {};
+  if (rejectOversizedBody(res, req.body, MAX_BODY_BYTES)) return;
+
+  const body: FormBody =
+    req.body && typeof req.body === "object" ? req.body : {};
+  if (rejectOverlongField(res, body, COLLECTION_FIELD_MAX)) return;
+  if (
+    Array.isArray(body.categories) &&
+    body.categories.length > MAX_REPORT_CATEGORIES
+  ) {
+    res.statusCode = 400;
+    res.json({ error: "categories has too many entries" });
+    return;
+  }
+  if (await writeRateLimited(getSql(), req, res, "submit")) return;
 
   if (body.kind === "feedback") {
     await handleFeedback(req, res, body);

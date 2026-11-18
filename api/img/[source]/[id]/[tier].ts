@@ -188,6 +188,22 @@ function isImgSource(value: unknown): value is ImgSource {
   );
 }
 
+const WILDCARD_DNS_SUFFIX =
+  /\.(nip\.io|sslip\.io|xip\.io|traefik\.me|localtest\.me)$/;
+const EMBEDDED_IPV4 = /(^|[.-])\d{1,3}([.-])\d{1,3}\2\d{1,3}\2\d{1,3}([.-]|$)/;
+
+// Rejects IP literals, internal and wildcard-DNS names, ports, credentials.
+function isPublicDnsHost(url: URL): boolean {
+  const host = url.hostname.replace(/\.+$/, "");
+  if (url.port || url.username || url.password) return false;
+  if (host.includes(":") || /^[0-9.]+$/.test(host) || /^\[/.test(host))
+    return false;
+  if (host === "localhost" || host.endsWith(".localhost")) return false;
+  if (/\.(internal|local|localdomain|lan|home|corp)$/.test(host)) return false;
+  if (WILDCARD_DNS_SUFFIX.test(host) || EMBEDDED_IPV4.test(host)) return false;
+  return host.includes(".");
+}
+
 function isAllowedOrigin(
   source: unknown,
   tier: ImgTier,
@@ -200,7 +216,9 @@ function isAllowedOrigin(
     return false;
   }
   if (parsed.protocol !== "https:") return false;
-  if (source === "europeana" && tier === "lightbox") return true;
+  if (parsed.port || parsed.username || parsed.password) return false;
+  if (source === "europeana" && tier === "lightbox")
+    return isPublicDnsHost(parsed);
   if (!isImgSource(source)) return false;
   return ALLOWED_ORIGIN_HOSTS[source].indexOf(parsed.hostname) !== -1;
 }
@@ -249,19 +267,96 @@ function tooLargeError(bytes: number) {
   return err;
 }
 
+const FORMAT_CONTENT_TYPES: Record<string, string> = {
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+  tiff: "image/tiff",
+};
+const HEADER_CONTENT_TYPES: Record<string, string> = {
+  "image/jpeg": "image/jpeg",
+  "image/jpg": "image/jpeg",
+  "image/pjpeg": "image/jpeg",
+  "image/png": "image/png",
+  "image/webp": "image/webp",
+  "image/avif": "image/avif",
+  "image/gif": "image/gif",
+  "image/tiff": "image/tiff",
+};
+const MAX_ORIGIN_REDIRECTS = 3;
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+
+function sniffContentType(buf: Buffer): string | null {
+  const ascii = (from: number, to: number) =>
+    buf.subarray(from, to).toString("latin1");
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff)
+    return "image/jpeg";
+  if (buf[0] === 0x89 && ascii(1, 4) === "PNG") return "image/png";
+  if (ascii(0, 3) === "GIF") return "image/gif";
+  if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "image/webp";
+  if (ascii(4, 8) === "ftyp" && /^(avif|avis)/.test(ascii(8, 12)))
+    return "image/avif";
+  if (ascii(0, 4) === "II*\u0000" || ascii(0, 4) === "MM\u0000*")
+    return "image/tiff";
+  return null;
+}
+
+function looksLikeMarkup(buf: Buffer): boolean {
+  return buf.subarray(0, 512).toString("utf8").trimStart().startsWith("<");
+}
+
+// Content type from the body's detected format, never the origin's header.
+async function detectRasterContentType(
+  declaredContentType: string | null,
+  buf: Buffer,
+): Promise<string | null> {
+  if (looksLikeMarkup(buf)) return null;
+  try {
+    const { format, compression } = await sharp(buf).metadata();
+    if (format === "heif")
+      return compression === "av1" ? "image/avif" : "image/heif";
+    return (format && FORMAT_CONTENT_TYPES[format]) || null;
+  } catch (_e) {
+    if (!declaredContentType) return sniffContentType(buf);
+    const mime = declaredContentType.split(";")[0].trim().toLowerCase();
+    return HEADER_CONTENT_TYPES[mime] ?? null;
+  }
+}
+
+function redirectRefused(reason: string): OriginError {
+  return new Error(`origin redirect refused: ${reason}`);
+}
+
 async function fetchOriginOnce(
   url: string,
   source: string,
+  tier: ImgTier = "display",
 ): Promise<{ buf: Buffer; contentType: string }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => {
     controller.abort();
   }, ORIGIN_FETCH_TIMEOUT_MS);
   try {
-    const r = await fetch(url, {
-      signal: controller.signal,
-      headers: identity.imageFetchHeaders(source),
-    });
+    let current = url;
+    let r: Response;
+    for (let hop = 0; ; hop++) {
+      r = await fetch(current, {
+        signal: controller.signal,
+        headers: identity.imageFetchHeaders(source),
+        redirect: "manual",
+      });
+      if (!REDIRECT_STATUSES.has(r.status)) break;
+      const location = r.headers.get("location");
+      await r.body?.cancel();
+      if (!location) throw redirectRefused("no location");
+      if (hop >= MAX_ORIGIN_REDIRECTS) throw redirectRefused("too many hops");
+      const next = new URL(location, current).toString();
+      if (!next.startsWith("https:")) throw redirectRefused("not https");
+      if (!isAllowedOrigin(source, tier, next))
+        throw redirectRefused("disallowed host");
+      current = next;
+    }
     if (!r.ok) {
       const err: OriginError = new Error(
         `origin fetch failed with status ${r.status}`,
@@ -297,14 +392,14 @@ async function fetchOriginOnce(
     // asset request with 200 and an HTML error page as the body. Without
     // this, that HTML would sail through sharp's decode failure path and
     // get stored verbatim as if it were the image.
-    if (declaredContentType && !/^image\//i.test(declaredContentType)) {
+    const contentType = await detectRasterContentType(declaredContentType, buf);
+    if (!contentType) {
       const typeErr: OriginError = new Error(
-        `origin returned a 200 with a non-image content-type (${declaredContentType})`,
+        `origin returned a 200 that is not a raster image (${declaredContentType ?? "no content-type"})`,
       );
       typeErr.status = r.status;
       throw typeErr;
     }
-    const contentType = declaredContentType || "application/octet-stream";
     return { buf: buf, contentType: contentType };
   } finally {
     clearTimeout(timeout);
@@ -354,8 +449,8 @@ async function alertOnce(
 
 // Single attempt -- see ORIGIN_COOLDOWN_DEFAULT_SECONDS above for why
 // there's no retry loop.
-async function fetchOrigin(url: string, source: string) {
-  return await fetchOriginOnce(url, source);
+async function fetchOrigin(url: string, source: string, tier: ImgTier) {
+  return await fetchOriginOnce(url, source, tier);
 }
 
 // Circuit breaker, atomic: the UPDATE's WHERE clause only lets the
@@ -460,7 +555,7 @@ async function transformForTier(
         return { buf: webpBuf, contentType: "image/webp" };
       }
     } catch (_encodeErr) {
-      // A source can serve something sharp can't decode (SVG, an exotic
+      // A source can serve something sharp can't decode (an exotic
       // TIFF) -- storing the original is correct, not a failure.
     }
     return { buf: buf, contentType: contentType };
@@ -777,7 +872,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           name: "img-proxy.fetch-origin",
           attributes: { source: source, tier: tier, id: id },
         },
-        () => fetchOrigin(fetchUrl, source),
+        () => fetchOrigin(fetchUrl, source, tier),
       );
       await guard.recordOriginOutcome(sqlClient, source, 200, true);
       await guard.recordHostOutcome(sqlClient, hostOf(originUrl), 200, true);

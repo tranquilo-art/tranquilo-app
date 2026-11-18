@@ -51,6 +51,7 @@ describe("prune-visitor-data", () => {
         "('items:old', now() - interval '3 days'), ('items:new', now()), " +
         "('img:old', now() - interval '3 days'), ('img:new', now()), " +
         "('detail:old', now() - interval '3 days'), ('detail:new', now()), " +
+        "('write:track:old', now() - interval '3 days'), ('write:track:new', now()), " +
         "('key:5', now() - interval '400 days'), " +
         "('other-key', now() - interval '30 days')",
     );
@@ -69,7 +70,7 @@ describe("prune-visitor-data", () => {
     const res = fakeRes();
     await handler(authed, res);
     expect(res.statusCode).toBe(200);
-    expect(res.body).toEqual({ events: 1, buckets: 3, usage: 1 });
+    expect(res.body).toEqual({ events: 1, buckets: 4, usage: 1 });
     const left = await sql.query(
       "SELECT ip FROM visitor_fetch_state ORDER BY ip",
     );
@@ -79,6 +80,7 @@ describe("prune-visitor-data", () => {
       "items:new",
       "key:5",
       "other-key",
+      "write:track:new",
     ]);
     const usage = await sql.query("SELECT count(*)::int AS n FROM api_usage");
     expect(usage).toEqual([{ n: 1 }]);

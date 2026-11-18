@@ -12,11 +12,38 @@ function firstHeaderValue(
   return Array.isArray(value) ? value[0] : value;
 }
 
-function getOrigin(req: VercelRequest): string {
+const PRODUCTION_ORIGIN = "https://tranquilo.art";
+
+function configuredOrigin(): string | null {
+  const raw = process.env.CANONICAL_ORIGIN;
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" || url.protocol === "http:"
+      ? url.origin
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function isLocalRuntime(): boolean {
+  return (
+    process.env.NODE_ENV === "test" || process.env.VERCEL_ENV === "development"
+  );
+}
+
+function requestOrigin(req: VercelRequest): string {
   const proto = firstHeaderValue(req.headers["x-forwarded-proto"]) || "https";
   const host =
     firstHeaderValue(req.headers["x-forwarded-host"]) || req.headers.host;
   return `${proto}://${host}`;
+}
+
+function getOrigin(req: VercelRequest): string {
+  const configured = configuredOrigin();
+  if (configured) return configured;
+  return isLocalRuntime() ? requestOrigin(req) : PRODUCTION_ORIGIN;
 }
 
 export { firstHeaderValue, getOrigin };

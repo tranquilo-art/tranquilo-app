@@ -42,6 +42,7 @@ const $functions = async () => {
     region: "us-east-1",
     optionalEnv: [
       "BLOB_USAGE_SOFT_CAP_BYTES",
+      "CANONICAL_ORIGIN",
       "IMG_ADMIT_FASTPATH_REQUESTS",
       "IMG_ADMIT_FASTPATH_WINDOW_SECONDS",
       "ITEMS_CURSOR_SECRET",

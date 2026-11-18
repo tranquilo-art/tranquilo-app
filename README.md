@@ -164,13 +164,17 @@ bun link cloudgear @cloudgear/dns @cloudgear/secrets @cloudgear/core @cloudgear/
 cloudgear --help
 ```
 
+The `cloudgear:*` scripts in `package.json` run `bunx --no-install cloudgear`, so they MUST
+use this linked binary and never fetch a package of that name from the npm registry.
+They fail if the link is missing; repeat this step instead of removing `--no-install`.
+
 3. AWS credentials (SSO), us-east-1 for CloudFront, ACM and your buckets
 ```
 aws sso login --profile <your-sso-profile>
 export AWS_PROFILE=<your-sso-profile>
 export AWS_REGION=us-east-1
 export GANDI_TOKEN=<gandi PAT>
-aws sts get-caller-identity        # confirm the right account (920042984913)
+aws sts get-caller-identity        # confirm the right account (<your-aws-account-id>)
 ```
 
 4. Gandi token for the DNS records (not stored anywhere by cloudgear)
@@ -236,4 +240,4 @@ check a POST route too; through CloudFront a POST needs the x-amz-content-sha256
 * Step 7: it only reads from AWS and records state, and never changes cloud resources. If you already imported, import --all skips what is in state.
 * `apply` refuses on: a missing required secret or env variable (step 5), a DNS conflict, or a cloudgear.env.json that doesn’t match the config (re-run step 6). --skip-env-check and --skip-dns-check bypass those; use them only if you know why.
 * Step 10: if it stops partway, run the same command again, and it resumes.
-* Keep `.cloudgear/state.json` safe (it’s git-ignored by default); back it up before every apply.
+* Keep `.cloudgear/state.json` safe (it’s git-ignored for new clones; see `.gitignore`); back it up before every apply.

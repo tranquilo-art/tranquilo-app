@@ -114,7 +114,7 @@ function getAppHtml(): string | null {
 // which would 404 at /v/met-436528 without it.
 function renderAppPage(appHtml: string, opts: PageMeta) {
   const head = `
-    <link rel="canonical" href="${opts.canonicalUrl}">
+    <link rel="canonical" href="${escapeHtml(opts.canonicalUrl)}">
     ${metaTags(opts)}`;
 
   return (
@@ -129,25 +129,25 @@ function renderAppPage(appHtml: string, opts: PageMeta) {
       // URLs after it in document order, and index.html links
       // css/style.css inside <head>.
       .replace("<head>", '<head>\n<base href="/">')
-      .replace(/<title>[\s\S]*?<\/title>/, `<title>${opts.title}</title>`)
+      .replace(/<title>[\s\S]*?<\/title>/, () => `<title>${opts.title}</title>`)
       .replace(
         /<meta name="description" content="[^"]*">/,
-        `<meta name="description" content="${opts.description}">`,
+        () => `<meta name="description" content="${opts.description}">`,
       )
-      .replace("</head>", `${head}</head>`)
+      .replace("</head>", () => `${head}</head>`)
   );
 }
 
 function metaTags(opts: PageMeta) {
   return `
     <meta property="og:type" content="website">
-    <meta property="og:url" content="${opts.canonicalUrl}">
+    <meta property="og:url" content="${escapeHtml(opts.canonicalUrl)}">
     <meta property="og:title" content="${opts.ogTitle}">
     <meta property="og:description" content="${opts.description}">
     ${
       opts.ogImage
         ? `
-          <meta property="og:image" content="${opts.ogImage}">
+          <meta property="og:image" content="${escapeHtml(opts.ogImage)}">
           <meta property="og:image:width" content="1200">
           <meta property="og:image:height" content="630">`
         : ""
@@ -157,9 +157,18 @@ function metaTags(opts: PageMeta) {
     <meta name="twitter:description" content="${opts.description}">
     ${
       opts.ogImage
-        ? `<meta name="twitter:image" content="${opts.ogImage}">`
+        ? `<meta name="twitter:image" content="${escapeHtml(opts.ogImage)}">`
         : ""
     }`;
+}
+
+function scriptSafeJson(value: string): string {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
 }
 
 function renderPage(opts: PageMeta) {
@@ -183,7 +192,7 @@ function renderPage(opts: PageMeta) {
       opts.redirectUrl
         ? // JSON.stringify leaves "<" alone, so a "</script>" inside the
           // URL would close this tag early -- \u003c keeps it inert.
-          `<script>location.replace(${JSON.stringify(opts.redirectUrl).replace(/</g, "\\u003c")});</script>`
+          `<script>location.replace(${scriptSafeJson(opts.redirectUrl)});</script>`
         : ""
     }
     </body>
@@ -412,7 +421,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           "A calm, ad-free digital museum and open-source art platform.",
         ogTitle: "Tranquilo",
         ogImage: null,
-        canonicalUrl: `${origin}/v/${escapeHtml(slug)}`,
+        canonicalUrl: `${origin}/v/${encodeURIComponent(slug)}`,
         redirectUrl: fallbackUrl || `${origin}/index.html`,
         redirectLabel: fallbackUrl
           ? "View it on the museum's site"

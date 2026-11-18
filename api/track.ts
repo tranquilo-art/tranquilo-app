@@ -12,6 +12,14 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getSql } from "../lib/db.ts";
 import { reportError } from "../lib/sentry.ts";
+import {
+  arePropsBounded,
+  isValidEventName,
+  rejectOversizedBody,
+  writeRateLimited,
+} from "../lib/write-guard.ts";
+
+const MAX_BODY_BYTES = 8192;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -21,13 +29,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const body = req.body || {};
+  if (rejectOversizedBody(res, req.body, MAX_BODY_BYTES)) return;
+
+  const body = req.body && typeof req.body === "object" ? req.body : {};
   const eventName = body.event_name;
   const props = body.props && typeof body.props === "object" ? body.props : {};
 
-  if (!eventName || typeof eventName !== "string") {
+  if (!isValidEventName(eventName)) {
     res.statusCode = 400;
-    res.json({ error: "event_name is required" });
+    res.json({ error: "event_name is required and must be a short slug" });
+    return;
+  }
+  if (!arePropsBounded(props)) {
+    res.statusCode = 400;
+    res.json({ error: "props is too large or too deeply nested" });
     return;
   }
 
@@ -38,6 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.json({ error: "Analytics store isn't configured yet" });
     return;
   }
+  if (await writeRateLimited(client, req, res, "track")) return;
 
   try {
     await client.query(

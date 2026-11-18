@@ -86,9 +86,10 @@ describe("/v/{slug} for a delisted (source withdrew it) item", () => {
     );
     // biome-ignore lint/suspicious/noTemplateCurlyInString: asserting on app.ts's literal source text, not an interpolation.
     expect(renderPageBody).toContain('href="${escapeHtml(opts.redirectUrl)}"');
-    // The <script> redirect uses JSON.stringify() on the raw value, which
-    // already produces a safe JS string literal.
-    expect(renderPageBody).toContain("JSON.stringify(opts.redirectUrl)");
+    // The <script> redirect encodes the raw value as a JSON string literal
+    // with <, > and & neutralised.
+    expect(renderPageBody).toContain("scriptSafeJson(opts.redirectUrl)");
+    expect(src).toContain("JSON.stringify(value)");
   });
 
   it("renderPage's link label is parameterized, not hardcoded to the homepage wording", () => {

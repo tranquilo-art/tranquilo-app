@@ -11,12 +11,21 @@
 //
 // Required env var: RESEND_API_KEY (shared with api/submit-collection.ts).
 
+import { randomUUID } from "node:crypto";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
+import { getSql } from "../lib/db.ts";
 import { isValidEmail } from "../lib/is-valid-email.ts";
-import { redactEmails } from "../lib/redact.ts";
 import { requestLocale } from "../lib/request-locale.ts";
 import { reportError, reportProblem } from "../lib/sentry.ts";
+import {
+  rejectOverlongField,
+  rejectOversizedBody,
+  writeRateLimited,
+} from "../lib/write-guard.ts";
+
+const MAX_BODY_BYTES = 2048;
+const FIELD_MAX = { email: 254, source: 40, locale: 20 };
 
 const VALID_SOURCES: Record<string, boolean> = {
   pro_waitlist: true,
@@ -86,7 +95,7 @@ async function mergedProperties(
   if (rawExisting && existing === null) {
     console.warn(
       "subscribe: unrecognized properties.source shape, treating as no history",
-      JSON.stringify(rawExisting),
+      typeof rawExisting,
     );
   }
   if (existing) {
@@ -136,7 +145,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const body = req.body || {};
+  if (rejectOversizedBody(res, req.body, MAX_BODY_BYTES)) return;
+
+  const requestId = randomUUID();
+  const body = req.body && typeof req.body === "object" ? req.body : {};
+  if (rejectOverlongField(res, body, FIELD_MAX)) return;
+  if (await writeRateLimited(getSql(), req, res, "subscribe")) return;
+
   const email = body.email;
   const source = body.source;
   const locale = requestLocale(body.locale);
@@ -194,12 +209,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           console.error(
             "subscribe: retry after creating property still failed",
             resendRes.status,
-            errBody,
+            requestId,
           );
           await reportProblem(
             "subscribe.resend_failed",
             `subscribe: Resend refused the contact (${resendRes.status})`,
-            { status: resendRes.status, body: redactEmails(errBody), source },
+            { status: resendRes.status, requestId, source },
           );
           res.statusCode = 502;
           res.json({ error: "Couldn't subscribe right now" });
@@ -210,11 +225,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return;
       }
 
-      console.error("subscribe: Resend API error", resendRes.status, errBody);
+      console.error("subscribe: Resend API error", resendRes.status, requestId);
       await reportProblem(
         "subscribe.resend_failed",
         `subscribe: Resend refused the contact (${resendRes.status})`,
-        { status: resendRes.status, body: redactEmails(errBody), source },
+        { status: resendRes.status, requestId, source },
       );
       res.statusCode = 502;
       res.json({ error: "Couldn't subscribe right now" });

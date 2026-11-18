@@ -59,7 +59,7 @@ export const ACQUIRE_SQL =
   "      * visitor_fetch_state.refill_per_sec) >= $2::real " +
   "RETURNING tokens";
 
-type BudgetKind = "items" | "detail";
+type BudgetKind = "items" | "detail" | `write:${string}`;
 
 const configured = (): Limits => TRANQUILO_CONFIG.items_visitor_rate_limit;
 const configuredDetail = (): Limits =>
@@ -152,6 +152,17 @@ export async function detailRateLimitOrRespond(
   limits: Limits = configuredDetail(),
 ): Promise<boolean> {
   return rateLimitOrRespond(sql, req, res, 1, limits, "detail");
+}
+
+// Per-IP bucket for an unauthenticated write route; `route` names the bucket.
+export async function writeRateLimitOrRespond(
+  sql: QuerySql | null | undefined,
+  req: RequestWithHeaders,
+  res: RateLimitResponse,
+  route: string,
+  limits: Limits,
+): Promise<boolean> {
+  return rateLimitOrRespond(sql, req, res, 1, limits, `write:${route}`);
 }
 
 async function rateLimitOrRespond(

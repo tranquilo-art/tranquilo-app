@@ -120,6 +120,28 @@ describe("isAllowedOrigin", () => {
     }
   });
 
+  it("limits Europeana's lightbox tier to public DNS hosts over plain https", () => {
+    const ok = (u: string) => proxy.isAllowedOrigin("europeana", "lightbox", u);
+    expect(ok("https://images.example-museum.nl/a.jpg")).toBe(true);
+    for (const bad of [
+      "http://images.example-museum.nl/a.jpg",
+      "https://127.0.0.1/a.jpg",
+      "https://169.254.169.254/latest/meta-data",
+      "https://[::1]/a.jpg",
+      "https://localhost/a.jpg",
+      "https://localhost./a.jpg",
+      "https://foo.internal./a.jpg",
+      "https://169.254.169.254.nip.io/a.jpg",
+      "https://10-0-0-1.sslip.io/a.jpg",
+      "https://metadata.internal/a.jpg",
+      "https://intranet/a.jpg",
+      "https://images.example-museum.nl:8443/a.jpg",
+      "https://user:pw@images.example-museum.nl/a.jpg",
+    ]) {
+      expect(ok(bad)).toBe(false);
+    }
+  });
+
   it("rejects a host outside the allowlist for a real source", () => {
     expect(
       proxy.isAllowedOrigin("commons", "display", "https://example.com/x.jpg"),

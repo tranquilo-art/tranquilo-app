@@ -50,7 +50,7 @@ export default async function handler(req: CronRequest, res: CronResponse) {
     )) as unknown[];
     const buckets = (await sql.query(
       "DELETE FROM visitor_fetch_state " +
-        "WHERE (ip LIKE 'items:%' OR ip LIKE 'img:%' OR ip LIKE 'detail:%') " +
+        "WHERE (ip LIKE 'items:%' OR ip LIKE 'img:%' OR ip LIKE 'detail:%' OR ip LIKE 'write:%') " +
         "AND updated_at < now() - make_interval(days => $1::int) RETURNING 1",
       [BUCKET_RETENTION_DAYS],
     )) as unknown[];
