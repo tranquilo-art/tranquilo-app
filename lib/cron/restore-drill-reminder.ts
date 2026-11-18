@@ -12,6 +12,7 @@
 // Required env vars: CRON_SECRET, RESEND_API_KEY, and OPS_ALERT_EMAIL or
 // SUBMIT_NOTIFY_EMAIL.
 import * as Sentry from "@sentry/node";
+import { isCronAuthorized } from "../cron-auth.ts";
 import type { CronRequest, CronResponse } from "../cron-types.ts";
 import { reportError } from "../sentry.ts";
 
@@ -39,11 +40,7 @@ const BODY =
   "4. Delete the branch.\n";
 
 export default async function handler(req: CronRequest, res: CronResponse) {
-  const auth = req.headers?.authorization || "";
-  if (
-    !process.env.CRON_SECRET ||
-    auth !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
+  if (!isCronAuthorized(req)) {
     res.statusCode = 401;
     res.json({ error: "Unauthorized" });
     return;

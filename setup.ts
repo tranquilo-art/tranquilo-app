@@ -90,11 +90,11 @@ const $functions = async () => {
         VERCEL_PROJECT_ID: "VERCEL_PROJECT_ID",
       }),
       schedule: [
-        { cron: cron`11 9 1 1,4,7,10 *`, query: { job: "analytics-report", days: "92", label: "Quarterly" } },
-        { cron: cron` 7 9 1 * *`, query: { job: "analytics-report", days: "30", label: "Monthly" } },
+        { cron: cron`11 9 1 1,4,7,10 *`, query: { job: "restore-drill-reminder" } },
         { cron: cron`27 7 * * *`, query: { job: "db-backup" } },
         { cron: cron`41 3 * * *`, query: { job: "db-backup", task: "reshuffle" } },
         { cron: cron`13 8 * * *`, query: { job: "health-check" } },
+        { cron: cron`37 4 * * *`, query: { job: "prune-visitor-data" } },
         { cron: cron`19 4 * * *`, query: { job: "vercel-deployment-cleanup", commit: "1" } },
       ],
     })

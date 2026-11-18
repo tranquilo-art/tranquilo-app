@@ -30,3 +30,7 @@
 # ---------------------------------------------------------------------
 /.github/workflows/  @elaous
 /vercel.json         @elaous
+
+# Cloud deployment definition and its config.
+/setup.ts            @elaous
+/cloudgear.*         @elaous

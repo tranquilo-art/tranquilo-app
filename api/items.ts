@@ -783,7 +783,7 @@ function buildQuery(params: QueryParams): BuiltQuery {
   }
 
   const limit = Math.min(
-    parseInt(scalar(params.limit) ?? "", 10) || DEFAULT_LIMIT,
+    Math.max(1, parseInt(scalar(params.limit) ?? "", 10) || DEFAULT_LIMIT),
     MAX_LIMIT,
   );
   const cursor = scalar(params.cursor);

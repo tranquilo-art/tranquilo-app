@@ -18,6 +18,7 @@ import pruneVisitorData from "../../lib/cron/prune-visitor-data.ts";
 import restoreDrillReminder from "../../lib/cron/restore-drill-reminder.ts";
 import vercelDeploymentCleanup from "../../lib/cron/vercel-deployment-cleanup.ts";
 import warmImageCache from "../../lib/cron/warm-image-cache.ts";
+import { isCronAuthorized } from "../../lib/cron-auth.ts";
 import type { CronRequest, CronResponse } from "../../lib/cron-types.ts";
 
 type CronJob = (req: CronRequest, res: CronResponse) => unknown;
@@ -46,7 +47,11 @@ async function handler(
     typeof job === "string" && Object.hasOwn(jobs, job) ? jobs[job] : undefined;
   if (!fn) {
     res.statusCode = 400;
-    res.json({ error: "Unknown or missing ?job", known: Object.keys(jobs) });
+    res.json(
+      isCronAuthorized(req)
+        ? { error: "Unknown or missing ?job", known: Object.keys(jobs) }
+        : { error: "Unknown or missing ?job" },
+    );
     return;
   }
   return fn(req, res);

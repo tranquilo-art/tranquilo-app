@@ -16,6 +16,7 @@
 import * as Sentry from "@sentry/node";
 import { list } from "@vercel/blob";
 import * as blobOps from "../blob-ops.ts";
+import { isCronAuthorized } from "../cron-auth.ts";
 import type { CronRequest, CronResponse } from "../cron-types.ts";
 import { getSql, type Sql } from "../db.ts";
 import * as cacheAlerts from "../img-cache-alerts.ts";
@@ -241,11 +242,7 @@ function monitorConfig() {
 }
 
 export default async function handler(req: CronRequest, res: CronResponse) {
-  const auth = req.headers?.authorization || "";
-  if (
-    !process.env.CRON_SECRET ||
-    auth !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
+  if (!isCronAuthorized(req)) {
     res.statusCode = 401;
     res.json({ error: "Unauthorized" });
     return;

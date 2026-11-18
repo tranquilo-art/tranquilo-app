@@ -33,3 +33,32 @@ describe("buildQuery with repeated scalar params", () => {
     expect(q.params[0]).toEqual(["a", "b"]);
   });
 });
+
+describe("buildQuery limit clamping", () => {
+  const limitOf = (limit: string) =>
+    buildQuery({ ...MANIFEST_PAGE, limit }).params.at(-1);
+
+  it.each(["-1", "-500", "0", "abc", ""])(
+    "never yields a non-positive LIMIT for ?limit=%s",
+    (limit) => {
+      expect(limitOf(limit)).toBeGreaterThanOrEqual(1);
+    },
+  );
+
+  it("caps an oversized limit at the maximum", () => {
+    expect(limitOf("999999")).toBe(200);
+  });
+
+  it("passes an in-range limit through", () => {
+    expect(limitOf("25")).toBe(25);
+  });
+
+  it("clamps vibe_search limits to the same floor", () => {
+    const q = buildQuery({
+      shape: "vibe_search",
+      vibe_tags_any: "calm",
+      limit: "-1",
+    });
+    expect(q.text).toContain("LIMIT 1");
+  });
+});

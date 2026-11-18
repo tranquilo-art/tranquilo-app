@@ -56,7 +56,25 @@ describe("api/cron/index.js dispatcher", () => {
 
     expect(spy).not.toHaveBeenCalled();
     expect(res.statusCode).toBe(400);
-    expect(res.body.known).toContain("db-backup");
+    expect(res.body.known).toBeUndefined();
+  });
+
+  it("lists the known jobs on an unknown ?job only for an authenticated request", async () => {
+    vi.stubEnv("CRON_SECRET", "s3cret");
+    try {
+      const req = {
+        query: { job: "nope" },
+        headers: { authorization: "Bearer s3cret" },
+      };
+      const res = fakeRes();
+
+      await dispatcher(req, res, { jobs: { "db-backup": vi.fn() } });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.known).toContain("db-backup");
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it.each(["constructor", "toString", "__proto__"])(

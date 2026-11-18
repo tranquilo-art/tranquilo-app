@@ -11,6 +11,8 @@
 // Required env vars: CRON_SECRET, VERCEL_API_TOKEN, plus the
 // auto-exposed VERCEL_PROJECT_ID and VERCEL_ORG_ID (if the project
 // lives under a team).
+
+import { isCronAuthorized } from "../cron-auth.ts";
 import type { CronRequest, CronResponse } from "../cron-types.ts";
 import { reportError, Sentry } from "../sentry.ts";
 
@@ -155,11 +157,7 @@ export default async function handler(
   res: CronResponse,
   opts?: HandlerOptions,
 ) {
-  const auth = req.headers?.authorization || "";
-  if (
-    !process.env.CRON_SECRET ||
-    auth !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
+  if (!isCronAuthorized(req)) {
     res.statusCode = 401;
     res.json({ error: "Unauthorized" });
     return;
