@@ -8,9 +8,9 @@
 // to refuse every visitor. Responses served from the edge cache never reach
 // this check.
 
+import { clientIp } from "./client-ip.ts";
 import { TRANQUILO_CONFIG } from "./config.generated.ts";
 import type { QuerySql } from "./img-store.ts";
-import { clientIp } from "./img-visitor-rate-limit.ts";
 import { visitorKey } from "./visitor-hash.ts";
 
 interface Limits {
@@ -31,6 +31,7 @@ interface CostedQuery {
 
 interface RequestWithHeaders {
   headers?: Record<string, string | string[] | undefined>;
+  socket?: { remoteAddress?: string | null } | null;
 }
 
 interface RateLimitResponse {

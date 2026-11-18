@@ -12,8 +12,9 @@
 // throttle a real visitor scrolling the feed.
 //
 // Rows are keyed "img:<daily visitor hash>" (lib/visitor-hash.ts), never a
-// raw IP address. With no hashing secret configured the budget is skipped.
+// raw IP address.
 
+import { clientIp } from "./client-ip.ts";
 import { TRANQUILO_CONFIG } from "./config.generated.ts";
 import type { QuerySql } from "./img-store.ts";
 import { visitorKey } from "./visitor-hash.ts";
@@ -26,6 +27,7 @@ interface VisitorVerdict {
 
 interface RequestWithHeaders {
   headers?: Record<string, string | string[] | undefined>;
+  socket?: { remoteAddress?: string | null } | null;
 }
 
 interface RateLimitResponse {
@@ -75,25 +77,6 @@ async function acquireVisitorToken(
   }
 }
 
-/**
- * The visitor's IP, best-effort. x-forwarded-for's first entry is the real
- * client (Vercel appends its own hop); req.socket.remoteAddress would just
- * be Vercel's edge. Returns null on a request we can't identify, since
- * acquireVisitorToken() treats that as "allow", not "deny everyone".
- */
-function clientIp(req: RequestWithHeaders | null | undefined): string | null {
-  const xff = req?.headers?.["x-forwarded-for"];
-  if (xff) {
-    const first = String(Array.isArray(xff) ? xff[0] : xff)
-      .split(",")[0]
-      .trim();
-    if (first) return first;
-  }
-  const real = req?.headers?.["x-real-ip"];
-  if (real) return String(Array.isArray(real) ? real[0] : real).trim();
-  return null;
-}
-
 // How long to ask a denied client to wait: not read back from the row, since
 // the next token lands in roughly 1/refill_per_sec seconds regardless of the
 // exact deficit, and a follow-up query would spend a round trip on the one
@@ -128,4 +111,4 @@ async function rateLimitOrRespond(
   return true;
 }
 
-export { acquireVisitorToken, clientIp, rateLimitOrRespond, retryAfterSeconds };
+export { acquireVisitorToken, rateLimitOrRespond, retryAfterSeconds };

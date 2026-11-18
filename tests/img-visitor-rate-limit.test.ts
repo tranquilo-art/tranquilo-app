@@ -87,43 +87,6 @@ describe("acquireVisitorToken", () => {
   });
 });
 
-describe("clientIp", () => {
-  it("reads the first address out of x-forwarded-for", () => {
-    expect(
-      rateLimit.clientIp({
-        headers: { "x-forwarded-for": "203.0.113.7, 10.0.0.1" },
-      }),
-    ).toBe("203.0.113.7");
-  });
-
-  it("trims whitespace around the first address", () => {
-    expect(
-      rateLimit.clientIp({
-        headers: { "x-forwarded-for": "  203.0.113.7 , 10.0.0.1" },
-      }),
-    ).toBe("203.0.113.7");
-  });
-
-  it("handles a header array as Node sometimes provides", () => {
-    expect(
-      rateLimit.clientIp({
-        headers: { "x-forwarded-for": ["203.0.113.7", "10.0.0.1"] },
-      }),
-    ).toBe("203.0.113.7");
-  });
-
-  it("falls back to x-real-ip when x-forwarded-for is absent", () => {
-    expect(
-      rateLimit.clientIp({ headers: { "x-real-ip": "203.0.113.9" } }),
-    ).toBe("203.0.113.9");
-  });
-
-  it("returns null rather than guessing when neither header is present", () => {
-    expect(rateLimit.clientIp({ headers: {} })).toBe(null);
-    expect(rateLimit.clientIp({})).toBe(null);
-  });
-});
-
 describe("rateLimitOrRespond", () => {
   beforeEach(() => {
     process.env.ITEMS_CURSOR_SECRET = "test-secret";
