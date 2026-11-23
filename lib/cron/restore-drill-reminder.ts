@@ -6,25 +6,13 @@
 // Emails the maintainer via Resend. Unlike health-check's alert email, a
 // failed send is reported as a 500 rather than swallowed: this email is the
 // only output, so a silent failure would mean the drill quietly never
-// happens. The Sentry cron monitor covers the other silent failure -- the
-// schedule itself not firing.
+// happens. Has no Sentry cron monitor: monitors are a billed quota, and a
+// missed quarterly reminder is cheap to notice.
 //
 // Required env vars: CRON_SECRET, RESEND_API_KEY, and OPS_ALERT_EMAIL or
 // SUBMIT_NOTIFY_EMAIL.
-import * as Sentry from "@sentry/node";
 import type { CronRequest, CronResponse } from "../cron-types.ts";
 import { reportError } from "../sentry.ts";
-
-const MONITOR_SLUG = "restore-drill-reminder";
-const CRON_SCHEDULE = "11 9 1 1,4,7,10 *";
-function monitorConfig() {
-  return {
-    schedule: { type: "crontab" as const, value: CRON_SCHEDULE },
-    checkinMargin: 60,
-    maxRuntime: 5,
-    timezone: "UTC",
-  };
-}
 
 const SUBJECT = "Tranquilo: quarterly restore drill is due";
 
@@ -48,11 +36,6 @@ export default async function handler(req: CronRequest, res: CronResponse) {
     res.json({ error: "Unauthorized" });
     return;
   }
-
-  const checkInId = Sentry.captureCheckIn(
-    { monitorSlug: MONITOR_SLUG, status: "in_progress" },
-    monitorConfig(),
-  );
 
   try {
     const apiKey = process.env.RESEND_API_KEY;
@@ -79,19 +62,9 @@ export default async function handler(req: CronRequest, res: CronResponse) {
     });
     if (!resp.ok) throw new Error(`Resend responded ${resp.status}`);
 
-    Sentry.captureCheckIn(
-      { checkInId: checkInId, monitorSlug: MONITOR_SLUG, status: "ok" },
-      monitorConfig(),
-    );
-    await Sentry.flush(2000);
-
     res.statusCode = 200;
     res.json({ ok: true });
   } catch (err) {
-    Sentry.captureCheckIn(
-      { checkInId: checkInId, monitorSlug: MONITOR_SLUG, status: "error" },
-      monitorConfig(),
-    );
     await reportError(err);
     res.statusCode = 500;
     res.json({ error: "restore-drill-reminder failed, see Sentry" });

@@ -14,6 +14,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // (api/cron/index.ts, on ?job=).
 const CRON = path.join(__dirname, "../lib/cron");
 const crons = readdirSync(CRON).filter((f) => f.endsWith(".ts"));
+// Sentry cron monitors are a billed quota; these jobs deliberately have none.
+const UNMONITORED = ["restore-drill-reminder.ts", "warm-image-cache.ts"];
+const monitored = crons.filter((f) => !UNMONITORED.includes(f));
 
 describe("cron check-ins actually reach Sentry", () => {
   for (const f of crons) {
@@ -46,7 +49,7 @@ describe("cron check-ins actually reach Sentry", () => {
   // Every scheduled job must check in, not just flush if it happens to --
   // matters most for health-check.js, which IS the monitoring: if it
   // silently stops firing, nothing else would notice.
-  for (const f of crons) {
+  for (const f of monitored) {
     it(`${f} registers a Sentry cron monitor`, () => {
       const src = readFileSync(path.join(CRON, f), "utf8");
       expect(
@@ -95,6 +98,13 @@ describe("cron check-ins actually reach Sentry", () => {
           "once the platform has the response, so the check-in is lost and the " +
           "monitor reports a false timeout on a job that succeeded.",
       ).toEqual([]);
+    });
+  }
+
+  for (const f of UNMONITORED) {
+    it(`${f} stays unmonitored`, () => {
+      const src = readFileSync(path.join(CRON, f), "utf8");
+      expect(src).not.toMatch(/captureCheckIn/);
     });
   }
 
