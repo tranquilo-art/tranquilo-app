@@ -5,7 +5,7 @@
 // request with imageFetchHeaders() succeeded.
 import sharp from "sharp";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchImageDataUri } from "../api/og/[slug].ts";
+import { cardImageDataUri, fetchImageDataUri } from "../api/og/[slug].ts";
 import { imageFetchHeaders } from "../lib/source-identity.ts";
 
 describe("fetchImageDataUri", () => {
@@ -97,5 +97,97 @@ describe("fetchImageDataUri", () => {
     stubImageResponse(null);
     const uri = await fetchImageDataUri("https://example.org/a", "met");
     expect(uri.startsWith("data:image/jpeg;base64,")).toBe(true);
+  });
+});
+
+describe("cardImageDataUri", () => {
+  const ORIGIN = "https://images.example.org/original.jpg";
+  const CDN = "https://cdn.example.net";
+  const row = { source: "met", native_id: "459334", img: ORIGIN };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  function stubFetch(responses: Record<string, "jpeg" | "html" | "fail">) {
+    const calls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        calls.push(url);
+        const kind = responses[url] ?? "fail";
+        if (kind === "fail") return { ok: false, status: 404 };
+        return {
+          ok: true,
+          status: 200,
+          headers: {
+            get: () => (kind === "html" ? "text/html" : "image/jpeg"),
+          },
+          arrayBuffer: async () => new ArrayBuffer(4),
+        };
+      }),
+    );
+    return calls;
+  }
+
+  function clientWithKey(key: string | null) {
+    return {
+      query: vi.fn(async () => (key ? [{ object_key: key }] : [])),
+    } as any;
+  }
+
+  it("reads our stored copy and never contacts the origin", async () => {
+    vi.stubEnv("IMG_CDN_BASE_URL", CDN);
+    const calls = stubFetch({ [`${CDN}/img-cache/k.webp`]: "jpeg" });
+    const uri = await cardImageDataUri(clientWithKey("img-cache/k.webp"), row);
+    expect(uri?.startsWith("data:image/jpeg;base64,")).toBe(true);
+    expect(calls).toEqual([`${CDN}/img-cache/k.webp`]);
+  });
+
+  it("looks the copy up by the display tier's cache key", async () => {
+    vi.stubEnv("IMG_CDN_BASE_URL", CDN);
+    stubFetch({});
+    const client = clientWithKey("img-cache/k.webp");
+    await cardImageDataUri(client, row);
+    expect(client.query.mock.calls[0][1]).toEqual(["met:459334:display"]);
+  });
+
+  it("falls back to the origin when no copy is stored", async () => {
+    vi.stubEnv("IMG_CDN_BASE_URL", CDN);
+    const calls = stubFetch({ [ORIGIN]: "jpeg" });
+    const uri = await cardImageDataUri(clientWithKey(null), row);
+    expect(uri).not.toBeNull();
+    expect(calls).toEqual([ORIGIN]);
+  });
+
+  it("falls back to the origin when the stored copy cannot be fetched", async () => {
+    vi.stubEnv("IMG_CDN_BASE_URL", CDN);
+    const calls = stubFetch({ [ORIGIN]: "jpeg" });
+    const uri = await cardImageDataUri(clientWithKey("img-cache/k.webp"), row);
+    expect(uri).not.toBeNull();
+    expect(calls).toEqual([`${CDN}/img-cache/k.webp`, ORIGIN]);
+  });
+
+  it("uses the origin when no CDN is configured", async () => {
+    vi.stubEnv("IMG_CDN_BASE_URL", "");
+    const calls = stubFetch({ [ORIGIN]: "jpeg" });
+    const client = clientWithKey("img-cache/k.webp");
+    await cardImageDataUri(client, row);
+    expect(calls).toEqual([ORIGIN]);
+    expect(client.query).not.toHaveBeenCalled();
+  });
+
+  it("returns null when a bot-challenge page is all the origin offers", async () => {
+    vi.stubEnv("IMG_CDN_BASE_URL", CDN);
+    stubFetch({ [ORIGIN]: "html" });
+    expect(await cardImageDataUri(clientWithKey(null), row)).toBeNull();
+  });
+
+  it("returns null for a row without an image", async () => {
+    stubFetch({});
+    expect(
+      await cardImageDataUri(clientWithKey(null), { ...row, img: null }),
+    ).toBeNull();
   });
 });
