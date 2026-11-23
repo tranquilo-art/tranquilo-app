@@ -132,15 +132,22 @@ describe("cardImageDataUri", () => {
   }
 
   function clientWithKey(key: string | null) {
+    const query = vi.fn(async (_text: string, _params?: unknown[]) =>
+      key ? [{ object_key: key }] : [],
+    );
     return {
-      query: vi.fn(async () => (key ? [{ object_key: key }] : [])),
-    } as any;
+      query,
+      client: { query } as unknown as Parameters<typeof cardImageDataUri>[0],
+    };
   }
 
   it("reads our stored copy and never contacts the origin", async () => {
     vi.stubEnv("IMG_CDN_BASE_URL", CDN);
     const calls = stubFetch({ [`${CDN}/img-cache/k.webp`]: "jpeg" });
-    const uri = await cardImageDataUri(clientWithKey("img-cache/k.webp"), row);
+    const uri = await cardImageDataUri(
+      clientWithKey("img-cache/k.webp").client,
+      row,
+    );
     expect(uri?.startsWith("data:image/jpeg;base64,")).toBe(true);
     expect(calls).toEqual([`${CDN}/img-cache/k.webp`]);
   });
@@ -148,15 +155,15 @@ describe("cardImageDataUri", () => {
   it("looks the copy up by the display tier's cache key", async () => {
     vi.stubEnv("IMG_CDN_BASE_URL", CDN);
     stubFetch({});
-    const client = clientWithKey("img-cache/k.webp");
+    const { client, query } = clientWithKey("img-cache/k.webp");
     await cardImageDataUri(client, row);
-    expect(client.query.mock.calls[0][1]).toEqual(["met:459334:display"]);
+    expect(query.mock.calls[0][1]).toEqual(["met:459334:display"]);
   });
 
   it("falls back to the origin when no copy is stored", async () => {
     vi.stubEnv("IMG_CDN_BASE_URL", CDN);
     const calls = stubFetch({ [ORIGIN]: "jpeg" });
-    const uri = await cardImageDataUri(clientWithKey(null), row);
+    const uri = await cardImageDataUri(clientWithKey(null).client, row);
     expect(uri).not.toBeNull();
     expect(calls).toEqual([ORIGIN]);
   });
@@ -164,7 +171,10 @@ describe("cardImageDataUri", () => {
   it("falls back to the origin when the stored copy cannot be fetched", async () => {
     vi.stubEnv("IMG_CDN_BASE_URL", CDN);
     const calls = stubFetch({ [ORIGIN]: "jpeg" });
-    const uri = await cardImageDataUri(clientWithKey("img-cache/k.webp"), row);
+    const uri = await cardImageDataUri(
+      clientWithKey("img-cache/k.webp").client,
+      row,
+    );
     expect(uri).not.toBeNull();
     expect(calls).toEqual([`${CDN}/img-cache/k.webp`, ORIGIN]);
   });
@@ -172,22 +182,22 @@ describe("cardImageDataUri", () => {
   it("uses the origin when no CDN is configured", async () => {
     vi.stubEnv("IMG_CDN_BASE_URL", "");
     const calls = stubFetch({ [ORIGIN]: "jpeg" });
-    const client = clientWithKey("img-cache/k.webp");
+    const { client, query } = clientWithKey("img-cache/k.webp");
     await cardImageDataUri(client, row);
     expect(calls).toEqual([ORIGIN]);
-    expect(client.query).not.toHaveBeenCalled();
+    expect(query).not.toHaveBeenCalled();
   });
 
   it("returns null when a bot-challenge page is all the origin offers", async () => {
     vi.stubEnv("IMG_CDN_BASE_URL", CDN);
     stubFetch({ [ORIGIN]: "html" });
-    expect(await cardImageDataUri(clientWithKey(null), row)).toBeNull();
+    expect(await cardImageDataUri(clientWithKey(null).client, row)).toBeNull();
   });
 
   it("returns null for a row without an image", async () => {
     stubFetch({});
     expect(
-      await cardImageDataUri(clientWithKey(null), { ...row, img: null }),
+      await cardImageDataUri(clientWithKey(null).client, { ...row, img: null }),
     ).toBeNull();
   });
 });
