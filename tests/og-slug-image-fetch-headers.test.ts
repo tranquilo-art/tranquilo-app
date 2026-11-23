@@ -3,6 +3,7 @@
 // never carried the proxy's identifying headers. An unheaded request to a
 // real Europeana thumbnail got a 403 from Cloudflare; the identical
 // request with imageFetchHeaders() succeeded.
+import sharp from "sharp";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fetchImageDataUri } from "../api/og/[slug].ts";
 import { imageFetchHeaders } from "../lib/source-identity.ts";
@@ -31,5 +32,70 @@ describe("fetchImageDataUri", () => {
       "europeana",
     );
     expect(sentHeaders).toEqual(imageFetchHeaders("europeana"));
+  });
+
+  function stubImageResponse(contentType: string | null, body?: Buffer) {
+    const bytes = body ?? Buffer.alloc(4);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        headers: { get: () => contentType },
+        arrayBuffer: async () =>
+          bytes.buffer.slice(
+            bytes.byteOffset,
+            bytes.byteOffset + bytes.byteLength,
+          ),
+      })),
+    );
+  }
+
+  async function sampleImage(format: "webp" | "tiff" | "avif") {
+    return sharp({
+      create: {
+        width: 40,
+        height: 30,
+        channels: 3,
+        background: { r: 200, g: 120, b: 40 },
+      },
+    })
+      .toFormat(format)
+      .toBuffer();
+  }
+
+  it.each([
+    ["webp", "image/webp"],
+    ["tiff", "image/tiff"],
+    ["avif", "image/avif"],
+    ["webp", "application/octet-stream"],
+  ] as const)(
+    "converts %s served as %s to a JPEG the card renderer can decode",
+    async (format, type) => {
+      stubImageResponse(type, await sampleImage(format));
+      const uri = await fetchImageDataUri("https://example.org/a", "met");
+      expect(uri.startsWith("data:image/jpeg;base64,")).toBe(true);
+      const decoded = Buffer.from(uri.split(",")[1], "base64");
+      expect((await sharp(decoded).metadata()).format).toBe("jpeg");
+    },
+  );
+
+  it("rejects an unsupported type whose bytes cannot be decoded", async () => {
+    stubImageResponse("image/webp", Buffer.from("not an image"));
+    await expect(
+      fetchImageDataUri("https://example.org/a", "met"),
+    ).rejects.toThrow();
+  });
+
+  it("passes a supported type through untouched", async () => {
+    stubImageResponse("Image/JPEG; charset=binary");
+    const uri = await fetchImageDataUri("https://example.org/a", "met");
+    expect(uri.startsWith("data:image/jpeg;base64,")).toBe(true);
+  });
+
+  it("treats a missing content type as jpeg", async () => {
+    stubImageResponse(null);
+    const uri = await fetchImageDataUri("https://example.org/a", "met");
+    expect(uri.startsWith("data:image/jpeg;base64,")).toBe(true);
   });
 });

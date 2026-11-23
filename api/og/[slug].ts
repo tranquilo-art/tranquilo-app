@@ -155,6 +155,18 @@ function loadFonts(): Promise<CardFonts> {
   return fontsPromise;
 }
 
+// Satori throws "not iterable" on any other data-URI type (e.g. webp);
+// those are re-encoded to JPEG at twice the card's image box.
+const CARD_IMAGE_BOX = { width: 920, height: 1004 };
+const MAX_CONVERT_PIXELS = 100_000_000;
+const SATORI_IMAGE_TYPES = new Set([
+  "image/png",
+  "image/apng",
+  "image/jpeg",
+  "image/gif",
+  "image/svg+xml",
+]);
+
 async function fetchImageDataUri(url: string, source: string) {
   const controller = new AbortController();
   const timeout = setTimeout(() => {
@@ -169,7 +181,25 @@ async function fetchImageDataUri(url: string, source: string) {
     });
     if (!r.ok) throw new Error(`image fetch failed with status ${r.status}`);
     const buf = await r.arrayBuffer();
-    const contentType = r.headers.get("content-type") || "image/jpeg";
+    const contentType = (r.headers.get("content-type") || "image/jpeg")
+      .split(";")[0]
+      .trim()
+      .toLowerCase();
+    if (!SATORI_IMAGE_TYPES.has(contentType)) {
+      const { default: sharp } = await import("sharp");
+      const jpeg = await sharp(Buffer.from(buf), {
+        limitInputPixels: MAX_CONVERT_PIXELS,
+      })
+        .rotate()
+        .resize(CARD_IMAGE_BOX.width, CARD_IMAGE_BOX.height, {
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .flatten({ background: "#ffffff" })
+        .jpeg({ quality: 85 })
+        .toBuffer();
+      return `data:image/jpeg;base64,${jpeg.toString("base64")}`;
+    }
     return `data:${contentType};base64,${Buffer.from(buf).toString("base64")}`;
   } finally {
     clearTimeout(timeout);
