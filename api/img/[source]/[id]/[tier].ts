@@ -337,7 +337,7 @@ async function alertOnce(
   if (alertedConditions[key] && now - alertedConditions[key] < ALERT_REPEAT_MS)
     return;
   alertedConditions[key] = now;
-  console.error(`img proxy: ${message}`, extra || "");
+  console.error("img proxy: %s", message, extra || "");
   try {
     const err = new Error(`img proxy: ${message}`);
     err.name = "ImgProxyDegraded";
@@ -973,7 +973,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await admission.markStored(sqlClient, cacheKey, outBuf.length);
     await guard.releaseFetch(sqlClient, cacheKey);
   } catch (err) {
-    console.error(`img proxy: failed for ${source}:${id}:${tier}`, err);
+    console.error("img proxy: failed for %s:%s:%s", source, id, tier, err);
     await sentry.reportError(err);
     res.statusCode = 502;
     res.json({ error: "Image unavailable" });

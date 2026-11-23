@@ -65,12 +65,19 @@ function shardFor(id: string | number): string {
     .slice(0, SHARD_CHARS);
 }
 
+function trimDashes(s: string): string {
+  let start = 0;
+  let end = s.length;
+  while (start < end && s[start] === "-") start++;
+  while (end > start && s[end - 1] === "-") end--;
+  return s.slice(start, end);
+}
+
 function idSegment(id: string | number): string {
   const raw = String(id);
-  const readable = raw
-    .replace(/[^A-Za-z0-9._-]+/g, "-") // collapse everything unsafe
-    .replace(/^-+|-+$/g, "") // no leading or trailing separators
-    .slice(0, ID_PREFIX_CHARS);
+  const readable = trimDashes(
+    raw.replace(/[^A-Za-z0-9._-]+/g, "-"), // collapse everything unsafe
+  ).slice(0, ID_PREFIX_CHARS);
   // The hash is over the RAW id, so the collapsing above can never merge two
   // distinct ids.
   const fingerprint = crypto

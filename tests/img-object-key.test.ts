@@ -66,6 +66,20 @@ describe("the id fingerprint is wide enough for the target catalogue", () => {
   });
 });
 
+describe("the readable half of an id segment", () => {
+  it("collapses unsafe runs and trims edge separators", () => {
+    expect(keys.idSegment("--a b--")).toMatch(/^a-b-[0-9a-f]{12}$/);
+    expect(keys.idSegment("!!!")).toMatch(/^[0-9a-f]{12}$/);
+  });
+
+  it("stays fast on ids made of long separator runs", () => {
+    const hostile = `x${"-".repeat(100_000)}y`;
+    const started = performance.now();
+    keys.idSegment(hostile);
+    expect(performance.now() - started).toBeLessThan(250);
+  });
+});
+
 describe("the shard segment", () => {
   it("is two hex characters and derived from native_id alone", () => {
     expect(keys.SHARD_CHARS).toBe(2);
