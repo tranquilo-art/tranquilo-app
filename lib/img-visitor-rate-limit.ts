@@ -14,6 +14,7 @@
 // Rows are keyed "img:<daily visitor hash>" (lib/visitor-hash.ts), never a
 // raw IP address. With no hashing secret configured the budget is skipped.
 
+import { recordBudgetDenial } from "./budget-events.ts";
 import { TRANQUILO_CONFIG } from "./config.generated.ts";
 import type { QuerySql } from "./img-store.ts";
 import { visitorKey } from "./visitor-hash.ts";
@@ -126,6 +127,7 @@ async function rateLimitOrRespond(
     visitor ? `img:${visitor}` : null,
   );
   if (verdict.allowed) return false;
+  if (sql && visitor) await recordBudgetDenial(sql, visitor, "img", 1, true);
   const retryAfter = retryAfterSeconds();
   res.statusCode = 429;
   res.setHeader("Retry-After", String(retryAfter));

@@ -23,6 +23,7 @@ import {
   hexToRgb,
   isNamedMaker,
   rgbToHsl,
+  shouldAutoRetry,
   shouldLogFailure,
   shouldSkipAutomaticLoad,
   withRetryAttempt,
@@ -95,6 +96,8 @@ function slugFor(item: Item): string {
 }
 
 const IMAGE_LOAD_TIMEOUT_MS = 8000;
+// Longer than the image rate limiter's Retry-After.
+const IMAGE_AUTO_RETRY_DELAY_MS = 1500;
 
 const IMAGE_ERROR_SVG =
   '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
@@ -279,6 +282,8 @@ export function createSlideBuilder(
     onLoaded?: () => void,
   ): ImageState {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let autoRetries = 0;
     // Tier-scoped, not just source:id -- display and lightbox are
     // separate fetches with different reliability profiles, and a bare
     // source:id key once let a slow lightbox timeout blacklist the
@@ -301,6 +306,15 @@ export function createSlideBuilder(
       // the aborted load, not a genuinely broken image. isManualRetry is
       // exempt: that's a click on a still-connected frame by definition.
       if (!isManualRetry && !img.isConnected) return;
+      if (shouldAutoRetry(reason || "unknown", isManualRetry, autoRetries)) {
+        autoRetries++;
+        failedImageAttempts.set(key, (failedImageAttempts.get(key) ?? 0) + 1);
+        retryTimer = setTimeout(() => {
+          retryTimer = null;
+          startLoad(false);
+        }, IMAGE_AUTO_RETRY_DELAY_MS);
+        return;
+      }
       renderFailedUI();
       skippedImageLoads.add(key);
       failedImageAttempts.set(key, (failedImageAttempts.get(key) ?? 0) + 1);
@@ -390,6 +404,10 @@ export function createSlideBuilder(
         if (timeoutId) {
           clearTimeout(timeoutId);
           timeoutId = null;
+        }
+        if (retryTimer) {
+          clearTimeout(retryTimer);
+          retryTimer = null;
         }
         imageVisibilityObserver.unobserve(frame);
         pendingImageLoads.delete(frame);

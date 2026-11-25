@@ -66,21 +66,40 @@ test("a failed image tells the visitor it can be retried", async ({ page }) => {
 test("one broken image does not break the feed", async ({ page }) => {
   // The failure must stay local to its slide -- the recycling DOM makes
   // "one slide's state leaks into another" a real possibility.
-  let n = 0;
-  failImages(page, () => n++ === 0); // only the very first request
+  let broken: string | null = null;
+  failImages(page, (url) => {
+    const image = url.split("?")[0]; // every attempt at the first image
+    broken ??= image;
+    return image === broken;
+  });
   const feed = await gotoFeed(page);
   await expect(feed.locator(".slide").first()).toBeVisible();
 
-  await page.waitForTimeout(1500);
+  // Asserts a floor too: `<= 1` alone would pass even with no failure at all.
+  await expect(
+    feed.locator(".art-frame.failed"),
+    "the injected failure did not happen",
+  ).not.toHaveCount(0, { timeout: 15000 });
   const slides = await feed.locator(".slide").count();
   const failed = await feed.locator(".art-frame.failed").count();
-
-  // Asserts a floor too: `<= 1` alone would pass even with no failure at all.
-  expect(failed, "the injected failure did not happen").toBeGreaterThanOrEqual(
-    1,
-  );
   expect(slides).toBeGreaterThan(5);
   expect(failed, "the failure leaked to other slides").toBeLessThan(slides / 2);
+});
+
+test("an image refused once loads on its own, without a failed state", async ({
+  page,
+}) => {
+  failImages(page, (url) => !url.includes("retry="));
+  const requests = imageRequests(page);
+  const feed = await gotoFeed(page);
+  const frame = feed.locator(".slide .art-frame").first();
+
+  await expect(frame).not.toHaveClass(/loading|failed/, { timeout: 10000 });
+  expect(
+    requests.some((url) => url.includes("retry=")),
+    "no automatic retry was requested",
+  ).toBe(true);
+  expect(await feed.locator(".art-frame.failed").count()).toBe(0);
 });
 
 async function firstFailedFrame(page: Page) {

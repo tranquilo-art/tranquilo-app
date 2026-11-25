@@ -4,6 +4,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { QuerySql } from "../lib/img-store.ts";
 import {
+  checkImageBudgetDenials,
   checkItemsBudgetDenials,
   VISITOR_DENIED_COST_MIN,
   VISITORS_DENIED_MIN,
@@ -85,6 +86,11 @@ describe("items budget denials", () => {
     expect(lines).toHaveLength(2);
   });
 
+  it("leaves image refusals to the image digest", async () => {
+    await denial("a", VISITOR_DENIED_COST_MIN, { kind: "img" });
+    expect(await checkItemsBudgetDenials(sql)).toEqual([]);
+  });
+
   it("says where to find the addresses, since the rows carry none", async () => {
     await denial("a", VISITOR_DENIED_COST_MIN);
     const [line] = await checkItemsBudgetDenials(sql);
@@ -99,6 +105,45 @@ describe("items budget denials", () => {
     };
     expect(
       await checkItemsBudgetDenials(broken as unknown as QuerySql),
+    ).toEqual([]);
+  });
+});
+
+describe("image budget denials", () => {
+  it("stays quiet when no image was refused", async () => {
+    await denial("a", VISITOR_DENIED_COST_MIN, { kind: "items" });
+    expect(await checkImageBudgetDenials(sql)).toEqual([]);
+  });
+
+  it("reports any visitor refused images yesterday", async () => {
+    await denial("a", 3, { kind: "img" });
+    await denial("b", 40, { kind: "img" });
+    const lines = await checkImageBudgetDenials(sql);
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toMatch(/2 visitor/);
+    expect(lines[0]).toContain("43");
+  });
+
+  it("ignores today and older days", async () => {
+    await denial("a", 40, { kind: "img", daysAgo: 0 });
+    await denial("b", 40, { kind: "img", daysAgo: 2 });
+    expect(await checkImageBudgetDenials(sql)).toEqual([]);
+  });
+
+  it("says how to find who was refused, since the rows carry no address", async () => {
+    await denial("a", 3, { kind: "img" });
+    const [line] = await checkImageBudgetDenials(sql);
+    expect(line).toMatch(/vercel metrics/);
+  });
+
+  it("reports nothing rather than throwing when the query fails", async () => {
+    const broken = {
+      query: async () => {
+        throw new Error("db down");
+      },
+    };
+    expect(
+      await checkImageBudgetDenials(broken as unknown as QuerySql),
     ).toEqual([]);
   });
 });

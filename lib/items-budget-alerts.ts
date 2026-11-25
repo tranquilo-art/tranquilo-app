@@ -30,7 +30,7 @@ export async function checkItemsBudgetDenials(
       "SELECT kind, count(*)::int AS visitors, " +
         "  (count(*) FILTER (WHERE denied_cost >= $1))::int AS heavy, " +
         "  max(denied_cost)::int AS worst, sum(denied_cost)::int AS total " +
-        " FROM items_budget_events WHERE day = CURRENT_DATE - 1 " +
+        " FROM items_budget_events WHERE day = CURRENT_DATE - 1 AND kind <> 'img' " +
         " GROUP BY kind " +
         " HAVING count(*) FILTER (WHERE denied_cost >= $1) > 0 OR count(*) >= $2 " +
         "   OR count(*) FILTER (WHERE enforced) > 0 " +
@@ -44,6 +44,31 @@ export async function checkItemsBudgetDenials(
         `The rows carry no address: find the IPs in the Vercel firewall traffic view ` +
         `(rule "Rate limit /api/items per IP") and block from there if it is scraping.`,
     );
+  } catch (_err) {
+    return [];
+  }
+}
+
+// Any refusal is worth a line: the image budget is sized so a person
+// scrolling never meets it.
+export async function checkImageBudgetDenials(
+  sql: QuerySql | null | undefined,
+): Promise<string[]> {
+  if (!sql) return [];
+  try {
+    const [r] = (await sql.query(
+      "SELECT count(*)::int AS visitors, max(denied_cost)::int AS worst, " +
+        "  sum(denied_cost)::int AS total " +
+        " FROM items_budget_events WHERE day = CURRENT_DATE - 1 AND kind = 'img'",
+    )) as { visitors: number; worst: number | null; total: number | null }[];
+    if (!r?.visitors) return [];
+    return [
+      `${r.visitors} visitor(s) were refused images by the per-visitor image budget yesterday ` +
+        `(worst ${r.worst}, ${r.total} in total). Small, bursty counts are people: raise ` +
+        `[img_visitor_rate_limit] in config.toml. To see who: vercel metrics vercel.request.count ` +
+        `--since 2d -q 'route:"/api/img/[source]/[id]/[tier]" AND httpStatus:429' ` +
+        `--group-by asnName --group-by clientJa4Digest`,
+    ];
   } catch (_err) {
     return [];
   }

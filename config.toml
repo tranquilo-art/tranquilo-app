@@ -156,6 +156,16 @@ visitor_active_min_items = 5000
 # many addresses cannot flood the inbox.
 alert_emails_per_hour = 3
 
+[firewall_alerts]
+# Daily health-check digest from Vercel's request metrics
+# (lib/firewall-alerts.ts). A visitor is one network + JA4 fingerprint.
+# Busiest hour for any ordinary visitor over 14 days was ~400 requests.
+client_requests_per_hour_min = 600
+# Denied or challenged requests on the last UTC day, against the median of
+# the seven days before; the floor keeps quiet days from tripping it.
+action_spike_ratio = 3
+action_spike_floor = 100
+
 [source_health]
 # Asymmetric on purpose -- see lib/source-health.ts's own comment. Five
 # consecutive failures degrade a source; a single success clears it,

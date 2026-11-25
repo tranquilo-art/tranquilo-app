@@ -181,6 +181,20 @@ describe("rateLimitOrRespond", () => {
     expect(res.body).toMatchObject({ error: "Too many requests" });
   });
 
+  it("records a refusal against the visitor hash for the daily digest", async () => {
+    const sql = fakeSql([[], [{ denied_cost: 1 }]]);
+    await rateLimit.rateLimitOrRespond(
+      sql,
+      { headers: { "x-forwarded-for": "203.0.113.7" } },
+      fakeRes(),
+    );
+    const recorded = sql.calls.find((c: { text: string }) =>
+      c.text.includes("items_budget_events"),
+    );
+    expect(recorded?.params).toContain("img");
+    expect(JSON.stringify(sql.calls)).not.toContain("203.0.113.7");
+  });
+
   it("touches nothing on the response and lets the caller proceed when allowed", async () => {
     const res = fakeRes();
     const handled = await rateLimit.rateLimitOrRespond(

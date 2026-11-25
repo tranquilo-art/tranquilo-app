@@ -578,6 +578,20 @@ export function withRetryAttempt(src: string, attempt: number): string {
   return `${src}${src.includes("?") ? "&" : "?"}retry=${attempt}`;
 }
 
+// An <img> cannot read its HTTP status, so a rate-limit 429 and a
+// transient error look the same; one delayed retry covers both.
+export const IMAGE_AUTO_RETRY_LIMIT = 1;
+
+export function shouldAutoRetry(
+  reason: string,
+  isManualRetry: boolean,
+  autoRetries: number,
+): boolean {
+  return (
+    reason === "error" && !isManualRetry && autoRetries < IMAGE_AUTO_RETRY_LIMIT
+  );
+}
+
 export function shouldSkipAutomaticLoad(
   key: string,
   isManualRetry: boolean,

@@ -17,6 +17,7 @@ import {
   foldDiacritics,
   hexToRgb,
   hslToRgb,
+  IMAGE_AUTO_RETRY_LIMIT,
   IMAGE_FAILURE_REPORT_CAP,
   isCollectiveAttribution,
   isNamedMaker,
@@ -31,6 +32,7 @@ import {
   relativeLuminance,
   rgbToHsl,
   shelfRenderLimit,
+  shouldAutoRetry,
   shouldLogFailure,
   shouldSkipAutomaticLoad,
   shuffled,
@@ -416,6 +418,24 @@ describe("withRetryAttempt", () => {
     );
     expect(url.pathname).toBe("/img/met/1/lightbox");
     expect(url.searchParams.get("w")).toBe("2200");
+  });
+});
+
+describe("shouldAutoRetry", () => {
+  it("retries the first automatic error", () => {
+    expect(shouldAutoRetry("error", false, 0)).toBe(true);
+  });
+
+  it("gives up after one automatic retry", () => {
+    expect(shouldAutoRetry("error", false, IMAGE_AUTO_RETRY_LIMIT)).toBe(false);
+  });
+
+  it("does not retry a timeout, which already waited", () => {
+    expect(shouldAutoRetry("timeout", false, 0)).toBe(false);
+  });
+
+  it("shows the result of a visitor's own retry directly", () => {
+    expect(shouldAutoRetry("error", true, 0)).toBe(false);
   });
 });
 
