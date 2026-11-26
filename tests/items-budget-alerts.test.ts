@@ -91,6 +91,25 @@ describe("items budget denials", () => {
     expect(line).toMatch(/firewall/i);
   });
 
+  it.each([
+    ["items", "/api/items feed and search"],
+    ["detail", "/api/items item-detail"],
+    ["quote", "/api/items print-quote"],
+  ])("names the endpoint group for the %s budget", async (kind, endpoint) => {
+    await denial("a", VISITOR_DENIED_COST_MIN, { kind });
+    const [line] = await checkItemsBudgetDenials(sql);
+    expect(line).toContain(`the ${endpoint} budget`);
+    expect(line).toContain("Rate limit /api/items per IP");
+  });
+
+  it("names a write endpoint and does not point at the /api/items rule", async () => {
+    await denial("a", 60, { kind: "write:track" });
+    const [line] = await checkItemsBudgetDenials(sql);
+    expect(line).toContain("'track' write endpoint");
+    expect(line).not.toContain("Rate limit /api/items per IP");
+    expect(line).toMatch(/firewall/i);
+  });
+
   it("reports nothing rather than throwing when the query fails", async () => {
     const broken = {
       query: async () => {

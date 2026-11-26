@@ -20,6 +20,33 @@ interface DenialSummary {
   total: number;
 }
 
+const ITEMS_FIREWALL_RULE = 'rule "Rate limit /api/items per IP"';
+
+interface BucketWording {
+  endpoint: string;
+  where: string;
+}
+
+function wordingFor(kind: string): BucketWording {
+  const inFirewallView = `find the IPs in the Vercel firewall traffic view (${ITEMS_FIREWALL_RULE})`;
+  if (kind === "items")
+    return { endpoint: "/api/items feed and search", where: inFirewallView };
+  if (kind === "detail")
+    return { endpoint: "/api/items item-detail", where: inFirewallView };
+  if (kind === "quote")
+    return { endpoint: "/api/items print-quote", where: inFirewallView };
+  if (kind.startsWith("write:"))
+    return {
+      endpoint: `'${kind.slice("write:".length)}' write endpoint`,
+      where:
+        "find the IPs in the Vercel firewall traffic view filtered to that endpoint",
+    };
+  return {
+    endpoint: `'${kind}'`,
+    where: "find the IPs in the Vercel firewall traffic view",
+  };
+}
+
 // The last complete day: items_budget_events is day-granular.
 export async function checkItemsBudgetDenials(
   sql: QuerySql | null | undefined,
@@ -37,13 +64,14 @@ export async function checkItemsBudgetDenials(
         " ORDER BY kind",
       [VISITOR_DENIED_COST_MIN, VISITORS_DENIED_MIN],
     )) as DenialSummary[];
-    return rows.map(
-      (r) =>
-        `${r.visitors} visitor(s) ran past the '${r.kind}' budget on /api/items yesterday ` +
+    return rows.map((r) => {
+      const { endpoint, where } = wordingFor(r.kind);
+      return (
+        `${r.visitors} visitor(s) ran past the ${endpoint} budget yesterday ` +
         `(${r.heavy} refused ${VISITOR_DENIED_COST_MIN}+ items; worst ${r.worst}, ${r.total} in total). ` +
-        `The rows carry no address: find the IPs in the Vercel firewall traffic view ` +
-        `(rule "Rate limit /api/items per IP") and block from there if it is scraping.`,
-    );
+        `The rows carry no address: ${where} and block from there if it is scraping.`
+      );
+    });
   } catch (_err) {
     return [];
   }
