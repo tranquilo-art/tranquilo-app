@@ -25,10 +25,10 @@ import {
   sessionTokenFromCookie,
   signInUrl,
   startSession,
-} from "../lib/auth.ts";
-import { getSql } from "../lib/db.ts";
-import { isValidEmail } from "../lib/is-valid-email.ts";
-import { reportError, reportProblem } from "../lib/sentry.ts";
+} from "./auth.ts";
+import { getSql } from "./db.ts";
+import { isValidEmail } from "./is-valid-email.ts";
+import { reportError, reportProblem } from "./sentry.ts";
 
 const METHODS: Record<string, string> = {
   "request-link": "POST",

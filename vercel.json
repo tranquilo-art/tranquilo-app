@@ -48,6 +48,14 @@
       "destination": "/api/items?audience=keyed"
     },
     {
+      "source": "/api/auth",
+      "destination": "/api/account?area=auth"
+    },
+    {
+      "source": "/api/boards",
+      "destination": "/api/account?area=boards"
+    },
+    {
       "source": "/img/:source/:id/:tier",
       "destination": "/api/img/:source/:id/:tier"
     }

@@ -137,6 +137,13 @@ refill_per_sec = 0.00167
 capacity = 20
 refill_per_sec = 0.0167
 
+[boards]
+# Saved-art boards for signed-in accounts -- see lib/boards.ts. Every account
+# gets free_boards boards; more is the paid upgrade. max_items_per_board
+# bounds one board's size, and with it a local-collection import.
+free_boards = 1
+max_items_per_board = 2000
+
 [img_cache_alerts]
 # A handful of shed requests is ordinary noise (one slow origin, one
 # coalesced burst); this is about SUSTAINED shedding, which is what

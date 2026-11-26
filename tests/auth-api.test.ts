@@ -17,7 +17,7 @@ vi.mock("../lib/sentry.ts", () => ({
   reportProblem: vi.fn(),
 }));
 
-const { default: handler } = await import("../api/auth.ts");
+const { default: handler } = await import("../lib/auth-api.ts");
 
 const FILES = [
   "035_visitor_rate_state.sql",
