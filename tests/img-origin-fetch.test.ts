@@ -1,8 +1,10 @@
+import { getEventListeners } from "node:events";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  fetchFollowingRedirects,
+  fetchFollowingRedirectsUnchecked,
   fetchOriginOnce,
   isPublicAddress,
+  lookupWithin,
   type OriginResolver,
 } from "../lib/img-origin-fetch.ts";
 
@@ -182,7 +184,7 @@ describe("the DNS pre-flight", () => {
     const fetchMock = vi.fn(async () => new Response(JPEG));
     vi.stubGlobal("fetch", fetchMock);
     await expect(
-      fetchFollowingRedirects(
+      fetchFollowingRedirectsUnchecked(
         "https://localhost/a.jpg",
         "europeana",
         "lightbox",
@@ -275,6 +277,84 @@ describe("the DNS pre-flight", () => {
       } finally {
         process.off("unhandledRejection", unhandled);
       }
+    });
+
+    const rejectsDnsFailed = (promise: Promise<unknown>) =>
+      expect(promise).rejects.toMatchObject({ refused: "dns-failed" });
+
+    it("leaves no timer or abort listener behind after a timeout", async () => {
+      vi.useFakeTimers();
+      try {
+        const controller = new AbortController();
+        const outcome = lookupWithin(
+          "host.example",
+          never,
+          controller.signal,
+          100,
+        );
+        const assertion = rejectsDnsFailed(outcome);
+        await vi.advanceTimersByTimeAsync(100);
+        await assertion;
+        expect(vi.getTimerCount()).toBe(0);
+        expect(getEventListeners(controller.signal, "abort")).toHaveLength(0);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("leaves no timer or abort listener behind after an abort", async () => {
+      vi.useFakeTimers();
+      try {
+        const controller = new AbortController();
+        const outcome = lookupWithin(
+          "host.example",
+          never,
+          controller.signal,
+          60_000,
+        );
+        const assertion = rejectsDnsFailed(outcome);
+        controller.abort();
+        await assertion;
+        expect(vi.getTimerCount()).toBe(0);
+        expect(getEventListeners(controller.signal, "abort")).toHaveLength(0);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("refuses and leaves nothing behind when the resolver throws synchronously", async () => {
+      vi.useFakeTimers();
+      try {
+        const controller = new AbortController();
+        const throwing: OriginResolver = () => {
+          throw new Error("sync failure");
+        };
+        await expect(
+          lookupWithin("host.example", throwing, controller.signal, 100),
+        ).rejects.toThrow("sync failure");
+        expect(vi.getTimerCount()).toBe(0);
+        expect(getEventListeners(controller.signal, "abort")).toHaveLength(0);
+        await rejectsDnsFailed(
+          fetchOriginOnce(
+            "https://images.metmuseum.org/a.jpg",
+            "met",
+            "display",
+            throwing,
+          ),
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("does not call the resolver when the signal is already aborted", async () => {
+      const controller = new AbortController();
+      controller.abort();
+      const resolver = vi.fn<OriginResolver>();
+      await rejectsDnsFailed(
+        lookupWithin("host.example", resolver, controller.signal, 100),
+      );
+      expect(resolver).not.toHaveBeenCalled();
     });
   });
 });

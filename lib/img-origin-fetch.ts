@@ -297,33 +297,38 @@ function addressRefused(
 
 const DNS_LOOKUP_TIMEOUT_MS = 3000;
 
-function lookupWithin(
+export function lookupWithin(
   host: string,
   resolve: OriginResolver,
   signal: AbortSignal,
   capMs: number,
 ): Promise<{ address: string }[]> {
   return new Promise((settle, reject) => {
-    const fail = () =>
-      reject(addressRefused(host, "dns-failed", "did not resolve in time"));
-    if (signal.aborted) return fail();
-    const timer = setTimeout(fail, capMs);
-    signal.addEventListener("abort", fail, { once: true });
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const done = () => {
       clearTimeout(timer);
       signal.removeEventListener("abort", fail);
     };
+    const fail = () => {
+      done();
+      reject(addressRefused(host, "dns-failed", "did not resolve in time"));
+    };
+    if (signal.aborted) return fail();
+    timer = setTimeout(fail, capMs);
+    signal.addEventListener("abort", fail, { once: true });
     // The lookup cannot be cancelled; both handlers keep a late result handled.
-    resolve(host).then(
-      (value) => {
-        done();
-        settle(value);
-      },
-      (err) => {
-        done();
-        reject(err);
-      },
-    );
+    Promise.resolve()
+      .then(() => resolve(host))
+      .then(
+        (value) => {
+          done();
+          settle(value);
+        },
+        (err) => {
+          done();
+          reject(err);
+        },
+      );
   });
 }
 
@@ -362,10 +367,16 @@ export async function fetchOriginOnce(
 ): Promise<{ buf: Buffer; contentType: string }> {
   if (!isAllowedOrigin(source, tier, url))
     throw redirectRefused("disallowed host");
-  return fetchFollowingRedirects(url, source, tier, resolve, dnsTimeoutMs);
+  return fetchFollowingRedirectsUnchecked(
+    url,
+    source,
+    tier,
+    resolve,
+    dnsTimeoutMs,
+  );
 }
 
-export async function fetchFollowingRedirects(
+export async function fetchFollowingRedirectsUnchecked(
   url: string,
   source: string,
   tier: OriginTier = "display",

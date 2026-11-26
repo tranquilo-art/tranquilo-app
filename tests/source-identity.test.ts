@@ -2,7 +2,7 @@
 // previously sent no headers at all, anonymous on every cache miss in
 // production -- one institution returned a 429 to a single lightbox request.
 
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -118,5 +118,28 @@ describe("the origin fetch actually uses it", () => {
     ).toHaveLength(1);
     expect(proxy).not.toMatch(/\bawait fetch\(/);
     expect(proxy).toMatch(/fetchOriginOnce\(fetchUrl/);
+  });
+});
+
+describe("the unchecked redirect-following fetch", () => {
+  const root = path.join(__dirname, "..");
+  const sourceFiles = (dir: string): string[] =>
+    readdirSync(path.join(root, dir), { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory()
+        ? sourceFiles(path.join(dir, e.name))
+        : /\.(ts|mts)$/.test(e.name)
+          ? [path.join(dir, e.name)]
+          : [],
+    );
+
+  it("is referenced by nothing under api/, lib/ or scripts/ but its own module", () => {
+    const referencing = ["api", "lib", "scripts"]
+      .flatMap(sourceFiles)
+      .filter((f) =>
+        readFileSync(path.join(root, f), "utf8").includes(
+          "fetchFollowingRedirectsUnchecked",
+        ),
+      );
+    expect(referencing).toEqual([path.join("lib", "img-origin-fetch.ts")]);
   });
 });

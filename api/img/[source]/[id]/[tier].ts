@@ -49,7 +49,6 @@ import * as admission from "../../../../lib/img-admission.ts";
 import * as guard from "../../../../lib/img-fetch-guard.ts";
 import * as objectKeys from "../../../../lib/img-object-key.ts";
 import {
-  fetchFollowingRedirects,
   fetchOriginOnce,
   isAllowedOrigin,
   MAX_ORIGIN_BYTES,
@@ -837,7 +836,6 @@ export {
   bookShed,
   canShedToOrigin,
   DISPLAY_MAX_DIMENSION,
-  fetchFollowingRedirects,
   fetchOriginOnce,
   headerSafeLocation,
   hostOf,
