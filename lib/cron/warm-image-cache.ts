@@ -29,7 +29,6 @@ import * as s3 from "../img-s3.ts";
 import * as store from "../img-store.ts";
 import { sourcesToWarm, warmBatch } from "../img-warm.ts";
 import { reportError } from "../sentry.ts";
-import * as identity from "../source-identity.ts";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200; // a manual ?limit= override still can't turn one
@@ -62,7 +61,7 @@ export default async function handler(req: CronRequest, res: CronResponse) {
       sources: sourcesToWarm(null),
       limit,
       commit: true,
-      deps: { proxy, objectKey, store, s3, identity },
+      deps: { proxy, objectKey, store, s3 },
       onProgress: (line) => lines.push(line),
     });
 

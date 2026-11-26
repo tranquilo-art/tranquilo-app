@@ -91,6 +91,7 @@ jobs:
         with:
           bun-version: "1.3.11"
       - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun run generate-config
       - name: Warm display tier
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -119,6 +120,7 @@ jobs:
         with:
           bun-version: "1.3.11"
       - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun run generate-config
       - name: Warm lightbox tier
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

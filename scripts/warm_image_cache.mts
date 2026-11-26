@@ -68,9 +68,6 @@ async function runCli() {
     pathToFileURL(path.join(ROOT, "lib/img-store.ts")).href
   );
   const s3 = await import(pathToFileURL(path.join(ROOT, "lib/img-s3.ts")).href);
-  const identity = await import(
-    pathToFileURL(path.join(ROOT, "lib/source-identity.ts")).href
-  );
 
   const args = process.argv.slice(2);
   const opt = (name: string, fallback: string | null) => {
@@ -109,7 +106,7 @@ async function runCli() {
     sources,
     limit: LIMIT,
     commit: COMMIT,
-    deps: { proxy, objectKey, store, s3, identity },
+    deps: { proxy, objectKey, store, s3 },
     shouldStop: () => stopping,
     onProgress: (line) => console.log(line),
   })

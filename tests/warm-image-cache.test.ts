@@ -4,6 +4,7 @@
 // gets its selection or pacing wrong is a scripted way to hammer a museum.
 // The pure decisions live here since the loop itself can't be
 // unit-tested without network or a live database.
+import sharp from "sharp";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LIVE_ITEMS_AND } from "../lib/items-sql.ts";
 import * as warm from "../scripts/warm_image_cache.mts";
@@ -208,18 +209,23 @@ describe("warmBatch -- the one loop every caller shares", () => {
       s3: {
         putObject: vi.fn(async () => ({ ok: true })),
       },
-      identity: {
-        imageFetchHeaders: vi.fn(() => ({})),
-      },
+      resolve: vi.fn(async () => [{ address: "93.184.216.34", family: 4 }]),
       ...overrides,
     };
   }
 
+  const ORIGIN_HOSTS: Record<string, string> = {
+    met: "images.metmuseum.org",
+  };
+  const imageResponse = (type = "image/jpeg") =>
+    new Response(new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 16, 0x4a, 0x46]), {
+      headers: { "content-type": type },
+    });
   const noSleep = async () => {};
   const row = (source: any, native_id: any) => ({
     source,
     native_id,
-    img: `https://${source}.example/${native_id}.jpg`,
+    img: `https://${ORIGIN_HOSTS[source] ?? `${source}.example`}/${native_id}.jpg`,
     title: "T",
   });
 
@@ -279,11 +285,7 @@ describe("warmBatch -- the one loop every caller shares", () => {
     const deps = fakeDeps();
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => ({
-        ok: true,
-        headers: { get: () => "image/jpeg" },
-        arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
-      })),
+      vi.fn(async () => imageResponse()),
     );
 
     const result = await warm.warmBatch({
@@ -313,7 +315,7 @@ describe("warmBatch -- the one loop every caller shares", () => {
     const deps = fakeDeps();
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => ({ ok: false, status: 404 })),
+      vi.fn(async () => new Response(null, { status: 404 })),
     );
 
     const result = await warm.warmBatch({
@@ -335,7 +337,7 @@ describe("warmBatch -- the one loop every caller shares", () => {
     const deps = fakeDeps();
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => ({ ok: false, status: 500 })),
+      vi.fn(async () => new Response(null, { status: 500 })),
     );
 
     const result = await warm.warmBatch({
@@ -363,11 +365,7 @@ describe("warmBatch -- the one loop every caller shares", () => {
     const deps = fakeDeps();
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => ({
-        ok: true,
-        headers: { get: () => "image/jpeg" },
-        arrayBuffer: async () => new Uint8Array([1]).buffer,
-      })),
+      vi.fn(async () => imageResponse()),
     );
     let calls = 0;
     const result = await warm.warmBatch({
@@ -403,5 +401,129 @@ describe("warmBatch -- the one loop every caller shares", () => {
     });
     expect(result.skipped).toBe(1);
     expect(deps.proxy.transformForTier).not.toHaveBeenCalled();
+  });
+  describe("hardened origin fetch", () => {
+    async function warmOne(
+      fetchMock: ReturnType<typeof vi.fn>,
+      depsOverrides: Record<string, unknown> = {},
+      tier: "display" | "lightbox" = "display",
+    ) {
+      const sql = fakeSql([[row("met", "1")], []]);
+      const deps = fakeDeps(depsOverrides);
+      vi.stubGlobal("fetch", fetchMock);
+      const result = await warm.warmBatch({
+        sql,
+        tier,
+        sources: ["met"],
+        commit: true,
+        deps,
+        sleepMs: noSleep,
+      });
+      return { result, deps };
+    }
+
+    it.each([
+      ["a private address", "https://127.0.0.1/a.jpg"],
+      ["the metadata address", "https://169.254.169.254/latest/meta-data"],
+      ["plain http", "http://images.metmuseum.org/a.jpg"],
+      ["a non-allowlisted host", "https://evil.example/a.jpg"],
+    ])(
+      "refuses a redirect to %s and stores nothing",
+      async (_label, target) => {
+        const fetchMock = vi.fn(
+          async () =>
+            new Response(null, { status: 302, headers: { location: target } }),
+        );
+        const { result, deps } = await warmOne(fetchMock);
+        expect(result).toMatchObject({ done: 0, failed: 1 });
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(deps.s3.putObject).not.toHaveBeenCalled();
+      },
+    );
+
+    it("refuses an allowlisted host that resolves to a private address", async () => {
+      const fetchMock = vi.fn(async () => imageResponse());
+      const { result, deps } = await warmOne(fetchMock, {
+        resolve: vi.fn(async () => [{ address: "10.0.0.5", family: 4 }]),
+      });
+      expect(result).toMatchObject({ done: 0, failed: 1 });
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(deps.s3.putObject).not.toHaveBeenCalled();
+    });
+
+    it("skips a stored origin URL outside the source's allowlist without fetching", async () => {
+      const sql = fakeSql([
+        [{ source: "met", native_id: "1", img: "https://evil.example/1.jpg" }],
+        [],
+      ]);
+      const deps = fakeDeps();
+      const fetchMock = vi.fn(async () => imageResponse());
+      vi.stubGlobal("fetch", fetchMock);
+      const result = await warm.warmBatch({
+        sql,
+        tier: "display",
+        sources: ["met"],
+        commit: true,
+        deps,
+        sleepMs: noSleep,
+      });
+      expect(result).toMatchObject({ done: 0, skipped: 1 });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it.each(["image/png", "text/html", "text/html; charset=utf-8"])(
+      "never stores an HTML body served as %s",
+      async (type) => {
+        const fetchMock = vi.fn(
+          async () =>
+            new Response("<!doctype html><html><body>blocked</body></html>", {
+              headers: { "content-type": type },
+            }),
+        );
+        const { result, deps } = await warmOne(fetchMock);
+        expect(result).toMatchObject({ done: 0, failed: 1 });
+        expect(deps.proxy.transformForTier).not.toHaveBeenCalled();
+        expect(deps.s3.putObject).not.toHaveBeenCalled();
+      },
+    );
+
+    it("stores the content type sharp detects, not the one the origin declared", async () => {
+      const png = await sharp({
+        create: {
+          width: 2,
+          height: 2,
+          channels: 3,
+          background: "#fff",
+        },
+      })
+        .png()
+        .toBuffer();
+      const fetchMock = vi.fn(
+        async () =>
+          new Response(new Uint8Array(png), {
+            headers: { "content-type": "text/html" },
+          }),
+      );
+      const { result, deps } = await warmOne(fetchMock, {
+        proxy: {
+          transformForTier: vi.fn(async (raw: Buffer, type: string) => ({
+            buf: raw,
+            contentType: type,
+          })),
+        },
+      });
+      expect(result).toMatchObject({ done: 1, failed: 0 });
+      expect(deps.s3.putObject.mock.calls[0][3]).toBe("image/png");
+    });
+
+    it("sends the identifying headers on the origin request", async () => {
+      const fetchMock = vi.fn(async (_url: unknown, _init?: RequestInit) =>
+        imageResponse(),
+      );
+      await warmOne(fetchMock);
+      const headers = new Headers(fetchMock.mock.calls[0][1]?.headers);
+      expect(headers.get("user-agent")).toBeTruthy();
+      expect(fetchMock.mock.calls[0][1]).toMatchObject({ redirect: "manual" });
+    });
   });
 });

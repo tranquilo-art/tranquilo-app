@@ -48,6 +48,12 @@ import sharp from "sharp";
 import * as admission from "../../../../lib/img-admission.ts";
 import * as guard from "../../../../lib/img-fetch-guard.ts";
 import * as objectKeys from "../../../../lib/img-object-key.ts";
+import {
+  fetchOriginOnce,
+  isAllowedOrigin,
+  MAX_ORIGIN_BYTES,
+  type OriginError,
+} from "../../../../lib/img-origin-fetch.ts";
 import * as s3 from "../../../../lib/img-s3.ts";
 import * as store from "../../../../lib/img-store.ts";
 import { rateLimitOrRespond } from "../../../../lib/img-visitor-rate-limit.ts";
@@ -56,19 +62,12 @@ import { LIVE_ITEMS_AND } from "../../../../lib/items-sql.ts";
 // binding is captured at require time, which vi.mock() in
 // tests/img-proxy.test.ts can't intercept.
 import * as sentry from "../../../../lib/sentry.ts";
-import * as identity from "../../../../lib/source-identity.ts";
 
 const TIERS = ["display", "lightbox"] as const;
 type ImgTier = (typeof TIERS)[number];
 
 function isImgTier(value: unknown): value is ImgTier {
   return value === "display" || value === "lightbox";
-}
-
-interface OriginError extends Error {
-  status?: number;
-  retryAfter?: string | null;
-  tooLarge?: boolean;
 }
 
 function firstValue(value: string | string[] | undefined): string | undefined {
@@ -90,15 +89,6 @@ function canShedToOrigin(tier: ImgTier): boolean {
   return SHEDDABLE_TO_ORIGIN[tier] === true;
 }
 
-// Backstop against a pathological origin response -- above the 52.9MB
-// worst case actually fetched, so it protects the tier rather than
-// breaking it. sharp has its own decode guard (limitInputPixels); this
-// is the one on the step before that, which had none.
-const MAX_ORIGIN_BYTES = 64 * 1024 * 1024;
-
-// Generous vs. the client's own 8s -- this is the populate path, and
-// Vercel Node functions default to a 300s timeout under Fluid Compute.
-const ORIGIN_FETCH_TIMEOUT_MS = 20000;
 // Was a 429-specific inline retry (up to 3x with backoff); removed
 // because retrying sends MORE requests to a source that just asked us
 // to stop -- the shape of the Wikimedia incident. The caller now parks
@@ -128,100 +118,6 @@ const DISPLAY_MAX_DIMENSION = 1600;
 // not because reserveUsage() below can race (it can't).
 const DEFAULT_USAGE_SOFT_CAP_BYTES = 950 * 1024 * 1024;
 const USAGE_WARN_FRACTION = 0.8;
-
-// Only fetch from known source CDNs, never a caller-supplied host --
-// with one exception: Europeana aggregates rather than hosts, so its
-// lightbox-tier full/full_img legitimately points at whichever
-// contributing institution's own domain, different per item and
-// impossible to enumerate. Its display tier still goes through
-// Europeana's fixed thumbnail proxy and is allowlisted normally; its
-// lightbox tier falls back to a scheme-only check (https, well-formed).
-const ALLOWED_ORIGIN_HOSTS: Record<string, string[]> = {
-  met: ["images.metmuseum.org"],
-  smithsonian: ["ids.si.edu"],
-  cleveland: ["openaccess-cdn.clevelandart.org"],
-  // thumb.wikimedia.org serves Wikimedia's own rendered derivative for
-  // anything not already a web-ready JPEG (e.g. TIFF scans).
-  commons: ["upload.wikimedia.org", "thumb.wikimedia.org"],
-  europeana: ["api.europeana.eu"],
-  // npm.py's IIIF image service host, confirmed against real ingested
-  // rows' img/full_img values -- this was missing entirely, so every
-  // npm request 400'd here as "disallowed origin" before ever reaching
-  // the S3 cache-hit lookup below, regardless of whether the object was
-  // already cached.
-  npm: ["iiifod.npm.gov.tw"],
-  // wellcome.py's IIIF image service host -- confirmed against the
-  // adapter's own map_item() (img/full both built from the work's
-  // digital location's IIIF base url). Added ahead of the adapter's
-  // first real ingestion run, not after, following the lesson recorded
-  // above: this allowlist and ingest-time S3 caching are unrelated code
-  // paths, so a source can cache cleanly at ingest time while every live
-  // image request for it still 400s here until this entry exists.
-  wellcome: ["iiif.wellcomecollection.org"],
-  // nga.py's IIIF Image API host (api.nga.gov/iiif/{uuid}), the only
-  // image host in NGA's published_images data. Added before the first
-  // ingestion run for the same reason as wellcome above.
-  nga: ["api.nga.gov"],
-  // tepapa.py's media host, confirmed against real ingested rows (img and
-  // full_img both). Missed at launch: the display tier was cached at
-  // ingest, so only cache misses -- mostly the lightbox -- 400'd.
-  tepapa: ["media.tepapa.govt.nz"],
-  // mia.py's image cache, which serves both the 800 and full renditions.
-  mia: ["1.api.artsmia.org"],
-  // aic.py builds img/full from the IIIF host; only the allowlisted
-  // widths (843 and 1686 for public-domain works) are served.
-  aic: ["www.artic.edu"],
-  // tainacan.py reads each museum's own WordPress site, which serves its
-  // own uploads; one host per instance in the adapter's INSTANCES. Added
-  // before the first ingestion run, as with wellcome above.
-  tainacan: [
-    "acervo.margs.rs.gov.br",
-    "museudoouro.acervos.museus.gov.br",
-    "museuregionalcasadosottoni.acervos.museus.gov.br",
-  ],
-};
-
-type ImgSource = keyof typeof ALLOWED_ORIGIN_HOSTS;
-function isImgSource(value: unknown): value is ImgSource {
-  return (
-    typeof value === "string" && Object.hasOwn(ALLOWED_ORIGIN_HOSTS, value)
-  );
-}
-
-const WILDCARD_DNS_SUFFIX =
-  /\.(nip\.io|sslip\.io|xip\.io|traefik\.me|localtest\.me)$/;
-const EMBEDDED_IPV4 = /(^|[.-])\d{1,3}([.-])\d{1,3}\2\d{1,3}\2\d{1,3}([.-]|$)/;
-
-// Rejects IP literals, internal and wildcard-DNS names, ports, credentials.
-function isPublicDnsHost(url: URL): boolean {
-  const host = url.hostname.replace(/\.+$/, "");
-  if (url.port || url.username || url.password) return false;
-  if (host.includes(":") || /^[0-9.]+$/.test(host) || /^\[/.test(host))
-    return false;
-  if (host === "localhost" || host.endsWith(".localhost")) return false;
-  if (/\.(internal|local|localdomain|lan|home|corp)$/.test(host)) return false;
-  if (WILDCARD_DNS_SUFFIX.test(host) || EMBEDDED_IPV4.test(host)) return false;
-  return host.includes(".");
-}
-
-function isAllowedOrigin(
-  source: unknown,
-  tier: ImgTier,
-  originUrl: string,
-): boolean {
-  let parsed: URL;
-  try {
-    parsed = new URL(originUrl);
-  } catch (_e) {
-    return false;
-  }
-  if (parsed.protocol !== "https:") return false;
-  if (parsed.port || parsed.username || parsed.password) return false;
-  if (source === "europeana" && tier === "lightbox")
-    return isPublicDnsHost(parsed);
-  if (!isImgSource(source)) return false;
-  return ALLOWED_ORIGIN_HOSTS[source].indexOf(parsed.hostname) !== -1;
-}
 
 // The URL to fetch on a miss, read from the item's own row -- never from
 // the request. `?origin=` used to be trusted here, which let anyone cache
@@ -254,156 +150,6 @@ function pathnameFor(source: string, id: string, tier: ImgTier) {
   // character here beyond "/".
   const safeId = id.replace(/[^A-Za-z0-9._-]+/g, "-");
   return `img-cache/${source}/${safeId}/${tier}`;
-}
-
-// `status` left unset so the handler counts this as origin_error, not a
-// misreported 429 -- nothing is wrong with the source, we're declining
-// to hold what it offered.
-function tooLargeError(bytes: number) {
-  const err: OriginError = new Error(
-    `origin response exceeds ${MAX_ORIGIN_BYTES} bytes (${bytes})`,
-  );
-  err.tooLarge = true;
-  return err;
-}
-
-const FORMAT_CONTENT_TYPES: Record<string, string> = {
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  gif: "image/gif",
-  tiff: "image/tiff",
-};
-const HEADER_CONTENT_TYPES: Record<string, string> = {
-  "image/jpeg": "image/jpeg",
-  "image/jpg": "image/jpeg",
-  "image/pjpeg": "image/jpeg",
-  "image/png": "image/png",
-  "image/webp": "image/webp",
-  "image/avif": "image/avif",
-  "image/gif": "image/gif",
-  "image/tiff": "image/tiff",
-};
-const MAX_ORIGIN_REDIRECTS = 3;
-const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
-
-function sniffContentType(buf: Buffer): string | null {
-  const ascii = (from: number, to: number) =>
-    buf.subarray(from, to).toString("latin1");
-  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff)
-    return "image/jpeg";
-  if (buf[0] === 0x89 && ascii(1, 4) === "PNG") return "image/png";
-  if (ascii(0, 3) === "GIF") return "image/gif";
-  if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "image/webp";
-  if (ascii(4, 8) === "ftyp" && /^(avif|avis)/.test(ascii(8, 12)))
-    return "image/avif";
-  if (ascii(0, 4) === "II*\u0000" || ascii(0, 4) === "MM\u0000*")
-    return "image/tiff";
-  return null;
-}
-
-function looksLikeMarkup(buf: Buffer): boolean {
-  return buf.subarray(0, 512).toString("utf8").trimStart().startsWith("<");
-}
-
-// Content type from the body's detected format, never the origin's header.
-async function detectRasterContentType(
-  declaredContentType: string | null,
-  buf: Buffer,
-): Promise<string | null> {
-  if (looksLikeMarkup(buf)) return null;
-  try {
-    const { format, compression } = await sharp(buf).metadata();
-    if (format === "heif")
-      return compression === "av1" ? "image/avif" : "image/heif";
-    return (format && FORMAT_CONTENT_TYPES[format]) || null;
-  } catch (_e) {
-    if (!declaredContentType) return sniffContentType(buf);
-    const mime = declaredContentType.split(";")[0].trim().toLowerCase();
-    return HEADER_CONTENT_TYPES[mime] ?? null;
-  }
-}
-
-function redirectRefused(reason: string): OriginError {
-  return new Error(`origin redirect refused: ${reason}`);
-}
-
-async function fetchOriginOnce(
-  url: string,
-  source: string,
-  tier: ImgTier = "display",
-): Promise<{ buf: Buffer; contentType: string }> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, ORIGIN_FETCH_TIMEOUT_MS);
-  try {
-    let current = url;
-    let r: Response;
-    for (let hop = 0; ; hop++) {
-      r = await fetch(current, {
-        signal: controller.signal,
-        headers: identity.imageFetchHeaders(source),
-        redirect: "manual",
-      });
-      if (!REDIRECT_STATUSES.has(r.status)) break;
-      const location = r.headers.get("location");
-      await r.body?.cancel();
-      if (!location) throw redirectRefused("no location");
-      if (hop >= MAX_ORIGIN_REDIRECTS) throw redirectRefused("too many hops");
-      const next = new URL(location, current).toString();
-      if (!next.startsWith("https:")) throw redirectRefused("not https");
-      if (!isAllowedOrigin(source, tier, next))
-        throw redirectRefused("disallowed host");
-      current = next;
-    }
-    if (!r.ok) {
-      const err: OriginError = new Error(
-        `origin fetch failed with status ${r.status}`,
-      );
-      err.status = r.status;
-      err.retryAfter = r.headers.get("retry-after");
-      throw err;
-    }
-    // Cheap rejection first, from the declared size.
-    const declared = Number(r.headers.get("content-length"));
-    if (Number.isFinite(declared) && declared > MAX_ORIGIN_BYTES) {
-      throw tooLargeError(declared);
-    }
-
-    // The real check follows, streamed: content-length is a claim, not
-    // the size, and some institutional servers omit it on chunked
-    // responses. Reading in chunks lets an oversized body be abandoned
-    // partway instead of fully materialised first.
-    const chunks: Uint8Array[] = [];
-    let total = 0;
-    for await (const chunk of r.body as unknown as AsyncIterable<Uint8Array>) {
-      total += chunk.length;
-      if (total > MAX_ORIGIN_BYTES) {
-        controller.abort();
-        throw tooLargeError(total);
-      }
-      chunks.push(chunk);
-    }
-    const buf = Buffer.concat(chunks, total);
-    const declaredContentType = r.headers.get("content-type");
-    // A 200 isn't proof of an image -- some institutional servers
-    // (Nationalmuseum Sweden's eMuseumPlus, found live) answer a broken
-    // asset request with 200 and an HTML error page as the body. Without
-    // this, that HTML would sail through sharp's decode failure path and
-    // get stored verbatim as if it were the image.
-    const contentType = await detectRasterContentType(declaredContentType, buf);
-    if (!contentType) {
-      const typeErr: OriginError = new Error(
-        `origin returned a 200 that is not a raster image (${declaredContentType ?? "no content-type"})`,
-      );
-      typeErr.status = r.status;
-      throw typeErr;
-    }
-    return { buf: buf, contentType: contentType };
-  } finally {
-    clearTimeout(timeout);
-  }
 }
 
 // Alerts on the TRANSITION into a bad state, not on every occurrence --
@@ -445,12 +191,6 @@ async function alertOnce(
   } catch (_e) {
     // Alerting must never take down the request path it is watching.
   }
-}
-
-// Single attempt -- see ORIGIN_COOLDOWN_DEFAULT_SECONDS above for why
-// there's no retry loop.
-async function fetchOrigin(url: string, source: string, tier: ImgTier) {
-  return await fetchOriginOnce(url, source, tier);
 }
 
 // Circuit breaker, atomic: the UPDATE's WHERE clause only lets the
@@ -872,14 +612,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           name: "img-proxy.fetch-origin",
           attributes: { source: source, tier: tier, id: id },
         },
-        () => fetchOrigin(fetchUrl, source, tier),
+        () => fetchOriginOnce(fetchUrl, source, tier),
       );
       await guard.recordOriginOutcome(sqlClient, source, 200, true);
       await guard.recordHostOutcome(sqlClient, hostOf(originUrl), 200, true);
       await guard.bumpStat(sqlClient, source, tier, "origin_ok");
     } catch (fetchErr) {
       await guard.releaseFetch(sqlClient, cacheKey);
-      const { status, retryAfter } = (fetchErr ?? {}) as OriginError;
+      const { status, retryAfter, refused } = (fetchErr ?? {}) as OriginError;
+      if (refused === "dns-private" || refused === "dns-failed") {
+        await alertOnce(
+          `origin-refused:${hostOf(originUrl)}`,
+          `refused to fetch ${hostOf(originUrl)}: ${(fetchErr as Error).message}`,
+          { source: source, host: hostOf(originUrl), reason: refused },
+        );
+      }
       if (status === 429) {
         const cooldown = guard.parseRetryAfter(
           retryAfter,

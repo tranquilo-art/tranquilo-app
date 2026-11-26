@@ -3,6 +3,11 @@
 // lib/cron/warm-image-cache.ts (a deployed Vercel function) never imports
 // from scripts/ (local-only tooling, not part of the function bundle) --
 // scripts/warm_image_cache.mts now re-exports this module for the CLI.
+import {
+  fetchOriginOnce,
+  isAllowedOrigin,
+  type OriginResolver,
+} from "./img-origin-fetch.ts";
 import type { S3Credentials } from "./img-s3.ts";
 import type { ImgS3Config, QuerySql } from "./img-store.ts";
 import { LIVE_ITEMS_AND } from "./items-sql.ts";
@@ -57,9 +62,7 @@ export interface WarmDeps {
       contentType: string,
     ): Promise<{ ok: boolean; status: number }>;
   };
-  identity: {
-    imageFetchHeaders(source: string): Record<string, string>;
-  };
+  resolve?: OriginResolver;
 }
 
 // Exported so it can be asserted against directly: this used to hand-roll
@@ -243,7 +246,7 @@ export async function warmBatch(opts: {
     };
   }
 
-  const { store, proxy, objectKey, s3, identity } = deps as WarmDeps;
+  const { store, proxy, objectKey, s3, resolve } = deps as WarmDeps;
   const cfg = store.configFromEnv();
   if (!cfg.enabled) throw new Error("S3 is not configured -- refusing to run");
 
@@ -282,21 +285,20 @@ export async function warmBatch(opts: {
       skipped++;
       continue;
     }
+    if (!isAllowedOrigin(row.source, tier, origin)) {
+      skipped++;
+      log(`  DISALLOWED ${row.source}:${row.native_id}`);
+      continue;
+    }
     const interval = intervalMsFor(byHost[host]);
 
     try {
-      const res = await fetch(origin, {
-        headers: identity.imageFetchHeaders(row.source),
-      });
-      if (!res.ok) {
-        failed++;
-        breaker.fail();
-        log(`  ${res.status} ${row.source}:${row.native_id}`);
-        await sleep(interval);
-        continue;
-      }
-      const raw = Buffer.from(await res.arrayBuffer());
-      const contentType = res.headers.get("content-type") || "image/jpeg";
+      const { buf: raw, contentType } = await fetchOriginOnce(
+        origin,
+        row.source,
+        tier,
+        resolve,
+      );
 
       const out = await proxy.transformForTier(raw, contentType, tier);
       const body = bufferFrom(out);

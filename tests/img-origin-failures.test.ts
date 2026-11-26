@@ -16,6 +16,10 @@ import * as guard from "../lib/img-fetch-guard.ts";
 import * as identity from "../lib/source-identity.ts";
 import { startFakeOrigin } from "./helpers/origin.ts";
 
+vi.mock("node:dns/promises", () => ({
+  lookup: vi.fn(async () => [{ address: "93.184.216.34", family: 4 }]),
+}));
+
 const proxy = await import("../api/img/[source]/[id]/[tier].ts");
 
 let origin: any;
