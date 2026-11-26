@@ -430,13 +430,17 @@ describe("warmBatch -- the one loop every caller shares", () => {
     ])(
       "refuses a redirect to %s and stores nothing",
       async (_label, target) => {
-        const fetchMock = vi.fn(
-          async () =>
-            new Response(null, { status: 302, headers: { location: target } }),
+        const fetchMock = vi.fn(async (_url: unknown, init?: RequestInit) =>
+          init?.redirect === "manual"
+            ? new Response(null, { status: 302, headers: { location: target } })
+            : imageResponse(),
         );
         const { result, deps } = await warmOne(fetchMock);
         expect(result).toMatchObject({ done: 0, failed: 1 });
         expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(fetchMock.mock.calls[0][1]).toMatchObject({
+          redirect: "manual",
+        });
         expect(deps.s3.putObject).not.toHaveBeenCalled();
       },
     );

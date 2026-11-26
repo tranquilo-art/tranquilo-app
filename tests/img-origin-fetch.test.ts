@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  fetchFollowingRedirects,
   fetchOriginOnce,
   isPublicAddress,
   type OriginResolver,
@@ -181,8 +182,99 @@ describe("the DNS pre-flight", () => {
     const fetchMock = vi.fn(async () => new Response(JPEG));
     vi.stubGlobal("fetch", fetchMock);
     await expect(
-      fetchOriginOnce("https://localhost/a.jpg", "europeana", "lightbox"),
+      fetchFollowingRedirects(
+        "https://localhost/a.jpg",
+        "europeana",
+        "lightbox",
+      ),
     ).rejects.toMatchObject({ refused: "dns-private" });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses an off-allowlist first hop before any lookup or fetch", async () => {
+    const fetchMock = vi.fn(async () => new Response(JPEG));
+    vi.stubGlobal("fetch", fetchMock);
+    const resolver = vi.fn<OriginResolver>();
+    for (const url of [
+      "https://evil.example/a.jpg",
+      "http://images.metmuseum.org/a.jpg",
+      "https://127.0.0.1/a.jpg",
+    ]) {
+      await expect(
+        fetchOriginOnce(url, "met", "display", resolver),
+      ).rejects.toThrow(/refused/);
+    }
+    expect(resolver).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  describe("lookup time limit", () => {
+    const never: OriginResolver = () => new Promise(() => {});
+
+    it("refuses a lookup that never answers within the cap", async () => {
+      const fetchMock = vi.fn(async () => new Response(JPEG));
+      vi.stubGlobal("fetch", fetchMock);
+      const started = Date.now();
+      await expect(
+        fetchOriginOnce(
+          "https://images.metmuseum.org/a.jpg",
+          "met",
+          "display",
+          never,
+          50,
+        ),
+      ).rejects.toMatchObject({ refused: "dns-failed" });
+      expect(Date.now() - started).toBeLessThan(2000);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("refuses promptly when the overall abort fires during the lookup", async () => {
+      vi.useFakeTimers();
+      try {
+        const fetchMock = vi.fn(async () => new Response(JPEG));
+        vi.stubGlobal("fetch", fetchMock);
+        const outcome = fetchOriginOnce(
+          "https://images.metmuseum.org/a.jpg",
+          "met",
+          "display",
+          never,
+          60_000,
+        ).then(
+          () => "resolved",
+          (err) => err.refused,
+        );
+        await vi.advanceTimersByTimeAsync(20_000);
+        expect(await outcome).toBe("dns-failed");
+        expect(fetchMock).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("raises no unhandled rejection when a late lookup fails after the cap", async () => {
+      const unhandled = vi.fn();
+      process.on("unhandledRejection", unhandled);
+      try {
+        let rejectLate: (err: Error) => void = () => {};
+        const late: OriginResolver = () =>
+          new Promise((_resolve, reject) => {
+            rejectLate = reject;
+          });
+        await expect(
+          fetchOriginOnce(
+            "https://images.metmuseum.org/a.jpg",
+            "met",
+            "display",
+            late,
+            10,
+          ),
+        ).rejects.toMatchObject({ refused: "dns-failed" });
+        rejectLate(new Error("ENOTFOUND"));
+        await new Promise((r) => setTimeout(r, 20));
+        expect(unhandled).not.toHaveBeenCalled();
+      } finally {
+        process.off("unhandledRejection", unhandled);
+      }
+    });
   });
 });

@@ -42,8 +42,7 @@ export const ALLOWED_ORIGIN_HOSTS: Record<string, string[]> = {
   // npm.py's IIIF image service host, confirmed against real ingested
   // rows' img/full_img values -- this was missing entirely, so every
   // npm request 400'd here as "disallowed origin" before ever reaching
-  // the S3 cache-hit lookup below, regardless of whether the object was
-  // already cached.
+  // the cache lookup, whether or not the object was cached.
   npm: ["iiifod.npm.gov.tw"],
   // wellcome.py's IIIF image service host -- confirmed against the
   // adapter's own map_item() (img/full both built from the work's
@@ -296,17 +295,51 @@ function addressRefused(
   return err;
 }
 
+const DNS_LOOKUP_TIMEOUT_MS = 3000;
+
+function lookupWithin(
+  host: string,
+  resolve: OriginResolver,
+  signal: AbortSignal,
+  capMs: number,
+): Promise<{ address: string }[]> {
+  return new Promise((settle, reject) => {
+    const fail = () =>
+      reject(addressRefused(host, "dns-failed", "did not resolve in time"));
+    if (signal.aborted) return fail();
+    const timer = setTimeout(fail, capMs);
+    signal.addEventListener("abort", fail, { once: true });
+    const done = () => {
+      clearTimeout(timer);
+      signal.removeEventListener("abort", fail);
+    };
+    // The lookup cannot be cancelled; both handlers keep a late result handled.
+    resolve(host).then(
+      (value) => {
+        done();
+        settle(value);
+      },
+      (err) => {
+        done();
+        reject(err);
+      },
+    );
+  });
+}
+
 // Narrows, but cannot close, the race between this lookup and the connect.
 async function assertPublicResolution(
   url: string,
   resolve: OriginResolver,
+  signal: AbortSignal,
+  capMs: number,
 ): Promise<void> {
   const host = new URL(url).hostname
     .replace(/^\[|\]$/g, "")
     .replace(/\.+$/, "");
   let addresses: { address: string }[];
   try {
-    addresses = await resolve(host);
+    addresses = await lookupWithin(host, resolve, signal, capMs);
   } catch (_e) {
     throw addressRefused(host, "dns-failed", "did not resolve");
   }
@@ -325,6 +358,19 @@ export async function fetchOriginOnce(
   source: string,
   tier: OriginTier = "display",
   resolve: OriginResolver = defaultResolver,
+  dnsTimeoutMs: number = DNS_LOOKUP_TIMEOUT_MS,
+): Promise<{ buf: Buffer; contentType: string }> {
+  if (!isAllowedOrigin(source, tier, url))
+    throw redirectRefused("disallowed host");
+  return fetchFollowingRedirects(url, source, tier, resolve, dnsTimeoutMs);
+}
+
+export async function fetchFollowingRedirects(
+  url: string,
+  source: string,
+  tier: OriginTier = "display",
+  resolve: OriginResolver = defaultResolver,
+  dnsTimeoutMs: number = DNS_LOOKUP_TIMEOUT_MS,
 ): Promise<{ buf: Buffer; contentType: string }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => {
@@ -334,7 +380,12 @@ export async function fetchOriginOnce(
     let current = url;
     let r: Response;
     for (let hop = 0; ; hop++) {
-      await assertPublicResolution(current, resolve);
+      await assertPublicResolution(
+        current,
+        resolve,
+        controller.signal,
+        dnsTimeoutMs,
+      );
       r = await fetch(current, {
         signal: controller.signal,
         headers: identity.imageFetchHeaders(source),
