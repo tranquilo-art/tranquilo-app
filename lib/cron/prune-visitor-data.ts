@@ -1,5 +1,5 @@
 // Daily retention for visitor-keyed rows: denial counters are kept 30 days,
-// per-day bucket rows for the items, detail and image budgets two days (their
+// per-day bucket rows for the items, detail, quote, write and image budgets two days (their
 // key changes daily, so older rows can never be read again). API key usage
 // counters are kept 13 months; key buckets ("key:<id>") are never pruned.
 //
@@ -47,7 +47,7 @@ export default async function handler(req: CronRequest, res: CronResponse) {
     )) as unknown[];
     const buckets = (await sql.query(
       "DELETE FROM visitor_fetch_state " +
-        "WHERE (ip LIKE 'items:%' OR ip LIKE 'img:%' OR ip LIKE 'detail:%' OR ip LIKE 'write:%') " +
+        "WHERE (ip LIKE 'items:%' OR ip LIKE 'img:%' OR ip LIKE 'detail:%' OR ip LIKE 'quote:%' OR ip LIKE 'write:%') " +
         "AND updated_at < now() - make_interval(days => $1::int) RETURNING 1",
       [BUCKET_RETENTION_DAYS],
     )) as unknown[];
