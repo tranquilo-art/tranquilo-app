@@ -22,6 +22,11 @@ describe("which objects are worth re-encoding", () => {
     expect(reencode.isCandidate({ bytes: null }, 1_000_000)).toBe(false);
   });
 
+  it("returns false for null or undefined entry", () => {
+    expect(reencode.isCandidate(null, 1_000_000)).toBe(false);
+    expect(reencode.isCandidate(undefined, 1_000_000)).toBe(false);
+  });
+
   it("skips an entry with no object key", () => {
     expect(reencode.isCandidate({ bytes: 9e9, object_key: null }, 1_000)).toBe(
       false,
@@ -104,5 +109,24 @@ describe("reporting", () => {
       savedBytes: 0,
       pct: 0,
     });
+  });
+});
+
+describe("formatError helper", () => {
+  it("formats Error with message", () => {
+    expect(reencode.formatError(new Error("network timeout"))).toBe("network timeout");
+  });
+
+  it("falls back to String(err) when Error message is empty", () => {
+    expect(reencode.formatError(new Error(""))).toBe("Error");
+  });
+
+  it("extracts message from plain object with non-empty message property", () => {
+    expect(reencode.formatError({ message: "custom failure" })).toBe("custom failure");
+  });
+
+  it("falls back to String(err) for primitives or plain objects without message", () => {
+    expect(reencode.formatError("raw failure string")).toBe("raw failure string");
+    expect(reencode.formatError(404)).toBe("404");
   });
 });

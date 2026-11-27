@@ -38,8 +38,18 @@ interface ReencodeResult {
   after: number;
 }
 
-export function isCandidate(entry: CacheEntry, minBytes: number) {
-  if (!entry.bytes) return false;
+export function formatError(err: unknown): string {
+  if (err && typeof err === "object" && "message" in err) {
+    const msg = (err as { message: unknown }).message;
+    if (typeof msg === "string" && msg.trim().length > 0) {
+      return msg;
+    }
+  }
+  return String(err);
+}
+
+export function isCandidate(entry: CacheEntry | null | undefined, minBytes: number) {
+  if (!entry || !entry.bytes) return false;
   if ("object_key" in entry && !entry.object_key) return false;
   return Number(entry.bytes) > minBytes;
 }
@@ -210,7 +220,7 @@ async function runCli() {
       } catch (err) {
         failed++;
         console.log(
-          `  ERR   ${r.cache_key} -- ${String(err instanceof Error ? err.message : err)}`,
+          `  ERR   ${r.cache_key} -- ${formatError(err)}`,
         );
       }
     }
@@ -228,7 +238,7 @@ async function runCli() {
   }
 
   await main().catch((e: unknown) => {
-    console.error("FATAL", e instanceof Error ? e.message : e);
+    console.error("FATAL", formatError(e));
     process.exit(1);
   });
 }
