@@ -77,18 +77,34 @@ function extractPropertyStringValue(raw: unknown): string | null {
   return null;
 }
 
-async function mergedProperties(
+// `unsubscribed` is null for a first-time signup. For an existing contact
+// it's their current choice, which a signup must never undo -- otherwise
+// anyone could put an unsubscribed address back on the list.
+type MergedContact = {
+  properties: Record<string, string>;
+  unsubscribed: boolean | null;
+};
+
+async function mergedContact(
   apiKey: string,
   email: string,
   newSource: string,
   newLocale: string | null,
-): Promise<Record<string, string>> {
+): Promise<MergedContact> {
   const merged: Record<string, string> = { source: newSource };
   if (newLocale) merged.locale = newLocale;
 
   const getRes = await getContact(apiKey, email);
-  if (!getRes.ok) return merged;
+  if (getRes.status === 404) return { properties: merged, unsubscribed: null };
+  // Any other failure leaves us not knowing whether they unsubscribed, so
+  // write nothing rather than risk re-subscribing them.
+  if (!getRes.ok) {
+    throw new Error(`subscribe: contact lookup failed (${getRes.status})`);
+  }
   const data = await getRes.json();
+  // Anything but an explicit false counts as unsubscribed, so an
+  // unexpected response shape can't re-subscribe anyone.
+  const unsubscribed = data?.unsubscribed !== false;
 
   const rawExisting = data?.properties?.source;
   const existing = extractPropertyStringValue(rawExisting);
@@ -115,14 +131,10 @@ async function mergedProperties(
     );
     if (storedLocale) merged.locale = storedLocale;
   }
-  return merged;
+  return { properties: merged, unsubscribed };
 }
 
-function createContact(
-  apiKey: string,
-  email: string,
-  properties: Record<string, string>,
-) {
+function createContact(apiKey: string, email: string, contact: MergedContact) {
   return fetch("https://api.resend.com/contacts", {
     method: "POST",
     headers: {
@@ -131,8 +143,8 @@ function createContact(
     },
     body: JSON.stringify({
       email: email,
-      unsubscribed: false,
-      properties,
+      unsubscribed: contact.unsubscribed ?? false,
+      properties: contact.properties,
     }),
   });
 }
@@ -186,10 +198,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  let properties: Record<string, string>, resendRes: Response, errBody: string;
+  let contact: MergedContact, resendRes: Response, errBody: string;
   try {
-    properties = await mergedProperties(apiKey, email, source, locale);
-    resendRes = await createContact(apiKey, email, properties);
+    contact = await mergedContact(apiKey, email, source, locale);
+    resendRes = await createContact(apiKey, email, contact);
 
     if (!resendRes.ok) {
       errBody = await resendRes.text();
@@ -200,10 +212,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ) {
         // Creating a property that already exists is harmless, so create
         // every one this contact carries rather than parse which was missing.
-        for (const key of Object.keys(properties)) {
+        for (const key of Object.keys(contact.properties)) {
           await createStringProperty(apiKey, key);
         }
-        resendRes = await createContact(apiKey, email, properties);
+        resendRes = await createContact(apiKey, email, contact);
         if (!resendRes.ok) {
           errBody = await resendRes.text();
           console.error(
