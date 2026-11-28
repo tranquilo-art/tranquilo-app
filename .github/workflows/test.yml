@@ -8,6 +8,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch: {}
 
 permissions:
   contents: read
@@ -67,7 +68,35 @@ jobs:
             --jq '.commits[] | .messageHeadline + "\n" + .messageBody' \
             | bun scripts/ticket-refs.mts --label "commit messages" || status=1
           exit $status
-      - run: bun run typecheck
+      # Pinned cloudgear commit; bump deliberately.
+      - name: Fetch cloudgear for setup.ts types
+        env:
+          CLOUDGEAR_SHA: ab10ebb91cce4c3c77c4050a8520045c545be4e2
+        run: |
+          git clone https://github.com/elaous/cloudgear "$RUNNER_TEMP/cloudgear"
+          git -C "$RUNNER_TEMP/cloudgear" checkout "$CLOUDGEAR_SHA"
+          cd "$RUNNER_TEMP/cloudgear"
+          bun install --frozen-lockfile --ignore-scripts
+      # cloudgear sources need a non-DOM lib; check setup.ts separately.
+      - name: typecheck
+        run: |
+          cat > tsconfig.ci.json <<EOF
+          { "extends": "./tsconfig.json", "exclude": ["setup.ts"] }
+          EOF
+          cat > tsconfig.ci-setup.json <<EOF
+          {
+            "extends": "./tsconfig.json",
+            "compilerOptions": {
+              "lib": ["ES2022"],
+              "types": ["bun"],
+              "paths": { "@cloudgear/*": ["$RUNNER_TEMP/cloudgear/packages/*"] }
+            },
+            "include": ["setup.ts"]
+          }
+          EOF
+          bun run generate-config
+          bunx tsc --noEmit -p tsconfig.ci.json
+          bunx tsc --noEmit -p tsconfig.ci-setup.json
       # `dist/` is gitignored -- this is the exact `vite build` Vercel's own
       # buildCommand runs at deploy time (see vercel.json). Running it here
       # is still worth doing: a broken src/ file that only fails at this

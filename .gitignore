@@ -3,6 +3,7 @@ temp/
 Temp/
 .mcp.json
 .env
+*.env
 .env.local
 .env.*.local
 .vercel
@@ -61,3 +62,9 @@ Temp/
 
 # macOS Finder metadata -- per-directory, never project content.
 .DS_Store
+
+# cloudgear local state, backups, build output and imported IAM policies
+/.cloudgear/
+/policies/
+tsconfig.ci.json
+tsconfig.ci-setup.json

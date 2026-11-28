@@ -62,6 +62,8 @@ bunx playwright test     # End-to-end tests (stubbed backend, real browser)
 bun run test:all         # Run both JS test suites
 ```
 
+`bun run typecheck` also checks `setup.ts`, which imports the `@cloudgear/*` packages. Run `bun run cloudgear:init` once on a fresh checkout (it needs a local cloudgear checkout registered with `bun link`), otherwise `setup.ts` fails with TS2307.
+
 The ingestion pipeline's own test suite runs from its own branch/repo.
 
 **Note on CI:** GitHub Actions runs the type check and both test suites on every PR. A failing check is a real failure to fix, not a flake to re-run. Workflows on a first-time contributor's PR wait for a maintainer to approve them.
